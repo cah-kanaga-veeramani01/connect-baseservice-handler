@@ -1,0 +1,6 @@
+NotFound:
+  code: "PCE002"
+  EN:
+    message: "Searching for something?"
+  ES:
+    message: "¿Buscando algo?"
