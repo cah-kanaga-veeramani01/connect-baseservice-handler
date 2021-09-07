@@ -38,12 +38,12 @@ resources:
       space: ((base-service-config.cf-space))
       skip_cert_check: false
 
-  # - name: veracode-source-handler
-  #   type: veracode
-  #   source:
-  #     api_id: ((base-service-config.veracode-api-id))
-  #     api_key: ((base-service-config.veracode-api-key))
-  #     app_name: service-config-handler
+  - name: veracode-source-handler
+    type: veracode
+    source:
+      api_id: ((base-service-config.veracode-api-id))
+      api_key: ((base-service-config.veracode-api-key))
+      app_name: service-config-handler
 
   - name: slack-alert
     type: slack-notification
@@ -162,19 +162,19 @@ jobs:
                   echo "$(cat .npmrc)"
                   set -uex
                   echo publishing to npm registry $NPM_PUBLISH_REGISTRY_URL
-                  # npm pack
-                  # npm publish
+                  npm pack
+                  npm publish
                   ls
-    # - put: veracode-source-handler
-    #   params:
-    #     path: service-config-handler-output/connect-baseservice-handler/*.tgz
+    - put: veracode-source-handler
+      params:
+        path: service-config-handler-output/*.tgz
     - put: np1-pcf
       params:
         manifest: service-config-handler-output/manifest.yml
         command: push
         app_name: service-config-handler
         path: service-config-handler-output/
-        buildpack: nodejs-buildpack
+        buildpack: nodejs_buildpack
         vars:
           db_port: ((base-service-config.db-port))
           db_host: ((base-service-config.db-host))
@@ -188,8 +188,3 @@ jobs:
           node_env: ((base-service-config.node-env))
           auth_url: ((base-service-config.cf-auth-url))
           auth_route: ((base-service-config.cf-auth-internal-route))
-        run: 
-           args:
-                - -c
-                - |
-                  cf logs service-config-handler --recent
