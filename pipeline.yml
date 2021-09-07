@@ -50,14 +50,14 @@ resources:
     icon: slack
     source:
       url: ((base-service-config.slack-web-hook))
-
-  jobs:
+  
+jobs:
   # Job to deploy service config back end app to staging
-   - name: service-config-handler
+  - name: service-config-handler
     serial: true
     public: false
     plan:
-    - get: service-config-git-repo
+    - get: connect-baseservice-handler-git-repo
       trigger: true
     - task: lint-service-config-handler
       on_success:
@@ -74,10 +74,10 @@ resources:
               type: registry-image
               source: { repository: node, tag: "14.17.1" }
             inputs:
-              - name: service-config-git-repo
+              - name: connect-baseservice-handler-git-repo
             outputs:
               - name: service-config-handler-output
-                path: service-config-git-repo
+                path: connect-baseservice-handler-git-repo
             run:
               path: /bin/sh
               args:
@@ -85,7 +85,7 @@ resources:
                 - |
                   echo "Node Version: $(node --version)"
                   echo "NPM Version: $(npm --version)"
-                  cd service-config-git-repo/service-config-handler
+                  cd connect-baseservice-handler-git-repo/
                   node --max-old-space-size=750 `which npm` install
                   npm run lint
     - task: unit-test-service-config-handler
@@ -114,7 +114,7 @@ resources:
                 - |
                   echo "Node Version: $(node --version)"
                   echo "NPM Version: $(npm --version)"
-                  cd service-config-handler-output/service-config-handler
+                  cd service-config-handler-output/
                   npm run coverage
     - task: build-service-config-handler
       on_success:
@@ -145,7 +145,7 @@ resources:
               args:
                 - -c
                 - |
-                  cd service-config-handler-output/service-config-handler
+                  cd service-config-handler-output/
                   npm run build
 
                   #publishing artifact to npm registry
@@ -170,10 +170,10 @@ resources:
     #     path: service-config-handler-output/service-config-handler/*.tgz
     - put: np1-pcf
       params:
-        manifest: service-config-handler-output/service-config-handler/manifest.yml
+        manifest: service-config-handler-output/manifest.yml
         command: push
         app_name: service-config-handler
-        path: service-config-handler-output/service-config-handler
+        path: service-config-handler-output/
         buildpack: nodejs-buildpack
         vars:
           db_port: ((base-service-config.db-port))
