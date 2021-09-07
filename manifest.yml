@@ -1,0 +1,21 @@
+---
+    applications:
+    - name: service-config-handler
+      command: npm run start
+      random-route: false
+      routes:
+        - route: service-config-handler.apps.np1.fuseapps.io
+      memory: 1024M
+      env:
+        DB_PORT: ((db_port))
+        DB_HOST: ((db_host))
+        DB_NAME: ((db_name))
+        DB_SCHEMA: ((db_schema))
+        DB_USERNAME_DDL: ((db_username_ddl))
+        DB_PASSWORD_DDL: ((db_password_ddl))
+        DB_USERNAME_DML: ((db_username_dml))
+        DB_PASSWORD_DML: ((db_password_dml))
+        DB_SSL: ((db_ssl))
+        NODE_ENV: ((node_env))
+        AUTH_URL: ((auth_url))
+        AUTH_ROUTE: ((auth_route))

@@ -1,0 +1,9 @@
+---
+applications:
+- name: stagephi-service-config-handler
+  command: npm run start
+  random-route: false
+  routes:
+    - route: stagephi-service-config-handler.apps.fuseapps.io
+  memory: 1024M
+  # Environment variables provided by Concourse/Vault

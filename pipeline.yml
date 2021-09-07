@@ -1,0 +1,190 @@
+---
+resource_types:
+  - name: veracode
+    type: docker-image
+    source:
+      repository: artifacts.cahcommtech.com/concourse/common/veracode
+      tag: latest
+      username: ((artifacts.username))
+      password: ((artifacts.password))
+
+  - name: slack-notification
+    type: registry-image
+    source:
+      repository: artifacts.cahcommtech.com/cfcommunity/slack-notification-resource
+      tag: latest
+      username: ((artifacts.username))
+      password: ((artifacts.password))
+
+resources:
+  #Git repo ->done
+  - name: connect-baseservice-handler-git-repo
+    type: git
+    source:
+      uri: https://github.com/cahcommercial/connect-baseservice-handler.git
+      username: ((github.username))
+      password: ((github.personal_access_token))
+      branch: develop
+
+
+  #PCF
+  - name: np1-pcf
+    type: cf
+    source:
+      api: api.system.np1.fuseapps.io
+      username: ((base-service-config.cf-username))
+      password: ((base-service-config.cf-password))
+      organization: ((base-service-config.cf-organization))
+      space: ((base-service-config.cf-space))
+      skip_cert_check: false
+
+  # - name: veracode-source-handler
+  #   type: veracode
+  #   source:
+  #     api_id: ((base-service-config.veracode-api-id))
+  #     api_key: ((base-service-config.veracode-api-key))
+  #     app_name: service-config-handler
+
+  - name: slack-alert
+    type: slack-notification
+    icon: slack
+    source:
+      url: ((base-service-config.slack-web-hook))
+
+  jobs:
+  # Job to deploy service config back end app to staging
+   - name: service-config-handler
+    serial: true
+    public: false
+    plan:
+    - get: service-config-git-repo
+      trigger: true
+    - task: lint-service-config-handler
+      on_success:
+        put: slack-alert
+        params:
+          text: "Code lint of service-config-handler passed in staging"
+      on_failure:
+        put: slack-alert
+        params:
+          text: "Code lint of service-config-handler failed in staging... FIX IT, FIX IT, FIX IT!!!"
+      config:
+            platform: linux
+            image_resource:
+              type: registry-image
+              source: { repository: node, tag: "14.17.1" }
+            inputs:
+              - name: service-config-git-repo
+            outputs:
+              - name: service-config-handler-output
+                path: service-config-git-repo
+            run:
+              path: /bin/sh
+              args:
+                - -c
+                - |
+                  echo "Node Version: $(node --version)"
+                  echo "NPM Version: $(npm --version)"
+                  cd service-config-git-repo/service-config-handler
+                  node --max-old-space-size=750 `which npm` install
+                  npm run lint
+    - task: unit-test-service-config-handler
+      on_success:
+        put: slack-alert
+        params:
+          text: "Unit testing of service-config-handler passed in staging"
+      on_failure:
+        put: slack-alert
+        params:
+          text: "Unit testing of service-config-handler failed in staging... FIX IT, FIX IT, FIX IT!!!"
+      config:
+            platform: linux
+            image_resource:
+              type: registry-image
+              source: { repository: node, tag: "14.17.1" }
+            inputs:
+              - name: service-config-handler-output
+            outputs:
+              - name: service-config-handler-output
+                path: service-config-handler-output
+            run:
+              path: /bin/sh
+              args:
+                - -c
+                - |
+                  echo "Node Version: $(node --version)"
+                  echo "NPM Version: $(npm --version)"
+                  cd service-config-handler-output/service-config-handler
+                  npm run coverage
+    - task: build-service-config-handler
+      on_success:
+        put: slack-alert
+        params:
+          text: "Build of service-config-handler passed in staging"
+      on_failure:
+        put: slack-alert
+        params:
+          text: "Build of service-config-handler failed in staging... FIX IT, FIX IT, FIX IT!!!"
+      config:
+            platform: linux
+            image_resource:
+              type: registry-image
+              source: { repository: node, tag: "14.17.1" }
+            inputs:
+              - name: service-config-handler-output
+            outputs:
+              - name: service-config-handler-output
+                path: service-config-handler-output
+            params:
+              NPM_PUBLISH_REGISTRY_URL: https://((artifacts.url))/repository/commtech-npmjs-internal/
+              NPM_PUBLISH_EMAIL: ((base-service-config.email))
+              NPM_PUBLISH_USERNAME: ((artifacts.username))
+              NPM_PUBLISH_PASSWORD: ((artifacts.password))
+            run:
+              path: /bin/sh
+              args:
+                - -c
+                - |
+                  cd service-config-handler-output/service-config-handler
+                  npm run build
+
+                  #publishing artifact to npm registry
+                  set -ue
+                  echo setting deployment npm credentials
+
+                  npm_auth=$(echo -n "$NPM_PUBLISH_USERNAME:$NPM_PUBLISH_PASSWORD" | base64 -w 0)
+
+                  echo "registry=$NPM_PUBLISH_REGISTRY_URL" >> .npmrc
+                  echo "email=$NPM_PUBLISH_EMAIL" >> .npmrc
+                  echo "always-auth=true" >> .npmrc
+                  echo "_auth=$npm_auth" >> .npmrc
+
+                  echo "$(cat .npmrc)"
+                  set -uex
+                  echo publishing to npm registry $NPM_PUBLISH_REGISTRY_URL
+                  # npm pack
+                  # npm publish
+                  ls
+    # - put: veracode-source-handler
+    #   params:
+    #     path: service-config-handler-output/service-config-handler/*.tgz
+    - put: np1-pcf
+      params:
+        manifest: service-config-handler-output/service-config-handler/manifest.yml
+        command: push
+        app_name: service-config-handler
+        path: service-config-handler-output/service-config-handler
+        buildpack: nodejs-buildpack
+        vars:
+          db_port: ((base-service-config.db-port))
+          db_host: ((base-service-config.db-host))
+          db_name: ((base-service-config.db-name))
+          db_schema: ((base-service-config.db-schema))
+          db_username_ddl: ((base-service-config.db-username-ddl))
+          db_password_ddl: ((base-service-config.db-password-ddl))
+          db_username_dml: ((base-service-config.db-username-dml))
+          db_password_dml: ((base-service-config.db-password-dml))
+          db_ssl: ((base-service-config.db-ssl))
+          node_env: ((base-service-config.node-env))
+          auth_url: ((base-service-config.cf-auth-url))
+          auth_route: ((base-service-config.cf-auth-internal-route))

@@ -1,0 +1,10 @@
+
+---
+applications:
+  - name: service-config-handler
+    command: npm run start
+    random-route: false
+    routes:
+      - route: service-config-handler.apps.fuseapps.io
+    memory: 1024M
+    # Environment variables provided by Concourse/Vault
