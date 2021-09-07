@@ -1,7 +1,7 @@
 ---
     applications:
     - name: service-config-handler
-      buildpack: nodejs
+      buildpack: nodejs-buildpack
       command: npm run start
       random-route: false
       routes:
