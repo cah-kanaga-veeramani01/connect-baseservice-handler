@@ -167,7 +167,7 @@ jobs:
                   ls
     # - put: veracode-source-handler
     #   params:
-    #     path: service-config-handler-output/service-config-handler/*.tgz
+    #     path: service-config-handler-output/connect-baseservice-handler/*.tgz
     - put: np1-pcf
       params:
         manifest: service-config-handler-output/manifest.yml
@@ -188,3 +188,8 @@ jobs:
           node_env: ((base-service-config.node-env))
           auth_url: ((base-service-config.cf-auth-url))
           auth_route: ((base-service-config.cf-auth-internal-route))
+        run: 
+           args:
+                - -c
+                - |
+                  cf logs service-config-handler --recent

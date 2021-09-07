@@ -8,7 +8,7 @@
     "preserve": "npm run build",
     "serve": "cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon -q build/server.js\"",
     "prestart": "npm run build",
-    "start": "cross-env NODE_ENV=production node build/server.js",
+    "start": "node -r dotenv/config build/server.js",
     "start:dev": "nodemon -e ts -w ./ -x ts-node -r dotenv/config server.ts dotenv_config_path=./env/dev.env",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
@@ -16,16 +16,8 @@
     "doc": "typedoc",
     "coverage": "node --max-old-space-size=1024 ./node_modules/.bin/jest --coverage --logHeapUsage --runInBand"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/cahcommercial/connect-baseservice-configuration.git"
-  },
   "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/cahcommercial/connect-baseservice-configuration/issues"
-  },
-  "homepage": "https://github.com/cahcommercial/connect-baseservice-configuration#readme",
   "dependencies": {
     "@casl/ability": "^5.4.3",
     "@types/body-parser": "^1.19.1",
