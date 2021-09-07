@@ -2,11 +2,11 @@
   "name": "base-service-config-handler",
   "version": "0.0.2",
   "description": "Handler for Base Service Configuration",
-  "main": "index.ts",
+  "main": "server.ts",
   "scripts": {
     "build": "rimraf build && tsc",
     "preserve": "npm run build",
-    "serve": "cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon -q build/index.js\"",
+    "serve": "cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon -q build/server.js\"",
     "prestart": "npm run build",
     "start": "cross-env NODE_ENV=production node build/server.js",
     "start:dev": "nodemon -e ts -w ./ -x ts-node -r dotenv/config server.ts dotenv_config_path=./env/dev.env",
