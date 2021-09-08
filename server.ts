@@ -14,7 +14,7 @@ import './database/DBManager';
 
 dotenv.config();
 
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 const app: Express = express();
 app.use(
 	cors({
@@ -59,4 +59,4 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 	next(new HandleError({ name: 'NotFound', message: 'You have landed on an incorrect route.', stack: 'Not Found', errorStatus: 404 }));
 });
 app.use(errorHandler);
-app.listen(PORT, () => console.log(`Running on ${PORT} ⚡`));
+app.listen(PORT);
