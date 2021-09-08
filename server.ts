@@ -59,4 +59,4 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 	next(new HandleError({ name: 'NotFound', message: 'You have landed on an incorrect route.', stack: 'Not Found', errorStatus: 404 }));
 });
 app.use(errorHandler);
-app.listen(PORT, () => process.stdout.write(`Running on ${PORT} ⚡`));
+app.listen(PORT, () => console.log(`Running on ${PORT} ⚡`));
