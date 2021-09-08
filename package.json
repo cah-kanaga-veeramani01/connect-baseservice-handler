@@ -1,6 +1,6 @@
 {
   "name": "@service-configuration/base-service-handler",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Handler for Base Service Configuration",
   "main": "server.ts",
   "scripts": {
