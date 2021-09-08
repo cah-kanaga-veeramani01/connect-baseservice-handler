@@ -4,7 +4,7 @@ import { ServiceClass } from './ServiceClass';
 import { ServiceType } from './ServiceType';
 
 @Table({ freezeTableName: true })
-export class BaseService extends Model<BaseService> {
+export class Service extends Model<Service> {
 	@AutoIncrement
 	@PrimaryKey
 	@Column(DataType.INTEGER)

@@ -1,20 +1,20 @@
 import { Sequelize } from 'sequelize';
 import { AllowNull, AutoIncrement, BelongsTo, Column, DataType, Default, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
-import { BaseService } from './BaseService';
+import { Service } from './Service';
 import { ServiceModule } from './ServiceModule';
 
 @Table
-export class ServiceConfigAuditLogs extends Model<ServiceConfigAuditLogs> {
+export class ServiceAuditLogs extends Model<ServiceAuditLogs> {
 	@AutoIncrement
 	@PrimaryKey
 	@Column(DataType.INTEGER)
 	serviceLogID: number;
 
-	@ForeignKey(() => BaseService)
+	@ForeignKey(() => Service)
 	@Column(DataType.INTEGER)
 	serviceID: number;
-	@BelongsTo(() => BaseService)
-	service: BaseService;
+	@BelongsTo(() => Service)
+	service: Service;
 
 	@ForeignKey(() => ServiceModule)
 	@Column(DataType.INTEGER)
