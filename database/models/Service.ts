@@ -31,10 +31,10 @@ export class Service extends Model<Service> {
 	isPublished: boolean;
 
 	@ForeignKey(() => ServiceClass)
-	@Column(DataType.INTEGER)
-	serviceClassID: number;
+	@Column(DataType.ARRAY(DataType.INTEGER))
+	serviceClassID: number[];
 	@BelongsTo(() => ServiceClass)
-	serviceClass: ServiceClass;
+	serviceClass: ServiceClass[];
 
 	@ForeignKey(() => ServiceType)
 	@Column(DataType.INTEGER)
