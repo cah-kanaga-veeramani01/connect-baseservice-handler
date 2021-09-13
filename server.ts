@@ -11,6 +11,7 @@ import { auth, contextStore, errorHandler, generateLogId, requestLogger } from '
 import { HandleError } from './utils';
 import csurf from 'csurf';
 import './database/DBManager';
+import { ServiceInternalRoute } from './src/routes/service-internal-router';
 
 dotenv.config();
 
@@ -41,7 +42,7 @@ app.get('/', (req: Request, res: Response) => {
 	res.send('<h4>Service Configuration is UP!</h4>');
 });
 
-app.use(csurf({ cookie: true }));
+// app.use(csurf({ cookie: true }));
 
 // set csrf token in the cookie
 app.get('/csrf', (req, res) => {
@@ -49,7 +50,7 @@ app.get('/csrf', (req, res) => {
 	res.status(200).json({ success: true });
 });
 
-//app.use('/policy/internal', ServiceInternalRoute);
+app.use('/internal/services', ServiceInternalRoute);
 app.use('/service', ServiceRoute);
 
 /**
