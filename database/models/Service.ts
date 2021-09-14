@@ -1,6 +1,5 @@
 import { Sequelize } from 'sequelize';
 import { AllowNull, AutoIncrement, BelongsTo, Column, DataType, Default, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
-import { ServiceClass } from './ServiceClass';
 import { ServiceType } from './ServiceType';
 
 @Table({ freezeTableName: true })
@@ -29,12 +28,6 @@ export class Service extends Model<Service> {
 	@AllowNull(false)
 	@Column(DataType.BOOLEAN)
 	isPublished: boolean;
-
-	@ForeignKey(() => ServiceClass)
-	@Column(DataType.ARRAY(DataType.INTEGER))
-	serviceClassID: number[];
-	@BelongsTo(() => ServiceClass)
-	serviceClass: ServiceClass[];
 
 	@ForeignKey(() => ServiceType)
 	@Column(DataType.INTEGER)

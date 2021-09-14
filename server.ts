@@ -1,7 +1,6 @@
 import express, { Express, NextFunction, Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
-import { ServiceRoute } from './src/routes/service-router';
 import dotenv from 'dotenv';
 import config from 'config';
 import cors from 'cors';
@@ -11,7 +10,7 @@ import { auth, contextStore, errorHandler, generateLogId, requestLogger } from '
 import { HandleError } from './utils';
 import csurf from 'csurf';
 import './database/DBManager';
-import { ServiceInternalRoute } from './src/routes/service-internal-router';
+import { ServiceInternalRouter } from './src/routes/service-internal-router';
 
 dotenv.config();
 
@@ -50,8 +49,7 @@ app.get('/csrf', (req, res) => {
 	res.status(200).json({ success: true });
 });
 
-app.use('/internal/services', ServiceInternalRoute);
-app.use('/service', ServiceRoute);
+app.use('/internal/services', ServiceInternalRouter);
 
 /**
  * NotFound Route
