@@ -6,6 +6,9 @@ import ServiceClassManager from '../../src/managers/ServiceClassManager';
 const mockServiceClassRepository: Repository<ServiceClass> = {
 	bulkCreate: jest.fn().mockImplementation(() => {
 		return Promise.resolve(serviceClassesResponse);
+	}),
+	findAll: jest.fn().mockImplementation(() => {
+		return Promise.resolve(serviceClassesResponse);
 	})
 };
 
