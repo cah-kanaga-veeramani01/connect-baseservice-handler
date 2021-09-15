@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { logger } from '../../utils';
-import { IService, IServiceClass } from '../interfaces/IServices';
+import { IService, IServiceClass, IServiceType } from '../interfaces/IServices';
 import ServiceManager from '../services/ServiceManager';
 
 export default class ServiceClassController {
@@ -9,9 +9,7 @@ export default class ServiceClassController {
 	public async createServiceClass(req: Request, res: Response, next: NextFunction) {
 		try {
 			const serviceClassPayload: IServiceClass = req.body;
-			const serviceTypeID = serviceClassPayload.serviceTypeID,
-				serviceClassNames = serviceClassPayload.serviceClassNames;
-			logger.nonPhi.info('ADD Service Class has been invoked with following parameters ', { serviceTypeID, serviceClassNames });
+			logger.nonPhi.info('ADD Service Class has been invoked with following parameters ', { ...req.body.serviceTypeID, ...req.body.serviceClassNames });
 			res.send(await this.serviceManager.createServiceClass(serviceClassPayload));
 		} catch (error) {
 			next(error);
@@ -37,11 +35,20 @@ export default class ServiceClassController {
 		}
 	}
 
+	public async createServiceType(req: Request, res: Response, next: NextFunction) {
+		try {
+			const serviceTypePayload: IServiceType = req.body;
+			logger.nonPhi.info('ADD Service Type has been invoked with following parameter ', { ...req.body });
+			res.send(await this.serviceManager.createServiceType(serviceTypePayload));
+		} catch (error) {
+			next(error);
+		}
+	}
+
 	public async createService(req: Request, res: Response, next: NextFunction) {
 		try {
 			const servicePayload: IService = req.body;
-			const serviceTypeID = servicePayload.serviceTypeID;
-			logger.nonPhi.info('ADD Service has been invoked with following parameters ', { serviceTypeID });
+			logger.nonPhi.info('ADD Service has been invoked with following parameters ', servicePayload.serviceTypeID);
 			res.send(await this.serviceManager.createService(servicePayload));
 		} catch (error) {
 			next(error);

@@ -38,7 +38,7 @@ app.use(generateLogId);
 app.use(/(.*\/internal.*)/i, auth);
 
 app.get('/', (req: Request, res: Response) => {
-	res.send('<h4>Service Configuration is UP!</h4>');
+	res.send('<h1>Service Configuration is UP!</h1>');
 });
 
 // app.use(csurf({ cookie: true }));
