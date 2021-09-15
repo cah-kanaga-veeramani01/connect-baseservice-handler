@@ -10,7 +10,8 @@ import { auth, contextStore, errorHandler, generateLogId, requestLogger } from '
 import { HandleError } from './utils';
 import csurf from 'csurf';
 import './database/DBManager';
-import { ServiceInternalRouter } from './src/routes/service-internal-router';
+import { InternalRouterManager } from './src/routes/internal/internal-router-manager';
+import { ExternalRouterManager } from './src/routes/external/external-router-manager';
 
 dotenv.config();
 
@@ -49,7 +50,8 @@ app.get('/csrf', (req, res) => {
 	res.status(200).json({ success: true });
 });
 
-app.use('/internal/services', ServiceInternalRouter);
+app.use('/internal/services', InternalRouterManager);
+app.use('/services', ExternalRouterManager);
 
 /**
  * NotFound Route

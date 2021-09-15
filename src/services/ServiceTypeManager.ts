@@ -1,8 +1,7 @@
 import { Repository } from 'sequelize-typescript';
-import { Service } from '../../database/models/Service';
 import { ServiceType as ServiceTypeModel } from '../../database/models/ServiceType';
 import { IServiceType } from '../interfaces/IServices';
-import { logger, HandleError, HTTP_STATUS_CODES } from '../../utils';
+import { logger, HandleError } from '../../utils';
 
 export default class ServiceTypeManager {
 	constructor(public serviceTypeRepository: Repository<ServiceTypeModel>) {}
