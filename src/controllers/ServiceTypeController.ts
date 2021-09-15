@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { logger } from '../../utils';
 import { IServiceType } from '../interfaces/IServices';
-import ServiceTypeManager from '../services/ServiceTypeManager';
+import ServiceTypeManager from '../managers/ServiceTypeManager';
 
 export default class ServiceTypeController {
 	constructor(public serviceTypeManager: ServiceTypeManager) {}

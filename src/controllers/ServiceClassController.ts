@@ -1,16 +1,16 @@
 import { NextFunction, Request, Response } from 'express';
 import { logger } from '../../utils';
 import { IServiceClass } from '../interfaces/IServices';
-import ServiceClassManager from '../services/ServiceClassManager';
+import ServiceClassManager from '../managers/ServiceClassManager';
 
 export default class ServiceClassController {
 	constructor(public serviceClassManager: ServiceClassManager) {}
 
-	public async createServiceClass(req: Request, res: Response, next: NextFunction) {
+	public async createServiceClasses(req: Request, res: Response, next: NextFunction) {
 		try {
 			const serviceClassPayload: IServiceClass = req.body;
 			logger.nonPhi.info('ADD Service Class has been invoked with following parameters ', { ...req.body.serviceTypeID, ...req.body.serviceClassNames });
-			res.send(await this.serviceClassManager.createServiceClass(serviceClassPayload));
+			res.send(await this.serviceClassManager.createServiceClasses(serviceClassPayload));
 		} catch (error) {
 			next(error);
 		}

@@ -3,7 +3,7 @@ import { isAuthorized } from '../../middleware';
 import { Subject, UserAction } from '../../models/defineAbility';
 import db from '../../../database/DBManager';
 import { ServiceType } from '../../../database/models/ServiceType';
-import ServiceTypeManager from '../../services/ServiceTypeManager';
+import ServiceTypeManager from '../../managers/ServiceTypeManager';
 import ServiceTypeController from '../../controllers/ServiceTypeController';
 
 const serviceTypeController = new ServiceTypeController(new ServiceTypeManager(db.getRepository(ServiceType)));
