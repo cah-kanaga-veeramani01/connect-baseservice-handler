@@ -4,3 +4,13 @@ NotFound:
     message: "Searching for something?"
   ES:
     message: "¿Buscando algo?"
+
+FailedToCreateServiceClass:
+  code: "BSC003"
+  EN: 
+    message: "Failed To create Service class"
+
+FailedToGetServiceClassList:
+  code: "BSC004"
+  END:
+    message: "Failed to fetch service class list"
