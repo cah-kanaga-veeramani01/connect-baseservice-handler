@@ -42,7 +42,7 @@ app.get('/', (req: Request, res: Response) => {
 	res.send('<h1>Service Configuration is UP!</h1>');
 });
 
-// app.use(csurf({ cookie: true }));
+app.use(csurf({ cookie: true }));
 
 // set csrf token in the cookie
 app.get('/csrf', (req, res) => {
