@@ -15,7 +15,7 @@ export default class ServiceClassManager {
 		} catch (error) {
 			// console.log(error);
 			logger.nonPhi.error(error.message, { _err: error });
-			throw new HandleError({ name: 'FailedToCreateServiceClass', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+			throw new HandleError({ name: 'CreateServiceClassError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
 
@@ -24,7 +24,7 @@ export default class ServiceClassManager {
 			return await this.serviceClassRepository.findAll({ where: { serviceTypeID } });
 		} catch (error) {
 			logger.nonPhi.error(error.message, { _err: error });
-			throw new HandleError({ name: 'FailedToCreateServiceClass', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+			throw new HandleError({ name: 'ServiceClassFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
 }

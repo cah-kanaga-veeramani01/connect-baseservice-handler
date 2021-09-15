@@ -44,7 +44,7 @@ describe('Service Class Test', () => {
 				serviceClassNames: ['test']
 			});
 		} catch (error) {
-			expect(error?.code).toEqual('BSC003');
+			expect(error?.code).toEqual('SCE003');
 		}
 	});
 
@@ -69,5 +69,20 @@ describe('Service Class Test', () => {
 			const res = await serviceClassManager.getAllServiceClasses(1);
 			expect(res.length).toEqual(1);
 		} catch (error) {}
+	});
+
+	test('Should fail to fetch the list', async () => {
+		const mockServiceClass: Repository<ServiceClass> = {
+			findAll: jest.fn().mockImplementation(() => {
+				return Promise.reject('failed');
+			})
+		};
+		const serviceClassManager: ServiceClassManager = new ServiceClassManager(mockServiceClass);
+		try {
+			const res = await serviceClassManager.getAllServiceClasses(1);
+			expect(res.length).toEqual(1);
+		} catch (error) {
+			expect(error.code).toEqual('SCE007');
+		}
 	});
 });
