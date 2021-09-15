@@ -11,7 +11,7 @@ export const LOG_ID = {
 export const HEADERS = {
 	LOG_ID: LOG_ID.HEADER_NAME
 };
-export const DEFAULT_ERROR_CODE = 'PCE001';
+export const DEFAULT_ERROR_CODE = 'SCE001';
 export const HTTP_STATUS_CODES = {
 	ok: 200,
 	created: 201,

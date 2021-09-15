@@ -1,6 +1,31 @@
-NotFound:
-  code: "PCE002"
-  EN:
-    message: "Searching for something?"
-  ES:
-    message: "¿Buscando algo?"
+NotFound: 
+  code: 'SCE002'
+  EN: 
+    message: 'Searching for something?'
+  ES: 
+    message: '¿Buscando algo?'
+
+CreateServiceClassError: 
+  code: 'SCE003'
+  EN: 
+    message: 'Error while creating service classes.'
+
+CreateServiceTypeError: 
+  code: 'SCE004'
+  EN: 
+    message: 'Error while creating service type.'
+
+CreateServiceError: 
+  code: 'SCE005'
+  EN: 
+    message: 'Error while creating a new service.'
+
+ServiceTypeFetchError: 
+  code: 'SCE006'
+  EN: 
+    message: 'Error while fetching service types.'
+
+ServiceClassFetchError: 
+  code: 'SCE007'
+  EN: 
+    message: 'Error while creating service classes.'

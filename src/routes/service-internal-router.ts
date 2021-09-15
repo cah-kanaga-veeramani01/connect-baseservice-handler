@@ -14,3 +14,4 @@ export const ServiceInternalRouter = Router({ mergeParams: true });
 ServiceInternalRouter.post('/classes', isAuthorized(UserAction.create, Subject.policy), serviceController.createServiceClass.bind(serviceController));
 ServiceInternalRouter.get('/classes', isAuthorized(UserAction.read, Subject.policy), serviceController.getAllServiceClasses.bind(serviceController));
 ServiceInternalRouter.post('/', isAuthorized(UserAction.create, Subject.policy), serviceController.createService.bind(serviceController));
+ServiceInternalRouter.post('/types', isAuthorized(UserAction.create, Subject.policy), serviceController.createServiceType.bind(serviceController));
