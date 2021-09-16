@@ -9,7 +9,7 @@ export default class ServiceController {
 	public async createService(req: Request, res: Response, next: NextFunction) {
 		try {
 			const servicePayload: IService = req.body;
-			logger.nonPhi.info('ADD Service has been invoked with following parameters ', servicePayload.serviceTypeID);
+			logger.nonPhi.info('ADD Service has been invoked with following parameters ', { ...servicePayload });
 			res.send(await this.serviceManager.createService(servicePayload));
 		} catch (error) {
 			next(error);

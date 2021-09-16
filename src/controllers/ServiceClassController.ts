@@ -9,7 +9,7 @@ export default class ServiceClassController {
 	public async createServiceClasses(req: Request, res: Response, next: NextFunction) {
 		try {
 			const serviceClassPayload: IServiceClass = req.body;
-			logger.nonPhi.info('ADD Service Class has been invoked with following parameters ', { ...req.body.serviceTypeID, ...req.body.serviceClassNames });
+			logger.nonPhi.info('ADD Service Class has been invoked with following parameters ', { ...serviceClassPayload });
 			res.send(await this.serviceClassManager.createServiceClasses(serviceClassPayload));
 		} catch (error) {
 			next(error);

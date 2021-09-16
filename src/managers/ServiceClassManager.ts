@@ -9,7 +9,9 @@ export default class ServiceClassManager {
 	public async createServiceClasses(serviceClassPayload: IServiceClass) {
 		try {
 			const serviceClassRecords = serviceClassPayload.serviceClassNames.map((item) => ({ serviceClassName: item, serviceTypeID: serviceClassPayload.serviceTypeID, createdBy: 'admin' }));
-			return await this.serviceClassRepository.bulkCreate(serviceClassRecords);
+			const result = await this.serviceClassRepository.bulkCreate(serviceClassRecords);
+			logger.nonPhi.info('Created Service Classes Successfully.');
+			return result;
 		} catch (error) {
 			logger.nonPhi.error(error.message, { _err: error });
 			throw new HandleError({ name: 'CreateServiceClassError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
@@ -18,7 +20,9 @@ export default class ServiceClassManager {
 
 	public async getAllServiceClasses(serviceTypeID: number) {
 		try {
-			return await this.serviceClassRepository.findAll({ where: { serviceTypeID } });
+			const result = await this.serviceClassRepository.findAll({ where: { serviceTypeID } });
+			if (result.length) logger.nonPhi.info('Able to fetch all service classes successfully.');
+			return result;
 		} catch (error) {
 			logger.nonPhi.error(error.message, { _err: error });
 			throw new HandleError({ name: 'ServiceClassFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
