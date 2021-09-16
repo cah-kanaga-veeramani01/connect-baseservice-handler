@@ -1,7 +1,6 @@
 import express, { Express, NextFunction, Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
-import { ServiceRoute } from './src/routes/service-router';
 import dotenv from 'dotenv';
 import config from 'config';
 import cors from 'cors';
@@ -11,6 +10,8 @@ import { auth, contextStore, errorHandler, generateLogId, requestLogger } from '
 import { HandleError } from './utils';
 import csurf from 'csurf';
 import './database/DBManager';
+import { InternalRouterManager } from './src/routes/internal/internal-router-manager';
+import { ExternalRouterManager } from './src/routes/external/external-router-manager';
 
 dotenv.config();
 
@@ -38,7 +39,7 @@ app.use(generateLogId);
 app.use(/(.*\/internal.*)/i, auth);
 
 app.get('/', (req: Request, res: Response) => {
-	res.send('<h4>Service Configuration is UP!</h4>');
+	res.send('<h1>Service Configuration is UP!</h1>');
 });
 
 app.use(csurf({ cookie: true }));
@@ -49,8 +50,8 @@ app.get('/csrf', (req, res) => {
 	res.status(200).json({ success: true });
 });
 
-//app.use('/policy/internal', ServiceInternalRoute);
-app.use('/service', ServiceRoute);
+app.use('/internal/services', InternalRouterManager);
+app.use('/services', ExternalRouterManager);
 
 /**
  * NotFound Route

@@ -8,6 +8,7 @@
     "preserve": "npm run build",
     "serve": "cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon -q build/server.js\"",
     "prestart": "npm run build",
+    "cache": "jest --clear-cache",
     "start": "node -r dotenv/config build/server.js",
     "start:dev": "nodemon -e ts -w ./ -x ts-node -r dotenv/config server.ts dotenv_config_path=./env/dev.env",
     "lint": "eslint . --ext .ts",

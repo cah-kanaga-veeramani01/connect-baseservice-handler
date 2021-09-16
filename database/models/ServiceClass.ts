@@ -1,5 +1,6 @@
 import { Sequelize } from 'sequelize';
-import { AutoIncrement, Column, DataType, Default, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { AutoIncrement, BelongsTo, Column, DataType, Default, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
+import { ServiceType } from './ServiceType';
 
 @Table({ freezeTableName: true })
 export class ServiceClass extends Model<ServiceClass> {
@@ -10,6 +11,12 @@ export class ServiceClass extends Model<ServiceClass> {
 
 	@Column(DataType.STRING)
 	serviceClassName: string;
+
+	@ForeignKey(() => ServiceType)
+	@Column(DataType.INTEGER)
+	serviceTypeID: number;
+	@BelongsTo(() => ServiceType)
+	serviceType: ServiceType;
 
 	@Default(Sequelize.fn('now')) @Column(DataType.DATE) createdAt: Date;
 

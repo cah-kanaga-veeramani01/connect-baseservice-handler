@@ -1,6 +1,6 @@
-import { contextStore } from '.';
 import httpContext from 'express-http-context';
 import httpMocks from 'node-mocks-http';
+import { contextStore } from '../../src/middleware';
 import { HandleError } from '../../utils';
 
 describe('Context Store', () => {

@@ -14,7 +14,7 @@ describe('Handler Error Class', () => {
 			handlerErrObj = HandleError.generateHandleError(err);
 		expect(handlerErrObj).toBeInstanceOf(HandleError);
 		expect(handlerErrObj.name).toEqual('NotFound');
-		expect(handlerErrObj.code).toEqual('PCE002');
+		expect(handlerErrObj.code).toEqual('SCE002');
 		expect(spyHttpContext).toHaveBeenCalledTimes(1);
 		expect(spyHttpContext).toHaveBeenCalledWith('language');
 	});

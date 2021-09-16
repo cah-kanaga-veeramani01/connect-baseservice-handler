@@ -1,7 +1,7 @@
 import httpContext from 'express-http-context';
 import httpMocks from 'node-mocks-http';
-import { isAuthorized } from '.';
-import { Subject, UserAction } from '../models/defineAbility';
+import { isAuthorized } from '../../src/middleware';
+import { Subject, UserAction } from '../../src/models/defineAbility';
 
 describe('isAuthorized middleware', () => {
 	test('should not Authorise empty userRoles', async () => {

@@ -1,7 +1,7 @@
-import { requestLogger } from '.';
 import httpMocks from 'node-mocks-http';
 import { logger } from '../../utils';
 import EventEmitter from 'events';
+import { requestLogger } from '../../src/middleware';
 
 describe('requestLogger', () => {
 	test('should log info regarding request', () => {
