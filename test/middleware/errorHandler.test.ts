@@ -1,6 +1,6 @@
-import { errorHandler } from '.';
 import { HandleError, logger } from '../../utils';
 import httpMocks from 'node-mocks-http';
+import { errorHandler } from '../../src/middleware';
 
 describe('error Handler middleware', () => {
 	test('should return provided error status', () => {

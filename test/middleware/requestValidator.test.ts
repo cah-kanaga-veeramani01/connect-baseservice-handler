@@ -1,6 +1,6 @@
-import { errorHandler, validateRequest } from '.';
 import httpMocks from 'node-mocks-http';
 import faker from 'faker';
+import { errorHandler, validateRequest } from '../../src/middleware';
 
 const mockSchema = {
 	$schema: 'test',

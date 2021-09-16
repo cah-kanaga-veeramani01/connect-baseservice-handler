@@ -1,4 +1,4 @@
-import defineAbilityFor, { Subject, UserAction } from './defineAbility';
+import defineAbilityFor, { Subject, UserAction } from '../../src/models/defineAbility';
 
 describe('Define Ability', () => {
 	test('should assign edit/write roles', () => {
