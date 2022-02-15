@@ -1,11 +1,11 @@
 import mocks from 'node-mocks-http';
 import db from '../../database/DBManager';
 import { serviceClassesResponse, serviceClassPayload } from '../TestData';
-import { ServiceClass } from '../../database/models/ServiceClass';
+import { ServiceTag } from '../../database/models/ServiceTag';
 import ServiceClassManager from '../../src/managers/ServiceClassManager';
 import ServiceClassController from '../../src/controllers/ServiceClassController';
 
-const serviceClassManager = new ServiceClassManager(db.getRepository(ServiceClass));
+const serviceClassManager = new ServiceClassManager(db.getRepository(ServiceTag));
 const serviceClassController = new ServiceClassController(serviceClassManager);
 
 describe('Create service classes', () => {

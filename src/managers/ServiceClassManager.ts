@@ -1,10 +1,10 @@
 import { Repository } from 'sequelize-typescript';
-import { ServiceClass } from '../../database/models/ServiceClass';
+import { ServiceTag } from '../../database/models/ServiceTag';
 import { IServiceClass } from '../interfaces/IServices';
 import { logger, HandleError, HTTP_STATUS_CODES } from '../../utils';
 
 export default class ServiceClassManager {
-	constructor(public serviceClassRepository: Repository<ServiceClass>) {}
+	constructor(public serviceClassRepository: Repository<ServiceTag>) {}
 
 	public async createServiceClasses(serviceClassPayload: IServiceClass) {
 		try {

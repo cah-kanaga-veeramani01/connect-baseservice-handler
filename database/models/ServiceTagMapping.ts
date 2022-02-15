@@ -1,22 +1,26 @@
 import { Sequelize } from 'sequelize';
 import { AutoIncrement, BelongsTo, Column, DataType, Default, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
-import { ServiceType } from './ServiceType';
+import { Service } from './Service';
+import { ServiceTag } from './ServiceTag';
 
 @Table({ freezeTableName: true })
-export class ServiceClass extends Model<ServiceClass> {
+export class ServiceTagMapping extends Model<ServiceTagMapping> {
 	@AutoIncrement
 	@PrimaryKey
 	@Column(DataType.INTEGER)
-	serviceClassID: number;
+	serviceTagMappingID: number;
 
-	@Column(DataType.STRING)
-	serviceClassName: string;
-
-	@ForeignKey(() => ServiceType)
+	@BelongsTo(() => Service)
+	service: Service;
+	@ForeignKey(() => Service)
 	@Column(DataType.INTEGER)
-	serviceTypeID: number;
-	@BelongsTo(() => ServiceType)
-	serviceType: ServiceType;
+	serviceID: number;
+
+	@BelongsTo(() => ServiceTag)
+	serviceTag: ServiceTag;
+	@ForeignKey(() => ServiceTag)
+	@Column(DataType.INTEGER)
+	serviceTagID: number;
 
 	@Default(Sequelize.fn('now')) @Column(DataType.DATE) createdAt: Date;
 

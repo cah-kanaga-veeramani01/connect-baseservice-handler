@@ -1,9 +1,9 @@
 import { Repository } from 'sequelize-mock';
-import { ServiceClass } from '../../database/models/ServiceClass';
+import { ServiceTag } from '../../database/models/ServiceTag';
 import { serviceClassesResponse, serviceClassPayload } from '../TestData';
 import ServiceClassManager from '../../src/managers/ServiceClassManager';
 
-const mockServiceClassRepository: Repository<ServiceClass> = {
+const mockServiceClassRepository: Repository<ServiceTag> = {
 	bulkCreate: jest.fn().mockImplementation(() => {
 		return Promise.resolve(serviceClassesResponse);
 	}),
@@ -12,7 +12,7 @@ const mockServiceClassRepository: Repository<ServiceClass> = {
 	})
 };
 
-const mockServiceClassRepository_reject: Repository<ServiceClass> = {
+const mockServiceClassRepository_reject: Repository<ServiceTag> = {
 	bulkCreate: jest.fn().mockImplementation(() => {
 		return Promise.reject(new Error());
 	}),
