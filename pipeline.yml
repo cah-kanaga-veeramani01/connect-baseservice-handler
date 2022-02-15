@@ -116,6 +116,40 @@ jobs:
                   echo "NPM Version: $(npm --version)"
                   cd service-config-handler-output/
                   npm run coverage
+    - task: flyway-service-config-handler
+      on_success:
+        put: slack-alert
+        params:
+          text: "Flyway Migration Scripts of service-config-handler passed in staging"
+      on_failure:
+        put: slack-alert
+        params:
+          text: "Flyway Migration Scripts of service-config-handler failed in staging... FIX IT, FIX IT, FIX IT!!!"
+      config:
+            platform: linux
+            image_resource:
+              type: registry-image
+              source: { repository: node, tag: "14.17.1" }
+            inputs:
+              - name: service-config-handler-output
+            outputs:
+              - name: service-config-handler-output
+                path: service-config-handler-output
+            params:
+              DB_HOST: ((base-service-config.db-host))
+              DB_NAME: ((base-service-config.db-name))
+              DB_PASSWORD: ((base-service-config.db-password-ddl))
+              DB_SCHEMA: ((base-service-config.db-schema))
+              DB_USERNAME: ((base-service-config.db-username-ddl))
+              NODE_ENV: ((base-service-config.node-env))
+            run:
+              path: /bin/sh
+              args:
+                - -c
+                - |
+                  cd policy-config-handler-output
+                  echo Started flyway migration
+                  npm run migrate
     - task: build-service-config-handler
       on_success:
         put: slack-alert
