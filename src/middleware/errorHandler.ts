@@ -1,4 +1,4 @@
-import { ErrorRequestHandler, Request, Response, NextFunction } from 'express';
+import { ErrorRequestHandler, Request, Response } from 'express';
 import { HandleError, logger } from '../../utils';
 import { HTTP_STATUS_CODES, DEFAULT_ERROR_CODE } from '../../utils/constants';
 

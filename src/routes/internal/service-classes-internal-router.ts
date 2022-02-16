@@ -9,6 +9,5 @@ import db from '../../../database/DBManager';
 const serviceClassController = new ServiceClassController(new ServiceClassManager(db.getRepository(ServiceTag)));
 export const ServiceClassesInternalRouter = Router({ mergeParams: true });
 
-ServiceClassesInternalRouter.route('/')
-	.post(isAuthorized(UserAction.create, Subject.policy), serviceClassController.createServiceClasses.bind(serviceClassController))
-	.get(isAuthorized(UserAction.read, Subject.policy), serviceClassController.getAllServiceClasses.bind(serviceClassController));
+ServiceClassesInternalRouter.route('/').post(isAuthorized(UserAction.create, Subject.policy), serviceClassController.createServiceClasses.bind(serviceClassController));
+// .get(isAuthorized(UserAction.read, Subject.policy), serviceClassController.getAllServiceClasses.bind(serviceClassController));

@@ -35,18 +35,18 @@ describe('Service Classes - Test', () => {
 			expect(error.name).toEqual('CreateServiceClassError');
 		}
 	});
-	test('should return classes list', async () => {
-		const serviceClassManager: ServiceClassManager = new ServiceClassManager(mockServiceClassRepository);
-		expect(await serviceClassManager.getAllServiceClasses(1)).toMatchObject(serviceClassesResponse);
-	});
+	// test('should return classes list', async () => {
+	// 	const serviceClassManager: ServiceClassManager = new ServiceClassManager(mockServiceClassRepository);
+	// 	expect(await serviceClassManager.getAllServiceClasses(1)).toMatchObject(serviceClassesResponse);
+	// });
 
-	test('should fail to fetch the list', async () => {
-		const serviceClassManager: ServiceClassManager = new ServiceClassManager(mockServiceClassRepository_reject);
-		try {
-			await serviceClassManager.getAllServiceClasses(1);
-		} catch (error) {
-			expect(error.code).toEqual('SCE007');
-			expect(error.name).toEqual('ServiceClassFetchError');
-		}
-	});
+	// test('should fail to fetch the list', async () => {
+	// 	const serviceClassManager: ServiceClassManager = new ServiceClassManager(mockServiceClassRepository_reject);
+	// 	try {
+	// 		await serviceClassManager.getAllServiceClasses(1);
+	// 	} catch (error) {
+	// 		expect(error.code).toEqual('SCE007');
+	// 		expect(error.name).toEqual('ServiceClassFetchError');
+	// 	}
+	// });
 });

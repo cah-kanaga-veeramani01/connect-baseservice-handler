@@ -18,14 +18,14 @@ export default class ServiceClassManager {
 		}
 	}
 
-	public async getAllServiceClasses(serviceTypeID: number) {
-		try {
-			const result = await this.serviceClassRepository.findAll({ where: { serviceTypeID } });
-			if (result.length) logger.nonPhi.info('Able to fetch all service classes successfully.');
-			return result;
-		} catch (error) {
-			logger.nonPhi.error(error.message, { _err: error });
-			throw new HandleError({ name: 'ServiceClassFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
-		}
-	}
+	// public async getAllServiceClasses(serviceTypeID: number) {
+	// 	try {
+	// 		const result = await this.serviceClassRepository.findAll({ where: { serviceTypeID } });
+	// 		if (result.length) logger.nonPhi.info('Able to fetch all service classes successfully.');
+	// 		return result;
+	// 	} catch (error) {
+	// 		logger.nonPhi.error(error.message, { _err: error });
+	// 		throw new HandleError({ name: 'ServiceClassFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+	// 	}
+	// }
 }

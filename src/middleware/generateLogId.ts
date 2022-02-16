@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { HEADERS, LOG_ID, LOG_PAYLOAD } from '../../utils/constants';
-import { HandleError, logger } from '../../utils';
+import { logger } from '../../utils';
 import { nanoid } from 'nanoid';
 
 /**
