@@ -1,25 +1,15 @@
-import sequelizeManager from './DBManager';
+import sequelizeManager, {sequelizeAdmin} from './DBManager';
 import { logger } from './../utils/logger';
-var SequelizeMock = require('sequelize-mock');
-
-const loggerInfoSpy = jest.spyOn(logger.nonPhi, 'info').mockImplementation(() => {});
-const loggerErrorSpy = jest.spyOn(logger.nonPhi, 'error').mockImplementation(() => {});
-var dbMock = new SequelizeMock({});
 
 describe('DB Manager', () => {
-    test('logger info to work fine', async () => {
-       sequelizeManager.log("test");
-       expect(loggerInfoSpy).toHaveBeenCalledTimes(1);
-    });
-
-	test('throws error', async () => {
-        sequelizeManager.sync = jest.fn().mockImplementation(() => {
-            return Promise.resolve();
-        });
-        try{
-           await sequelizeManager.sync();
-        } catch(error){
-            expect(loggerErrorSpy).toHaveBeenCalled();
-        }
-    });
+	test('logger info to work fine', async () => {
+		const loggerInfoSpy = jest.spyOn(logger.nonPhi, 'info');
+		sequelizeManager.log('test');
+		expect(loggerInfoSpy).toHaveBeenCalledTimes(1);
+	});
+	test('logger info to work fine - 2', async () => {
+		const loggerInfoSpy = jest.spyOn(logger.nonPhi, 'info');
+		sequelizeAdmin.log('test');
+		expect(loggerInfoSpy).toHaveBeenCalledTimes(2);
+	});
 });

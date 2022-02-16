@@ -16,13 +16,13 @@ export default class ServiceClassController {
 		}
 	}
 
-	public async getAllServiceClasses(req: Request, res: Response, next: NextFunction) {
-		try {
-			const serviceTypeID = Number(req.query?.serviceTypeID);
-			logger.nonPhi.info('GET Service Classes has been invoked with following parameter ', { serviceTypeID });
-			res.send(await this.serviceClassManager.getAllServiceClasses(serviceTypeID));
-		} catch (error) {
-			next(error);
-		}
-	}
+	// public async getAllServiceClasses(req: Request, res: Response, next: NextFunction) {
+	// 	try {
+	// 		const serviceTypeID = Number(req.query?.serviceTypeID);
+	// 		logger.nonPhi.info('GET Service Classes has been invoked with following parameter ', { serviceTypeID });
+	// 		res.send(await this.serviceClassManager.getAllServiceClasses(serviceTypeID));
+	// 	} catch (error) {
+	// 		next(error);
+	// 	}
+	// }
 }

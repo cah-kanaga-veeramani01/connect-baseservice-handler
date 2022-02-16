@@ -1,1 +1,0 @@
-ALTER TABLE service."Service" ADD COLUMN IF NOT EXISTS "testColumn" INTEGER;

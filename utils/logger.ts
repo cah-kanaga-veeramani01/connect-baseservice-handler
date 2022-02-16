@@ -4,44 +4,32 @@
  * @requires constants
  */
 
-import log4js from 'log4js';
-import { LOG_PAYLOAD } from '../utils/constants';
-import jsonLayout from 'log4js-json-layout';
-/**
- * Logger configuration for Phi & nonPhi.
- * Default is configured to nonPhi and Phi is configred as a seperate category.
- * This gives two files for both the appenders.
- */
+import winston, { format } from 'winston';
+import httpContext from 'express-http-context';
 
-log4js.addLayout('json', jsonLayout);
-log4js.configure({
-	appenders: {
-		phi: {
-			type: 'stdout',
-			layout: {
-				type: 'json',
-				dynamic: {
-					logID: function () {
-						return LOG_PAYLOAD._logId;
-					}
-				}
-			}
-		},
-		nonPhi: {
-			type: 'stdout',
-			layout: {
-				type: 'json',
-				dynamic: {
-					logID: function () {
-						return LOG_PAYLOAD._logId;
-					}
-				}
-			}
-		}
-	},
-	categories: {
-		phi: { appenders: ['phi'], level: 'trace' },
-		default: { appenders: ['nonPhi'], level: 'trace' }
+const winstonLogger = winston.createLogger({
+	transports: [
+		new winston.transports.Console({
+			level: 'silly',
+			handleExceptions: true
+		})
+	],
+	format: winston.format.combine(
+		winston.format.metadata(),
+		format((info) => {
+			info['@timestamp'] = new Date().toISOString();
+			info.logID = httpContext.get('logID');
+			info.hl_meta = info?.metadata ? { ...info?.metadata } : {};
+			delete info.metadata;
+			return info;
+		})(),
+		winston.format.printf((info) => {
+			return `${JSON.stringify(info)}`;
+		})
+	),
+
+	defaultMeta: {
+		logger: 'winston'
 	}
 });
 
@@ -49,6 +37,7 @@ log4js.configure({
  * @exports logger with phi and nonPhi options
  */
 export const logger = {
-	phi: log4js.getLogger('phi'),
-	nonPhi: log4js.getLogger('nonPhi')
+	phi: winstonLogger,
+	nonPhi: winstonLogger,
+	winstonLogger
 };

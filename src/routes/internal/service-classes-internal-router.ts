@@ -1,14 +1,13 @@
 import { Router } from 'express';
-import { ServiceClass } from '../../../database/models/ServiceClass';
+import { ServiceTag } from '../../../database/models/ServiceTag';
 import ServiceClassController from '../../controllers/ServiceClassController';
 import { isAuthorized } from '../../middleware';
 import { Subject, UserAction } from '../../models/defineAbility';
 import ServiceClassManager from '../../managers/ServiceClassManager';
 import db from '../../../database/DBManager';
 
-const serviceClassController = new ServiceClassController(new ServiceClassManager(db.getRepository(ServiceClass)));
+const serviceClassController = new ServiceClassController(new ServiceClassManager(db.getRepository(ServiceTag)));
 export const ServiceClassesInternalRouter = Router({ mergeParams: true });
 
-ServiceClassesInternalRouter.route('/')
-	.post(isAuthorized(UserAction.create, Subject.policy), serviceClassController.createServiceClasses.bind(serviceClassController))
-	.get(isAuthorized(UserAction.read, Subject.policy), serviceClassController.getAllServiceClasses.bind(serviceClassController));
+ServiceClassesInternalRouter.route('/').post(isAuthorized(UserAction.create, Subject.policy), serviceClassController.createServiceClasses.bind(serviceClassController));
+// .get(isAuthorized(UserAction.read, Subject.policy), serviceClassController.getAllServiceClasses.bind(serviceClassController));

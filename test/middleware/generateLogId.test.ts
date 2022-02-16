@@ -37,13 +37,9 @@ describe('generateLogId', () => {
 		const mockNext = jest.fn();
 		const error = new Error();
 		const mockHandleError = HandleError.generateHandleError(error);
-
-		const nonPhiLoggerSpy = jest.spyOn(logger.nonPhi, 'addContext');
+		
+		const nonPhiLoggerSpy = jest.spyOn(logger.nonPhi, 'debug');
 		nonPhiLoggerSpy.mockImplementation(() => {
-			throw error;
-		});
-		const phiLoggerSpy = jest.spyOn(logger.nonPhi, 'addContext');
-		phiLoggerSpy.mockImplementation(() => {
 			throw error;
 		});
 

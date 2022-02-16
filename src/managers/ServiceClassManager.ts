@@ -1,10 +1,10 @@
 import { Repository } from 'sequelize-typescript';
-import { ServiceClass } from '../../database/models/ServiceClass';
+import { ServiceTag } from '../../database/models/ServiceTag';
 import { IServiceClass } from '../interfaces/IServices';
 import { logger, HandleError, HTTP_STATUS_CODES } from '../../utils';
 
 export default class ServiceClassManager {
-	constructor(public serviceClassRepository: Repository<ServiceClass>) {}
+	constructor(public serviceClassRepository: Repository<ServiceTag>) {}
 
 	public async createServiceClasses(serviceClassPayload: IServiceClass) {
 		try {
@@ -18,14 +18,14 @@ export default class ServiceClassManager {
 		}
 	}
 
-	public async getAllServiceClasses(serviceTypeID: number) {
-		try {
-			const result = await this.serviceClassRepository.findAll({ where: { serviceTypeID } });
-			if (result.length) logger.nonPhi.info('Able to fetch all service classes successfully.');
-			return result;
-		} catch (error) {
-			logger.nonPhi.error(error.message, { _err: error });
-			throw new HandleError({ name: 'ServiceClassFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
-		}
-	}
+	// public async getAllServiceClasses(serviceTypeID: number) {
+	// 	try {
+	// 		const result = await this.serviceClassRepository.findAll({ where: { serviceTypeID } });
+	// 		if (result.length) logger.nonPhi.info('Able to fetch all service classes successfully.');
+	// 		return result;
+	// 	} catch (error) {
+	// 		logger.nonPhi.error(error.message, { _err: error });
+	// 		throw new HandleError({ name: 'ServiceClassFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+	// 	}
+	// }
 }

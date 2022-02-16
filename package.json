@@ -39,18 +39,17 @@
     "helmet": "^4.6.0",
     "js-yaml": "^4.1.0",
     "locale": "^0.1.0",
-    "log4js": "^6.3.0",
-    "log4js-json-layout": "^2.2.3",
-    "nanoid": "^3.1.25",
+    "nanoid": "^3.3.0",
     "node-esapi": "0.0.1",
     "node-flywaydb": "^3.0.7",
     "pg": "^8.7.1",
     "pg-hstore": "^2.3.4",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "sequelize": "^5.21.13",
+    "sequelize": "^6.16.1",
     "sequelize-history": "^1.4.0",
-    "sequelize-typescript": "^1.1.0"
+    "sequelize-typescript": "^2.1.2",
+    "winston": "^3.6.0"
   },
   "devDependencies": {
     "@types/config": "0.0.39",

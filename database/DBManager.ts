@@ -3,8 +3,7 @@ import { logger } from '../utils/logger';
 import { HandleError } from '../utils/HandleError';
 const trackAll = require('sequelize-history').all;
 
-let sequelizeAdmin: Sequelize, sequelizeManager;
-
+let sequelizeAdmin, sequelizeManager;
 try {
 	sequelizeAdmin = new Sequelize({
 		host: process.env.DB_HOST,
@@ -58,3 +57,4 @@ try {
 }
 
 export default sequelizeManager;
+export { sequelizeAdmin };
