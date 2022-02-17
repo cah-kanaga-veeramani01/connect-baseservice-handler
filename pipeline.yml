@@ -24,7 +24,7 @@ resources:
       uri: https://github.com/cahcommercial/connect-baseservice-handler.git
       username: ((github.username))
       password: ((github.personal_access_token))
-      branch: develop
+      branch: deploy/staging
 
 
   #PCF
@@ -147,7 +147,7 @@ jobs:
               args:
                 - -c
                 - |
-                  cd policy-config-handler-output
+                  cd service-config-handler-output
                   echo Started flyway migration
                   npm run migrate
     - task: build-service-config-handler
