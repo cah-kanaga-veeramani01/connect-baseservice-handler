@@ -1,15 +1,12 @@
 import express, { Express, NextFunction, Request, Response } from 'express';
-import bodyParser from 'body-parser';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import config from 'config';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import httpContext from 'express-http-context';
 import { auth, contextStore, errorHandler, generateLogId, requestLogger } from './src/middleware';
 import { HandleError } from './utils';
 import csurf from 'csurf';
-import './database/DBManager';
 import { InternalRouterManager } from './src/routes/internal/internal-router-manager';
 import { ExternalRouterManager } from './src/routes/external/external-router-manager';
 
@@ -21,13 +18,17 @@ app.use(
 	cors({
 		credentials: true,
 		methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
-		allowedHeaders: ['Origin', 'Content-Type', 'Accept', 'Accept-Language', 'Cookies', 'x-xsrf-token'],
-		origin: config.get('allowedOrigins')
+		allowedHeaders: ['Origin', 'Content-Type', 'Accept', 'Accept-Language', 'Cookies', 'x-xsrf-token']
 	})
 );
+app.use((req: Request, res: Response, next: NextFunction) => {
+	res.setHeader('X-Frame-Options', 'DENY');
+	res.setHeader('Content-Security-Policy', "frame-ancestors 'none'");
+	next();
+});
+
 app.use(helmet());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: false }));
 
 //middlewares for each request
 app.use(cookieParser());
@@ -50,8 +51,8 @@ app.get('/csrf', (req, res) => {
 	res.status(200).json({ success: true });
 });
 
-app.use('/internal/services', InternalRouterManager);
-app.use('/services', ExternalRouterManager);
+app.use('/service/internal', InternalRouterManager);
+app.use('/service', ExternalRouterManager);
 
 /**
  * NotFound Route
