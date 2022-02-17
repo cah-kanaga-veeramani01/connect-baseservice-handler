@@ -1,6 +1,6 @@
 import httpMocks from 'node-mocks-http';
 import httpContext from 'express-http-context';
-import { auth } from '../../src/middleware/auth';
+import {auth} from '../../src/middleware/auth';
 
 jest.mock('../../utils');
 import { invoke } from '../../utils';
@@ -8,7 +8,7 @@ import { invoke } from '../../utils';
 describe('Authentication middleware', () => {
 	test('should not authenticate on API result for non 200', async () => {
 		const mockReq = httpMocks.createRequest({
-			cookies: { CFID: '26354', CFTOKEN: 'buncha-jibberish', AWSALBCORS: 'jibrish', AWSALB: 'jibrish' }
+			headers: { cookie: 'CFID=26354;CFTOKEN=buncha-jibberish;AWSALBCORS=jibrish;AWSALB=jibrish' }
 		});
 		const mockRes = httpMocks.createResponse();
 		const mockNext = jest.fn();
@@ -28,7 +28,7 @@ describe('Authentication middleware', () => {
 
 	test('should throw error on API result Failure', async () => {
 		const mockReq = httpMocks.createRequest({
-			cookies: { CFID: '26354', CFTOKEN: 'buncha-jibberish', AWSALBCORS: 'jibrish', AWSALB: 'jibrish' }
+			headers: { cookie: 'CFID=26354;CFTOKEN=buncha-jibberish;AWSALBCORS=jibrish;AWSALB=jibrish' }
 		});
 		const mockRes = httpMocks.createResponse();
 		const mockNext = jest.fn();
@@ -50,7 +50,7 @@ describe('Authentication middleware', () => {
 
 	test('should authenticate and set context on 200 from api', async () => {
 		const mockReq = httpMocks.createRequest({
-			cookies: { CFID: '26354', CFTOKEN: 'buncha-jibberish', AWSALBCORS: 'jibrish', AWSALB: 'jibrish' }
+      headers : {cookie: 'CFID=26354;CFTOKEN=buncha-jibberish;AWSALBCORS=jibrish;AWSALB=jibrish' }
 		});
 		const mockRes = httpMocks.createResponse();
 		const mockNext = jest.fn();

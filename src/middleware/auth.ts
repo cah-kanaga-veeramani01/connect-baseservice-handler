@@ -16,7 +16,7 @@ export const auth = async (req: Request, _res: Response, next: NextFunction) => 
 		const authRes = await invoke({
 			method: 'GET',
 			url: authUrl,
-			headers: { cookie: `CFID=${req.cookies.CFID};CFTOKEN=${req.cookies.CFTOKEN};AWSALBCORS=${req.cookies.AWSALBCORS};AWSALB=${req.cookies.AWSALB}` }
+			headers: { cookie: req.headers.cookie }
 		});
 		if (authRes.status === HTTP_STATUS_CODES.ok) {
 			httpContext.set('userId', authRes.data.userId);
