@@ -2,6 +2,10 @@ import { Repository } from 'sequelize-typescript';
 import { Service } from '../../database/models/Service';
 import { HandleError, logger } from '../../utils';
 import { IService } from '../interfaces/IServices';
+import { serviceList } from '../../utils/constants';
+import { QPolicyList } from '../../database/queries/service';
+import db from '../../database/DBManager';
+import { QueryTypes } from 'sequelize';
 
 export default class ServiceManager {
 	constructor(public serviceRepository: Repository<Service>) {}
@@ -21,6 +25,21 @@ export default class ServiceManager {
 		} catch (error) {
 			logger.nonPhi.error(error.message, { _err: error });
 			throw new HandleError({ name: 'CreateServiceError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
+		}
+	}
+
+	public async getServiceList(sortBy: string, sortOrder: string, offset: number, limit: number, keyword: string, statusFilter: string) {
+		try {
+			let totalServices = [];
+
+			totalServices = await db.query(QPolicyList(sortBy ?? serviceList.defaultSortOrder, sortOrder), {
+				type: QueryTypes.SELECT,
+				replacements: { limit: null, offset: null, sortBy, sortOrder: 'asc' }
+			});
+
+			return totalServices;
+		} catch (error) {
+			throw new HandleError({ name: 'ServiceListFetchError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
 		}
 	}
 }
