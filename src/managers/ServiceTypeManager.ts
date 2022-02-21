@@ -12,7 +12,6 @@ export default class ServiceTypeManager {
 			logger.nonPhi.info('Created a new service type successfully.');
 			return result;
 		} catch (error) {
-			logger.nonPhi.error(error.message, { _err: error });
 			throw new HandleError({ name: 'CreateServiceTypeError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
 		}
 	}
@@ -23,7 +22,6 @@ export default class ServiceTypeManager {
 			if (result.length) logger.nonPhi.info('Able to fetch all service types successfully.');
 			return result;
 		} catch (error) {
-			logger.nonPhi.error(error.message, { _err: error });
 			throw new HandleError({ name: 'ServiceTypeFetchError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
 		}
 	}

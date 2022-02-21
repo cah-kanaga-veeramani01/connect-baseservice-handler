@@ -1,6 +1,7 @@
 const enums = require('./configEnums');
 
 const configs = {
+	allowedOrigins: null,
 	supportedLanguages: [enums.language.en, enums.language.es],
 	language: enums.language.en,
 	defaultErrorMessage: 'Sorry, an error occurred',

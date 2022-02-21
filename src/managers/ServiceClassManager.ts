@@ -13,7 +13,6 @@ export default class ServiceClassManager {
 			logger.nonPhi.info('Created Service Classes Successfully.');
 			return result;
 		} catch (error) {
-			logger.nonPhi.error(error.message, { _err: error });
 			throw new HandleError({ name: 'CreateServiceClassError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
@@ -24,7 +23,6 @@ export default class ServiceClassManager {
 	// 		if (result.length) logger.nonPhi.info('Able to fetch all service classes successfully.');
 	// 		return result;
 	// 	} catch (error) {
-	// 		logger.nonPhi.error(error.message, { _err: error });
 	// 		throw new HandleError({ name: 'ServiceClassFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 	// 	}
 	// }

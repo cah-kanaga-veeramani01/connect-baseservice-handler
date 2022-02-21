@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import httpContext from 'express-http-context';
-import { HandleError, logger, invoke, HTTP_STATUS_CODES } from '../../utils';
+import { HandleError, invoke, HTTP_STATUS_CODES } from '../../utils';
 
 const authUrl = `${process.env.AUTH_URL}${process.env.AUTH_ROUTE}`;
 
@@ -26,7 +26,6 @@ export const auth = async (req: Request, _res: Response, next: NextFunction) => 
 			throw new HandleError({ name: 'AuthenticationError', errorStatus: HTTP_STATUS_CODES.unauthenticated, message: 'Error while authenticating', stack: 'Error while authenticating' });
 		}
 	} catch (error) {
-		logger.nonPhi.error(error.message, { _err: error });
 		if (error instanceof HandleError) next(error);
 		else next(new HandleError({ name: 'AuthenticationError', errorStatus: HTTP_STATUS_CODES.unauthenticated, message: 'Error while authenticating', stack: 'Error while authenticating' }));
 	}
