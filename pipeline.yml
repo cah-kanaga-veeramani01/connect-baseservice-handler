@@ -177,7 +177,7 @@
                 - -c
                 - |
                   cd service-config-handler-output
-                  npm run build:server
+                  npm run build
 
                   #publishing artifact to npm registry
                   set -ue
@@ -298,6 +298,7 @@
         vars:
           db_port: ((base-service-config.db-port))
           db_host: ((base-service-config.db-host))
+          db_schema: ((base-service-config.db-schema))
           db_name: ((base-service-config.db-name))
           db_username_ddl: ((base-service-config.db-username-ddl))
           db_password_ddl: ((base-service-config.db-password-ddl))
@@ -305,8 +306,6 @@
           db_password_dml: ((base-service-config.db-password-dml))
           db_ssl: ((base-service-config.db-ssl))
           node_env: ((base-service-config.node-env))
-          aws_access_key: ((base-service-config.aws-access-key))
-          aws_secret_key: ((base-service-config.aws-secret-key))
           auth_url: ((base-service-config.cf-auth-url))
           auth_route: ((base-service-config.cf-auth-internal-route))
   jobs:
