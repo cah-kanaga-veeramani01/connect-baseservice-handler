@@ -5,7 +5,7 @@ const configs = {
 };
 
 // Modify existing configs
-configs.allowedOrigins = 'https://staging.outcomesmtm.com/internal';
+configs.allowedOrigins = 'https://staging.outcomesmtm.com';
 
 // always Export the configs as default
 module.exports = configs;
