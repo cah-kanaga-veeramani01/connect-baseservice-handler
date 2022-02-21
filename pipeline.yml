@@ -1,31 +1,29 @@
 ---
-resource_types:
-  - name: veracode
-    type: docker-image
-    source:
-      repository: artifacts.cahcommtech.com/concourse/common/veracode
-      tag: latest
-      username: ((artifacts.username))
-      password: ((artifacts.password))
 
-  - name: slack-notification
-    type: registry-image
-    source:
-      repository: artifacts.cahcommtech.com/cfcommunity/slack-notification-resource
-      tag: latest
-      username: ((artifacts.username))
-      password: ((artifacts.password))
+  resource_types:     
+    - name: veracode
+      type: docker-image
+      source:
+        repository: artifacts.cahcommtech.com/concourse/common/veracode
+        tag: latest
+        username: ((artifacts.username))
+        password: ((artifacts.password))
+    
+    - name: slack-notification
+      type: registry-image
+      source:
+        repository: cfcommunity/slack-notification-resource
+        tag: latest
 
-resources:
-  #Git repo ->done
+  resources:
+  #Git repo
   - name: connect-baseservice-handler-git-repo
     type: git
-    source:
+    source: 
       uri: https://github.com/cahcommercial/connect-baseservice-handler.git
+      branch: deploy/staging
       username: ((github.username))
       password: ((github.personal_access_token))
-      branch: deploy/staging
-
 
   #PCF
   - name: np1-pcf
@@ -37,7 +35,7 @@ resources:
       organization: ((base-service-config.cf-organization))
       space: ((base-service-config.cf-space))
       skip_cert_check: false
-
+  
   - name: veracode-source-handler
     type: veracode
     source:
@@ -51,15 +49,38 @@ resources:
     source:
       url: ((base-service-config.slack-web-hook))
   
-jobs:
-  # Job to deploy service config back end app to staging
-  - name: service-config-handler
-    serial: true
-    public: false
-    plan:
-    - get: connect-baseservice-handler-git-repo
-      trigger: true
-    - task: lint-service-config-handler
+  install-dependencies-task: &install-dependencies-task
+    on_success:
+      put: slack-alert
+      params:
+        text: "Service config handler => Installed Package Dependencies Successfully!"
+    on_failure:
+      put: slack-alert
+      params:
+        text: "Service config handler => Failed to Install Package Dependencies --> Fix it ---> Fix it"
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source: { repository: node, tag: "16.14.0" }
+      container_limits:
+        cpu: 0
+        memory: 4294967296  
+      inputs:
+        - name: connect-baseservice-handler-git-repo
+      outputs:
+        - name: service-config-handler-output
+          path: connect-baseservice-handler-git-repo
+      run:
+        path: /bin/sh
+        args:
+          - -c
+          - |
+            echo "Node Version: $(node --version)"
+            echo "NPM Version: $(npm --version)"
+            cd connect-baseservice-handler-git-repo
+            node --max-old-space-size=750 `which npm` install
+  test-code-linting: &test-code-linting
       on_success:
         put: slack-alert
         params:
@@ -72,12 +93,15 @@ jobs:
             platform: linux
             image_resource:
               type: registry-image
-              source: { repository: node, tag: "14.17.1" }
+              source: { repository: node, tag: "16.14.0" }
+            container_limits:
+              cpu: 0
+              memory: 4294967296
             inputs:
-              - name: connect-baseservice-handler-git-repo
+              - name: service-config-handler-output
             outputs:
               - name: service-config-handler-output
-                path: connect-baseservice-handler-git-repo
+                path: service-config-handler-output
             run:
               path: /bin/sh
               args:
@@ -85,10 +109,10 @@ jobs:
                 - |
                   echo "Node Version: $(node --version)"
                   echo "NPM Version: $(npm --version)"
-                  cd connect-baseservice-handler-git-repo/
-                  node --max-old-space-size=750 `which npm` install
+                  cd service-config-handler-output
                   npm run lint
-    - task: unit-test-service-config-handler
+
+  run-unit-testing: &run-unit-testing
       on_success:
         put: slack-alert
         params:
@@ -101,7 +125,10 @@ jobs:
             platform: linux
             image_resource:
               type: registry-image
-              source: { repository: node, tag: "14.17.1" }
+              source: { repository: node, tag: "16.14.0" }
+            container_limits:
+              cpu: 0
+              memory: 4294967296
             inputs:
               - name: service-config-handler-output
             outputs:
@@ -114,43 +141,10 @@ jobs:
                 - |
                   echo "Node Version: $(node --version)"
                   echo "NPM Version: $(npm --version)"
-                  cd service-config-handler-output/
-                  npm run coverage
-    - task: flyway-service-config-handler
-      on_success:
-        put: slack-alert
-        params:
-          text: "Flyway Migration Scripts of service-config-handler passed in staging"
-      on_failure:
-        put: slack-alert
-        params:
-          text: "Flyway Migration Scripts of service-config-handler failed in staging... FIX IT, FIX IT, FIX IT!!!"
-      config:
-            platform: linux
-            image_resource:
-              type: registry-image
-              source: { repository: node, tag: "14.17.1" }
-            inputs:
-              - name: service-config-handler-output
-            outputs:
-              - name: service-config-handler-output
-                path: service-config-handler-output
-            params:
-              DB_HOST: ((base-service-config.db-host))
-              DB_NAME: ((base-service-config.db-name))
-              DB_PASSWORD: ((base-service-config.db-password-ddl))
-              DB_SCHEMA: ((base-service-config.db-schema))
-              DB_USERNAME: ((base-service-config.db-username-ddl))
-              NODE_ENV: ((base-service-config.node-env))
-            run:
-              path: /bin/sh
-              args:
-                - -c
-                - |
                   cd service-config-handler-output
-                  echo Started flyway migration
-                  npm run migrate
-    - task: build-service-config-handler
+                  npm run coverage
+
+  build-and-pack: &build-and-pack
       on_success:
         put: slack-alert
         params:
@@ -163,14 +157,17 @@ jobs:
             platform: linux
             image_resource:
               type: registry-image
-              source: { repository: node, tag: "14.17.1" }
+              source: { repository: node, tag: "16.14.0" }
+            container_limits:
+              cpu: 0
+              memory: 4294967296 
             inputs:
               - name: service-config-handler-output
             outputs:
               - name: service-config-handler-output
                 path: service-config-handler-output
             params:
-              NPM_PUBLISH_REGISTRY_URL: https://((artifacts.url))/repository/commtech-npmjs-internal/
+              NPM_PUBLISH_REGISTRY_URL: https://artifacts.cahcommtech.com/repository/commtech-npmjs-internal/
               NPM_PUBLISH_EMAIL: ((base-service-config.email))
               NPM_PUBLISH_USERNAME: ((artifacts.username))
               NPM_PUBLISH_PASSWORD: ((artifacts.password))
@@ -179,8 +176,99 @@ jobs:
               args:
                 - -c
                 - |
-                  cd service-config-handler-output/
-                  npm run build
+                  cd service-config-handler-output
+                  npm run build:server
+
+                  #publishing artifact to npm registry
+                  set -ue
+                  echo setting deployment npm credentials
+
+                  npm_auth=$(echo -n "$NPM_PUBLISH_USERNAME:$NPM_PUBLISH_PASSWORD" | base64 -w 0)
+
+                  echo "registry=$NPM_PUBLISH_REGISTRY_URL" >> .npmrc
+                  echo "email=$NPM_PUBLISH_EMAIL" >> .npmrc
+                  echo "always-auth=true" >> .npmrc
+                  echo "_auth=$npm_auth" >> .npmrc
+
+                  echo "$(cat .npmrc)"
+                  set -uex
+                  echo publishing to npm registry $NPM_PUBLISH_REGISTRY_URL
+                  npm pack
+                  ls
+  run-migration-scripts: &run-migration-scripts
+   on_success:
+     put: slack-alert
+     params:
+       text: "Service config handler => Executed Flyway Migration Scripts In Staging Successfully!"
+   on_failure:
+    put: slack-alert
+    params:
+      text: "Service config handler => Failed To Execute Flyway Migration Scripts In Staging!"
+   config:
+      container_limits:
+        cpu: 0
+        memory: 4294967296
+      image_resource:
+        source:
+          repository: node
+          tag: 14.17.1
+        type: registry-image
+      inputs:
+      - name: service-config-handler-output
+      outputs:
+      - name: service-config-handler-output
+        path: service-config-handler-output
+      params:
+        DB_HOST: ((base-service-config.db-host))
+        DB_NAME: ((base-service-config.db-name))
+        DB_PASSWORD_DDL: ((base-service-config.db-password-ddl))
+        DB_SCHEMA: ((base-service-config.db-schema))
+        DB_USERNAME_DDL: ((base-service-config.db-username-ddl))
+        NODE_ENV: ((base-service-config.node-env))
+      platform: linux
+      run:
+        args:
+        - -c
+        - |
+          cd service-config-handler-output
+          echo Started flyway migration
+          npm run migrate
+        path: /bin/sh
+
+  publish-the-artifact: &publish-the-artifact
+      on_success:
+        put: slack-alert
+        params:
+          text: "Build of service-config-handler passed in staging"
+      on_failure:
+        put: slack-alert
+        params:
+          text: "Build of service-config-handler failed in staging... FIX IT, FIX IT, FIX IT!!!"
+      config:
+            platform: linux
+            image_resource:
+              type: registry-image
+              source: { repository: node, tag: "16.14.0" }
+            container_limits:
+              cpu: 0
+              memory: 4294967296
+            inputs:
+              - name: service-config-handler-output
+            outputs:
+              - name: service-config-handler-output
+                path: service-config-handler-output
+            params:
+              NPM_PUBLISH_REGISTRY_URL: https://artifacts.cahcommtech.com/repository/commtech-npmjs-internal/
+              NPM_PUBLISH_EMAIL: ((base-service-config.email))
+              NPM_PUBLISH_USERNAME: ((artifacts.username))
+              NPM_PUBLISH_PASSWORD: ((artifacts.password))
+            run:
+              path: /bin/sh
+              args:
+                - -c
+                - |
+                  cd service-config-handler-output
+                  npm run build:server
 
                   #publishing artifact to npm registry
                   set -ue
@@ -199,26 +287,75 @@ jobs:
                   npm pack
                   npm publish
                   ls
-    - put: veracode-source-handler
-      params:
-        path: service-config-handler-output/*.tgz
-    - put: np1-pcf
-      params:
+  
+  pcf-params: &pcf-params
+    params:
         manifest: service-config-handler-output/manifest.yml
         command: push
-        app_name: service-config-handler
-        path: service-config-handler-output/
-        buildpack: nodejs_buildpack
+        app_name: base-service-handler
+        path: service-config-handler-output
+        buildpack: nodejs-buildpack
         vars:
           db_port: ((base-service-config.db-port))
           db_host: ((base-service-config.db-host))
           db_name: ((base-service-config.db-name))
-          db_schema: ((base-service-config.db-schema))
           db_username_ddl: ((base-service-config.db-username-ddl))
           db_password_ddl: ((base-service-config.db-password-ddl))
           db_username_dml: ((base-service-config.db-username-dml))
           db_password_dml: ((base-service-config.db-password-dml))
           db_ssl: ((base-service-config.db-ssl))
           node_env: ((base-service-config.node-env))
+          aws_access_key: ((base-service-config.aws-access-key))
+          aws_secret_key: ((base-service-config.aws-secret-key))
           auth_url: ((base-service-config.cf-auth-url))
           auth_route: ((base-service-config.cf-auth-internal-route))
+  jobs:
+    - name: service-config-handler-stage
+      serial: true
+      public: false
+      plan: 
+        - get: connect-baseservice-handler-git-repo
+          trigger: true
+        - task: install-dependencies
+          <<: *install-dependencies-task
+
+        - task: check-code-linting
+          <<: *test-code-linting
+
+        - task: run-unit-test-and-coverage
+          <<: *run-unit-testing
+
+        - task: run-flyway-migration-scripts  
+          <<: *run-migration-scripts
+
+        - task: build-and-pack
+          <<: *build-and-pack
+
+        - put: np1-pcf
+          <<: *pcf-params
+
+    - name: service-config-handler-release
+      serial: true
+      public: false
+      plan: 
+        - get: connect-baseservice-handler-git-repo
+          trigger: false
+        - task: install-dependencies
+          <<: *install-dependencies-task
+  
+        - task: build-and-pack
+          <<: *build-and-pack
+
+        - put: veracode-source-handler
+          params:
+            path: service-config-handler-output/*.tgz
+
+        - task: publish-artifact
+          <<: *publish-the-artifact
+  groups:
+      - name: build
+        jobs:
+        - service-config-handler-stage
+      - name: release
+        jobs:
+        - service-config-handler-release
