@@ -26,8 +26,8 @@ export class Service extends Model<Service> {
 	validTill: Date;
 
 	@AllowNull(false)
-	@Column(DataType.BOOLEAN)
-	isPublished: boolean;
+	@Column(DataType.INTEGER)
+	isPublished: number;
 
 	@ForeignKey(() => ServiceType)
 	@Column(DataType.INTEGER)
