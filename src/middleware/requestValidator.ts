@@ -30,7 +30,6 @@ export function validateRequest(validationSchema: object) {
 				);
 			}
 		} catch (error) {
-			logger.nonPhi.error(error.message, { _err: error });
 			next(new HandleError({ name: 'Request Validation Failed', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.badRequest }));
 		}
 	};

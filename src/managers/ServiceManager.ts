@@ -19,7 +19,6 @@ export default class ServiceManager {
 			logger.nonPhi.info('Created a New Service Successfully.');
 			return result;
 		} catch (error) {
-			logger.nonPhi.error(error.message, { _err: error });
 			throw new HandleError({ name: 'CreateServiceError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
 		}
 	}
