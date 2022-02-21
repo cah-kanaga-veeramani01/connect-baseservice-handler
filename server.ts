@@ -15,7 +15,7 @@ dotenv.config();
 
 const PORT = Number(process.env.PORT) || 5000;
 const app: Express = express();
-console.log("Allowed origins---> ", config.get('allowedOrigins'))
+console.log('Allowed origins---> ', config.get('allowedOrigins'));
 app.use(
 	cors({
 		credentials: true,
