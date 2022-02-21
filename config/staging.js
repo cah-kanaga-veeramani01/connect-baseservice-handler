@@ -5,7 +5,7 @@ const configs = {
 };
 
 // Modify existing configs
-configs.allowedOrigins = ['http://localhost:3000'];
+configs.allowedOrigins = 'https://staging.outcomesmtm.com/internal';
 
 // always Export the configs as default
 module.exports = configs;
