@@ -9,16 +9,19 @@ import { HandleError } from './utils';
 import csurf from 'csurf';
 import { InternalRouterManager } from './src/routes/internal/internal-router-manager';
 import { ExternalRouterManager } from './src/routes/external/external-router-manager';
+import config from 'config';
 
 dotenv.config();
 
 const PORT = Number(process.env.PORT) || 5000;
 const app: Express = express();
+console.log("Allowed origins---> ", config.get('allowedOrigins'))
 app.use(
 	cors({
 		credentials: true,
 		methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
-		allowedHeaders: ['Origin', 'Content-Type', 'Accept', 'Accept-Language', 'Cookies', 'x-xsrf-token']
+		allowedHeaders: ['Origin', 'Content-Type', 'Accept', 'Accept-Language', 'Cookies', 'x-xsrf-token'],
+		origin: config.get('allowedOrigins')
 	})
 );
 app.use((req: Request, res: Response, next: NextFunction) => {
