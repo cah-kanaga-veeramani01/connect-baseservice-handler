@@ -49,10 +49,10 @@ try {
 			sequelizeAdmin.close();
 		})
 		.catch((error) => {
-			logger.nonPhi.error(error);
+			logger.nonPhi.error('Error from Sequelize admin', { stack: error });
 		});
 } catch (error) {
-	logger.nonPhi.error(error);
+	logger.nonPhi.error('Error from Sequelize admin', { stack: error });
 	throw HandleError.generateHandleError(error);
 }
 

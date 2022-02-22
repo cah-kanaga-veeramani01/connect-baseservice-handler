@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import httpContext from 'express-http-context';
-import { HandleError, logger, HTTP_STATUS_CODES } from '../../utils';
+import { HandleError, HTTP_STATUS_CODES } from '../../utils';
 import defineAbilityFor, { Subject, UserAction } from '../models/defineAbility';
 
 /**
@@ -23,7 +23,6 @@ export function isAuthorized(action: UserAction, resource: Subject) {
 				throw new HandleError({ name: 'Unauthorised', errorStatus: HTTP_STATUS_CODES.unauthorized, message: 'Access Denied', stack: 'User Doesn’t have access to this resource' });
 			}
 		} catch (error) {
-			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) next(error);
 			else next(new HandleError({ name: 'InternalServerError', errorStatus: HTTP_STATUS_CODES.unauthorized, message: 'Error while Authorising', stack: 'Error while Authorising' }));
 		}
