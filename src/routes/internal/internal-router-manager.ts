@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ServiceClassesInternalRouter } from './service-classes-internal-router';
+import { ServiceClassesInternalRouter } from './service-tag-internal-router';
 import { ServiceTypesInternalRouter } from './service-types-internal-router';
 import { ServicesInternalRouter } from './services-internal-router';
 

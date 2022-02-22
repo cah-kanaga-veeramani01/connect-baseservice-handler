@@ -1,6 +1,5 @@
-export interface IServiceClass {
-	serviceTypeID: number;
-	serviceClassNames: string[];
+export interface IServiceTag {
+	serviceTags: string[];
 }
 
 export interface IServiceType {
@@ -15,4 +14,5 @@ export interface IService {
 	validTill?: Date;
 	isPublished?: boolean;
 	serviceTypeID: number;
+	serviceTagIDs: number[];
 }

@@ -1,33 +1,33 @@
 import mocks from 'node-mocks-http';
 import db from '../../database/DBManager';
-import { serviceClassesResponse, serviceClassPayload } from '../TestData';
+import { serviceTagsResponse, serviceTagPayload } from '../TestData';
 import { ServiceTag } from '../../database/models/ServiceTag';
-import ServiceClassManager from '../../src/managers/ServiceClassManager';
-import ServiceClassController from '../../src/controllers/ServiceClassController';
+import ServiceClassManager from '../../src/managers/ServiceTagManager';
+import ServiceTagController from '../../src/controllers/ServiceTagController';
 
 const serviceClassManager = new ServiceClassManager(db.getRepository(ServiceTag));
-const serviceClassController = new ServiceClassController(serviceClassManager);
+const serviceTagController = new ServiceTagController(serviceClassManager);
 
 describe('Create service classes', () => {
 	const request = mocks.createRequest({
 			method: 'POST',
 			url: '/classes',
-			body: serviceClassPayload
+			body: serviceTagPayload
 		}),
 		response = mocks.createResponse(),
 		next = jest.fn();
 	test('should create service classes', async () => {
-		jest.spyOn(serviceClassManager, 'createServiceClasses').mockImplementation((): any => {
-			return Promise.resolve(serviceClassesResponse);
+		jest.spyOn(serviceClassManager, 'createServiceTags').mockImplementation((): any => {
+			return Promise.resolve(serviceTagsResponse);
 		});
-		await serviceClassController.createServiceClasses(request, response, next);
-		expect(response._getData()).toMatchObject(serviceClassesResponse);
+		await serviceTagController.createServiceTags(request, response, next);
+		expect(response._getData()).toMatchObject(serviceTagsResponse);
 	});
 	test('should fail to create service classes', async () => {
-		jest.spyOn(serviceClassManager, 'createServiceClasses').mockImplementation((): any => {
+		jest.spyOn(serviceClassManager, 'createServiceTags').mockImplementation((): any => {
 			return Promise.reject();
 		});
-		await serviceClassController.createServiceClasses(request, response, next);
+		await serviceTagController.createServiceTags(request, response, next);
 		expect(next).toHaveBeenCalledTimes(1);
 	});
 });

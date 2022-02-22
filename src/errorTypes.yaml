@@ -5,10 +5,10 @@ NotFound:
   ES:
     message: "¿Buscando algo?"
 
-CreateServiceClassError: 
+CreateServiceTagsError: 
   code: 'SCE003'
   EN: 
-    message: 'Error while creating service classes.'
+    message: 'Error while creating service tags.'
 
 CreateServiceTypeError: 
   code: 'SCE004'
@@ -25,7 +25,7 @@ ServiceTypeFetchError:
   EN: 
     message: 'Error while fetching service types.'
 
-ServiceClassFetchError: 
+ServiceTagsFetchError: 
   code: 'SCE007'
   EN: 
-    message: 'Error while creating service classes.'
+    message: 'Error while fetching service tags.'
