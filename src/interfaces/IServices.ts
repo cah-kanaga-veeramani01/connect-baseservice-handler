@@ -9,10 +9,10 @@ export interface IServiceType {
 export interface IService {
 	serviceName: string;
 	serviceDisplayName: string;
-	globalServiceVersion?: string;
-	validFrom?: Date;
-	validTill?: Date;
-	isPublished?: boolean;
 	serviceTypeID: number;
 	serviceTagIDs: number[];
+	// globalServiceVersion?: string;
+	// validFrom?: Date;
+	// validTill?: Date;
+	// isPublished?: boolean;
 }

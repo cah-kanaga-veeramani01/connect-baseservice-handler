@@ -32,7 +32,7 @@ describe('Service Tages - Test', () => {
 			await serviceTagManager.createServiceTags(serviceTagPayload);
 		} catch (error) {
 			expect(error.code).toEqual('SCE003');
-			expect(error.name).toEqual('CreateServiceTagError');
+			expect(error.name).toEqual('CreateServiceTagsError');
 		}
 	});
 	test('should return tags list', async () => {
@@ -46,7 +46,7 @@ describe('Service Tages - Test', () => {
 			await serviceTagManager.getAllServiceTags();
 		} catch (error) {
 			expect(error.code).toEqual('SCE007');
-			expect(error.name).toEqual('ServiceTagFetchError');
+			expect(error.name).toEqual('ServiceTagsFetchError');
 		}
 	});
 });

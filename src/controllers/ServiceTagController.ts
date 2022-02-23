@@ -18,7 +18,7 @@ export default class ServiceTagController {
 
 	public async getAllServiceTags(req: Request, res: Response, next: NextFunction) {
 		try {
-			logger.nonPhi.info('GET Service Tags has been invoked ');
+			logger.nonPhi.info('GET Service Tags have been invoked ');
 			res.send(await this.serviceTagManager.getAllServiceTags());
 		} catch (error) {
 			next(error);

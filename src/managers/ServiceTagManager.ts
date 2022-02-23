@@ -8,7 +8,7 @@ export default class ServiceTagManager {
 
 	public async createServiceTags(serviceTagPayload: IServiceTag) {
 		try {
-			const serviceTags = serviceTagPayload.serviceTags.map((item) => ({ serviceTags: item, createdBy: 'admin' }));
+			const serviceTags = serviceTagPayload.serviceTags.map((item) => ({ serviceTagName: item, createdBy: 'admin' }));
 			const result = await this.serviceTagsRepository.bulkCreate(serviceTags);
 			logger.nonPhi.info('Created Service Tag(s) Successfully.');
 			return result;
