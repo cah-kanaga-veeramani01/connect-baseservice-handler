@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { logger } from '../../utils';
+import { HandleError } from '../../utils';
 import { IService } from '../interfaces/IServices';
 import ServiceManager from '../managers/ServiceManager';
 import { serviceList, EMPTY_STRING } from '../../utils/constants';
@@ -10,14 +10,13 @@ export default class ServiceController {
 	public async createService(req: Request, res: Response, next: NextFunction) {
 		try {
 			const servicePayload: IService = req.body;
-			logger.nonPhi.info('ADD Service has been invoked with following parameters ', { ...servicePayload });
 			res.send(await this.serviceManager.createService(servicePayload));
 		} catch (error) {
 			next(error);
 		}
 	}
 
-	public async getServiceList(req: Request, res: Response, next: NextFunction) {
+	public async getServiceList(req: Request, res: Response) {
 		try {
 			const sortBy = req.query.sortBy ? String(req.query.sortBy) : serviceList.defaultSortBy,
 				sortOrder = req.query.sortOrder ? String(req.query.sortOrder) : serviceList.defaultSortOrder,
@@ -28,7 +27,7 @@ export default class ServiceController {
 
 			res.send(await this.serviceManager.getServiceList(sortBy, sortOrder, from, limit, keyword, statusFilter));
 		} catch (error) {
-			next(error);
+			throw new HandleError({ name: 'ServiceListFetchError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
 		}
 	}
 }

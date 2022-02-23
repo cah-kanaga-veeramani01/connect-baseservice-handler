@@ -29,3 +29,8 @@ ServiceClassFetchError:
   code: 'SCE007'
   EN: 
     message: 'Error while creating service classes.'
+
+ServiceListFetchError:
+  code: "SCE008"
+  EN:
+    message: "An error occurred while fetching service list."

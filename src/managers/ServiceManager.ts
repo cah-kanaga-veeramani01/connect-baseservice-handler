@@ -1,6 +1,6 @@
 import { Repository } from 'sequelize-typescript';
 import { Service } from '../../database/models/Service';
-import { HandleError, logger } from '../../utils';
+import { HandleError } from '../../utils';
 import { IService, ServiceListResponse } from '../interfaces/IServices';
 import { serviceList, EMPTY_STRING } from '../../utils/constants';
 import { QServiceList } from '../../database/queries/service';
@@ -20,7 +20,6 @@ export default class ServiceManager {
 				validFrom: new Date(),
 				isPublished: 1
 			});
-			logger.nonPhi.info('Created a New Service Successfully.');
 			return result;
 		} catch (error) {
 			throw new HandleError({ name: 'CreateServiceError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
