@@ -27,7 +27,7 @@ export const addService = {
 					type: 'number'
 				}
 			},
-			required: ['serviceTypeID']
+			required: ['serviceName', 'serviceDisplayName', 'serviceTypeID']
 		}
 	}
 };
