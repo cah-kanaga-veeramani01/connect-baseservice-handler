@@ -29,3 +29,18 @@ ServiceTagsFetchError:
   code: 'SCE007'
   EN: 
     message: 'Error while fetching service tags.'
+
+ServiceAlreadyExistsError:
+  code: 'SCE008'
+  EN:
+    message: 'Service already exists.'
+
+ServiceTagAlreadyExistsError:
+  code: 'SCE009'
+  EN:
+    message: 'Service tag already exists.'
+
+ServiceTypeAlreadyExistsError:
+  code: 'SCE010'
+  EN:
+    message: 'Service type already exists.'
