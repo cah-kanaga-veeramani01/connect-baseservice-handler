@@ -20,7 +20,7 @@ export const QServiceList = (sortBy, sortOrder) => {
         OR ds."serviceName" ILIKE ALL (array[:searchKey])
         OR ds."serviceTagName"::text ILIKE ALL (array[:searchKey]))
         AND ds."status" ILIKE :status
-        AND ds."isPublished" = true
+        AND ds."isPublished" = 1
     order by "${sortBy}" ${sortOrder}
     limit :limit offset :offset;`;
 };
