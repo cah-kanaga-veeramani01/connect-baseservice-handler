@@ -46,7 +46,7 @@ describe('get list of services', () => {
 					serviceTagName: [
 						"TagA"
 					],
-					status: "ACTIVE"
+					status: "Active"
 				}
 			];
 		};
@@ -61,7 +61,7 @@ describe('get list of services', () => {
 					"serviceTagName": [
 						"TagA"
 					],
-					"status": "ACTIVE"
+					"status": "Active"
 				}]
 		});
 	});
@@ -76,11 +76,11 @@ describe('get list of services', () => {
 						"TagA",
 						"TagB"
 					],
-					status: "INACTIVE"
+					status: "Inactive"
 				}
 			];
 		};
-		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'TagB', 'INACTIVE')).toMatchObject({
+		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'TagB', 'Inactive')).toMatchObject({
 			totalServices: 1,
 			nonFilteredServicesCount: 1,
 			services: [
@@ -92,7 +92,7 @@ describe('get list of services', () => {
 						"TagA",
 						"TagB"
 					],
-					"status": "INACTIVE"
+					"status": "Inactive"
 				}]
 		});
 	});
@@ -106,11 +106,11 @@ describe('get list of services', () => {
 					serviceTagName: [
 						"TagA"
 					],
-					status: "ACTIVE"
+					status: "Active"
 				},
 			];
 		};
-		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'All', 'ACTIVE')).toMatchObject({
+		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'All', 'Active')).toMatchObject({
 			totalServices: 1,
 			nonFilteredServicesCount: 1,
 			services: [
@@ -121,7 +121,7 @@ describe('get list of services', () => {
 					serviceTagName: [
 						"TagA"
 					],
-					status: "ACTIVE"
+					status: "Active"
 				}]
 		});
 	});
@@ -129,7 +129,7 @@ describe('get list of services', () => {
 		db.query = () => {
 			return [];
 		};
-		expect(await serviceManager.getServiceList('serviceName', 'desc', 12, 1, 'All', 'ACTIVE')).toMatchObject({
+		expect(await serviceManager.getServiceList('serviceName', 'desc', 12, 1, 'All', 'Active')).toMatchObject({
 			totalServices: 0,
 			nonFilteredServicesCount: 0,
 			services: []

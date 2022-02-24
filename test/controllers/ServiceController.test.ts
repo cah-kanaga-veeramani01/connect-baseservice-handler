@@ -44,21 +44,21 @@ describe('get list of policies', () => {
 						serviceName: 'Automation Service 0001',
 						serviceType: 'TIP',
 						serviceTagName: ['TagA'],
-						status: 'ACTIVE'
+						status: 'Active'
 					},
 					{
 						serviceID: 2,
 						serviceName: 'Automation Service 0002',
 						serviceType: 'TIP',
 						serviceTagName: ['TagA', 'TagB'],
-						status: 'INACTIVE'
+						status: 'Inactive'
 					},
 					{
 						serviceID: 3,
 						serviceName: 'Automation Service 0003',
 						serviceType: 'CMR',
 						serviceTagName: ['TagB', 'TagC'],
-						status: 'INACTIVE'
+						status: 'Inactive'
 					}
 				]
 			});
@@ -87,21 +87,21 @@ describe('get list of policies', () => {
 					serviceName: 'Automation Service 0001',
 					serviceType: 'TIP',
 					serviceTagName: ['TagA'],
-					status: 'ACTIVE'
+					status: 'Active'
 				},
 				{
 					serviceID: 2,
 					serviceName: 'Automation Service 0002',
 					serviceType: 'TIP',
 					serviceTagName: ['TagA', 'TagB'],
-					status: 'INACTIVE'
+					status: 'Inactive'
 				},
 				{
 					serviceID: 3,
 					serviceName: 'Automation Service 0003',
 					serviceType: 'CMR',
 					serviceTagName: ['TagB', 'TagC'],
-					status: 'INACTIVE'
+					status: 'Inactive'
 				}
 			]
 		});
