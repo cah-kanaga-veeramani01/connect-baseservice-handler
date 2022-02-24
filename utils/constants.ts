@@ -39,7 +39,7 @@ export const sortServiceListBy = {
 };
 
 export const serviceList = {
-	defaultSortBy: 'serviceName',
+	defaultSortBy: 'status',
 	defaultSortOrder: 'asc',
 	defaultFrom: 0,
 	defaultLimit: 10,

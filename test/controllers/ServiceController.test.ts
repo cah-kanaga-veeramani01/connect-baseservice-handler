@@ -4,8 +4,9 @@ import ServiceManager from '../../src/managers/ServiceManager';
 import ServiceController from '../../src/controllers/ServiceController';
 import db from '../../database/DBManager';
 import { createServicesResponse, servicePayload } from '../TestData';
+import { ServiceTagMapping } from '../../database/models/ServiceTagMapping';
 
-const serviceManager = new ServiceManager(db.getRepository(Service));
+const serviceManager = new ServiceManager(db.getRepository(Service), db.getRepository(ServiceTagMapping));
 const serviceController = new ServiceController(serviceManager);
 
 describe('Create a new service', () => {
@@ -152,7 +153,7 @@ describe('get list of policies', () => {
 		try {
 			await serviceController.getServiceList(req, res);
 		} catch (error) {
-			expect(error.code).toBe('SCE008');
+			expect(error.code).toBe('SCE011');
 			expect(error.name).toBe('ServiceListFetchError');
 		}
 	});
