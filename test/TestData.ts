@@ -1,9 +1,10 @@
-import { IService, IServiceClass, IServiceType } from '../src/interfaces/IServices';
+import { IService, IServiceTag, IServiceType } from '../src/interfaces/IServices';
 
 export const servicePayload: IService = {
 	serviceName: 'Service A',
 	serviceDisplayName: 'Display A',
-	serviceTypeID: 1
+	serviceTypeID: 1,
+	serviceTagIDs: [1]
 };
 export const createServicesResponse = {
 	serviceID: 1,
@@ -15,16 +16,15 @@ export const createServicesResponse = {
 	isPublished: true,
 	validTill: null
 };
-export const serviceClassPayload: IServiceClass = {
-	serviceTypeID: 1,
-	serviceClassNames: ['serviceClass A', 'serviceClass B']
+export const serviceTagPayload: IServiceTag = {
+	serviceTags: ['serviceTag A', 'serviceTag B']
 };
-export const serviceClassesResponse = [
+export const serviceTagsResponse = [
 	{
 		createdAt: '2021-09-15T13:37:10.240Z',
 		updatedAt: '2021-09-15T13:37:10.240Z',
-		serviceClassID: 1,
-		serviceClassName: 'serviceClass A',
+		serviceTagID: 1,
+		serviceTagName: 'serviceTag A',
 		serviceTypeID: 1,
 		createdBy: 'admin',
 		updatedBy: null
@@ -32,8 +32,8 @@ export const serviceClassesResponse = [
 	{
 		createdAt: '2021-09-15T13:37:10.240Z',
 		updatedAt: '2021-09-15T13:37:10.240Z',
-		serviceClassID: 2,
-		serviceClassName: 'serviceClass B',
+		serviceTagID: 2,
+		serviceTagName: 'serviceTag B',
 		serviceTypeID: 1,
 		createdBy: 'admin',
 		updatedBy: null
