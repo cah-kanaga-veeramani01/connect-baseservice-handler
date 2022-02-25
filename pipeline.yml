@@ -292,7 +292,7 @@
     params:
         manifest: service-config-handler-output/manifest.yml
         command: push
-        app_name: base-service-handler
+        app_name: service-config-handler
         path: service-config-handler-output
         buildpack: nodejs-buildpack
         vars:
