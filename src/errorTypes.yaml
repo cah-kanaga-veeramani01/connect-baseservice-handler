@@ -44,3 +44,8 @@ ServiceTypeAlreadyExistsError:
   code: 'SCE010'
   EN:
     message: 'Service type already exists.'
+
+ServiceListFetchError:
+  code: 'SCE011'
+  EN:
+    message: 'Error while fetching service list.'

@@ -6,9 +6,10 @@ import ServiceManager from '../../managers/ServiceManager';
 import db from '../../../database/DBManager';
 import { Service } from '../../../database/models/Service';
 import { ServiceTagMapping } from '../../../database/models/ServiceTagMapping';
-import { addService } from '../../models/schema';
+import { addService, getServiceListSchema } from '../../models/schema';
 
 const serviceController = new ServiceController(new ServiceManager(db.getRepository(Service), db.getRepository(ServiceTagMapping)));
 export const ServicesInternalRouter = Router({ mergeParams: true });
 
 ServicesInternalRouter.route('/').post(isAuthorized(UserAction.create, Subject.policy), validateRequest(addService), serviceController.createService.bind(serviceController));
+ServicesInternalRouter.route('/list').get(isAuthorized(UserAction.read, Subject.policy), validateRequest(getServiceListSchema), serviceController.getServiceList.bind(serviceController));
