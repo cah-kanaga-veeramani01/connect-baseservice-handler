@@ -41,7 +41,7 @@
     source:
       api_id: ((base-service-config.veracode-api-id))
       api_key: ((base-service-config.veracode-api-key))
-      app_name: service-config-handler
+      app_name: base-service-handler
 
   - name: slack-alert
     type: slack-notification
