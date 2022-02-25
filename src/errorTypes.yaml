@@ -5,10 +5,10 @@ NotFound:
   ES:
     message: "¿Buscando algo?"
 
-CreateServiceClassError: 
+CreateServiceTagsError: 
   code: 'SCE003'
   EN: 
-    message: 'Error while creating service classes.'
+    message: 'Error while creating service tags.'
 
 CreateServiceTypeError: 
   code: 'SCE004'
@@ -25,7 +25,22 @@ ServiceTypeFetchError:
   EN: 
     message: 'Error while fetching service types.'
 
-ServiceClassFetchError: 
+ServiceTagsFetchError: 
   code: 'SCE007'
   EN: 
-    message: 'Error while creating service classes.'
+    message: 'Error while fetching service tags.'
+
+ServiceAlreadyExistsError:
+  code: 'SCE008'
+  EN:
+    message: 'Service already exists.'
+
+ServiceTagAlreadyExistsError:
+  code: 'SCE009'
+  EN:
+    message: 'Service tag already exists.'
+
+ServiceTypeAlreadyExistsError:
+  code: 'SCE010'
+  EN:
+    message: 'Service type already exists.'
