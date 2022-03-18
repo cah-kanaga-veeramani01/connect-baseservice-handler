@@ -20,15 +20,18 @@ describe('Create service type', () => {
 		jest.spyOn(serviceTypeManager, 'createServiceType').mockImplementation((): any => {
 			return Promise.resolve(serviceTypesResponse);
 		});
-		await serviceTypeController.createServiceType(request, response, next);
+		await serviceTypeController.createServiceType(request, response);
 		expect(response._getData()).toMatchObject(serviceTypesResponse);
 	});
 	test('should fail to create service type', async () => {
 		jest.spyOn(serviceTypeManager, 'createServiceType').mockImplementation((): any => {
 			return Promise.reject();
 		});
-		await serviceTypeController.createServiceType(request, response, next);
-		expect(next).toHaveBeenCalledTimes(1);
+		try {
+			await serviceTypeController.createServiceType(request, response);
+		} catch (error) {
+			expect(error.code).toBe('CreateServiceTypeError');
+		}
 	});
 });
 

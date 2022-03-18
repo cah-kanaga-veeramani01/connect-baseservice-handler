@@ -44,3 +44,13 @@ ServiceTypeAlreadyExistsError:
   code: 'SCE010'
   EN:
     message: 'Service type already exists.'
+
+ServiceTagDoesNotExistsError:
+  code: 'SCE011'
+  EN:
+    message: 'Service Tag(s) does not exists.'
+
+ServiceTypeNotFoundError:
+  code: 'SCE012'
+  EN:
+    message: 'Service Type does not exists.'

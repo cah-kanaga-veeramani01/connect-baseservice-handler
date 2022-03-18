@@ -2,6 +2,7 @@ import { Repository } from 'sequelize-typescript';
 import { ServiceType } from '../../database/models/ServiceType';
 import { IServiceType } from '../interfaces/IServices';
 import { logger, HandleError, HTTP_STATUS_CODES } from '../../utils';
+import httpContext from 'express-http-context';
 
 export default class ServiceTypeManager {
 	constructor(public serviceTypeRepository: Repository<ServiceType>) {}
@@ -17,7 +18,7 @@ export default class ServiceTypeManager {
 					errorStatus: HTTP_STATUS_CODES.badRequest
 				});
 			}
-			const result = await this.serviceTypeRepository.create({ serviceType: serviceTypePayload.serviceType, createdBy: 'admin' });
+			const result = await this.serviceTypeRepository.create({ serviceType: serviceTypePayload.serviceType, createdBy: httpContext.get('userId') });
 			logger.nonPhi.info('Created a new service type successfully.');
 			return result;
 		} catch (error) {

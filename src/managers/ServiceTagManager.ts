@@ -3,6 +3,7 @@ import { Repository } from 'sequelize-typescript';
 import { ServiceTag } from '../../database/models/ServiceTag';
 import { logger, HandleError, HTTP_STATUS_CODES } from '../../utils';
 import { IServiceTag } from '../interfaces/IServices';
+import httpContext from 'express-http-context';
 
 export default class ServiceTagManager {
 	constructor(public serviceTagsRepository: Repository<ServiceTag>) {}
@@ -18,7 +19,7 @@ export default class ServiceTagManager {
 					errorStatus: HTTP_STATUS_CODES.badRequest
 				});
 			}
-			const serviceTags = serviceTagPayload.serviceTags.map((item) => ({ serviceTagName: item, createdBy: 'admin' }));
+			const serviceTags = serviceTagPayload.serviceTags.map((item) => ({ serviceTagName: item, createdBy: httpContext.get('userId') }));
 			const result = await this.serviceTagsRepository.bulkCreate(serviceTags);
 			logger.nonPhi.info('Created Service Tag(s) Successfully.');
 			return result;
