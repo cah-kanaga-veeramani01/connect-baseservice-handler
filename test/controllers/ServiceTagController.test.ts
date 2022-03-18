@@ -47,14 +47,17 @@ describe('GET all service tags', () => {
 		jest.spyOn(serviceTagManager, 'getAllServiceTags').mockImplementation((): any => {
 			return Promise.resolve(serviceTagsResponse);
 		});
-		await serviceTagController.getAllServiceTags(request, response, next);
+		await serviceTagController.getAllServiceTags(request, response);
 		expect(response._getData()).toMatchObject(serviceTagsResponse);
 	});
 	test('should throw error', async () => {
 		jest.spyOn(serviceTagManager, 'getAllServiceTags').mockImplementation((): any => {
 			return Promise.reject();
 		});
-		await serviceTagController.getAllServiceTags(request, response, next);
-		expect(next).toHaveBeenCalledTimes(1);
+		try {
+			await serviceTagController.getAllServiceTags(request, response);
+		} catch (error) {
+			expect(error.code).toBe('ServiceTypeFetchError');
+		}
 	});
 });
