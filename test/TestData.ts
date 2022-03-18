@@ -14,7 +14,9 @@ export const createServicesResponse = {
 	globalServiceVersion: 1,
 	validFrom: '2021-09-15T12:28:45.465Z',
 	isPublished: true,
-	validTill: null
+	validTill: null,
+	serviceTagMappingIDs: [11, 22, 33],
+	serviceTagIDs: [1, 2, 3]
 };
 export const serviceTagPayload: IServiceTag = {
 	serviceTags: ['serviceTag A', 'serviceTag B']
