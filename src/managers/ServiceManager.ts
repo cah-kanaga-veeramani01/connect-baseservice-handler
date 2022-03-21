@@ -62,7 +62,7 @@ export default class ServiceManager {
 					},
 					{ transaction: t }
 				);
-				const serviceMappingPayload = servicePayload.serviceTagIDs.map((tag) => ({ serviceID: service.serviceID, serviceTagID: tag })),
+				const serviceMappingPayload = servicePayload.serviceTagIDs.map((tag) => ({ serviceID: service.serviceID, globalServiceVersion: service.globalServiceVersion, serviceTagID: tag })),
 					stmResult = await this.serviceTagMappingRepository.bulkCreate(serviceMappingPayload, { transaction: t });
 				logger.nonPhi.debug('Created a New Service Successfully.');
 				logger.nonPhi.debug('Mapped tags with service successfully.');
