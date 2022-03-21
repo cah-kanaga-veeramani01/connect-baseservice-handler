@@ -16,6 +16,12 @@ export class ServiceTagMapping extends Model<ServiceTagMapping> {
 	@Column(DataType.INTEGER)
 	serviceID: number;
 
+	@BelongsTo(() => Service)
+	serviceVersion: Service;
+	@ForeignKey(() => Service)
+	@Column(DataType.INTEGER)
+	globalServiceVersion: number;
+
 	@BelongsTo(() => ServiceTag)
 	serviceTag: ServiceTag;
 	@ForeignKey(() => ServiceTag)
