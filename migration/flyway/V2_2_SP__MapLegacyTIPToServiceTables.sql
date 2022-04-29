@@ -36,7 +36,7 @@ INSERT INTO service."Service" ("serviceName","serviceDisplayName", "globalServic
 VALUES(legacyTIPDetail."tiptitle", legacyTIPDetail."tiptitle", 1, serviceTypeID, (minDetail->>'f2')::timestamp, (maxDetail->>'f2')::timestamp, legacyTIPDetail."status",
 	   legacyTIPDetail."createdate", createdBy, (maxDetail->>'f4')::timestamp,updatedBy, legacyTIPDetail."tipdetailid") ON CONFLICT DO NOTHING;
 
-INSERT INTO service."ServiceTagMapping" ("serviceID", "serviceTagID", "globalServiceVersion", "createdBy") VALUES ((SELECT MAX("serviceID") FROM service."Service"),newServiceTagID,1, updatedBy) ON CONFLICT DO NOTHING;
+INSERT INTO service."ServiceTagMapping" ("serviceID", "serviceTagID", "globalServiceVersion", "createdBy", "updatedBy") VALUES ((SELECT MAX("serviceID") FROM service."Service"),newServiceTagID,1,createdBy, updatedBy) ON CONFLICT DO NOTHING;
 
 END LOOP;
 END 
