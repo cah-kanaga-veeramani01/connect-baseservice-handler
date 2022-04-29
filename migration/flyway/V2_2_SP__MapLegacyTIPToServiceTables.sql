@@ -7,7 +7,6 @@ DECLARE minDetail JSON;
 DECLARE maxDetail JSON;
 DECLARE createdBy INTEGER;
 DECLARE updatedBy INTEGER;
-DECLARE newServiceID INTEGER;
 DECLARE newServiceTagID INTEGER;
 DECLARE legacyTIPType VARCHAR;
 
@@ -37,9 +36,7 @@ INSERT INTO service."Service" ("serviceName","serviceDisplayName", "globalServic
 VALUES(legacyTIPDetail."tiptitle", legacyTIPDetail."tiptitle", 1, serviceTypeID, (minDetail->>'f2')::timestamp, (maxDetail->>'f2')::timestamp, legacyTIPDetail."status",
 	   legacyTIPDetail."createdate", createdBy, (maxDetail->>'f4')::timestamp,updatedBy, legacyTIPDetail."tipdetailid") ON CONFLICT DO NOTHING;
 
-newServiceID = (SELECT MAX("serviceID") FROM service."Service" ORDER BY 1 DESC);
-
-INSERT INTO service."ServiceTagMapping" ("serviceID", "serviceTagID", "globalServiceVersion") VALUES (newServiceID,newServiceTagID,1 ) ON CONFLICT DO NOTHING;
+INSERT INTO service."ServiceTagMapping" ("serviceID", "serviceTagID", "globalServiceVersion", "createdBy") VALUES ((SELECT MAX("serviceID") FROM service."Service"),newServiceTagID,1, updatedBy) ON CONFLICT DO NOTHING;
 
 END LOOP;
 END 
