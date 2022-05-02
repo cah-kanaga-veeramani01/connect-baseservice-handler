@@ -4,8 +4,7 @@ DECLARE userID INTEGER;
 DECLARE serviceTagID INTEGER;
 DECLARE startDate TIMESTAMP;
 DECLARE endDate TIMESTAMP := NULL;
--- DECLARE expirationDays INTEGER;
--- DECLARE expirationType VARCHAR;
+DECLARE newServiceTagID INTEGER;
 DECLARE serviceID INTEGER;
 BEGIN
 IF(TG_OP = 'INSERT')
@@ -18,6 +17,7 @@ userID = (select "createUserID" from attunityservice."TIPDetailRuleOverview" whe
 serviceTagID = NEW."TIPTypeID";
 startDate = NEW."activeasof";
 endDate = NEW."activethru";
+newServiceTagID = (SELECT "serviceTagID" FROM service."ServiceTag" WHERE "serviceTagName" = (SELECT "TipType" FROM attunityservice."TIPType" WHERE "TIPTypeID" = serviceTagID));
 
 UPDATE
    service."Service"
@@ -35,7 +35,7 @@ WHERE
 UPDATE
     service."ServiceTagMapping"
 SET
-   "serviceTagID"= serviceTagID,
+   "serviceTagID"= newServiceTagID,
    "updatedAt" = NOW(),
    "updatedBy" = userID
 WHERE

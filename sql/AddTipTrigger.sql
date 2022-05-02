@@ -4,8 +4,8 @@ DECLARE userID INTEGER;
 DECLARE serviceTagID INTEGER;
 DECLARE startDate TIMESTAMP;
 DECLARE endDate TIMESTAMP := NULL;
--- DECLARE expirationDays INTEGER;
--- DECLARE expirationType VARCHAR;
+DECLARE serviceTypeID INTEGER;
+DECLARE newServiceTagID INTEGER;
 DECLARE serviceID INTEGER;
 BEGIN
 IF (TG_OP = 'INSERT') 
@@ -16,16 +16,16 @@ userID = (select "createUserID" from attunityservice."TIPDetailRuleOverview" whe
 serviceTagID = (select "TIPTypeID" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = thisisPK);
 startDate = (select "activeasof" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = thisisPK);
 endDate = (select "activethru" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = thisisPK);
--- expirationType = (select "expirationtype" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" = thisisPK);
--- expirationDays = (select "expirationdays" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" = thisisPK);
+serviceTypeID = (SELECT "serviceTypeID" FROM service."ServiceType" WHERE "serviceType" = 'TIP');
+newServiceTagID = (SELECT "serviceTagID" FROM service."ServiceTag" WHERE "serviceTagName" = (SELECT "TipType" FROM attunityservice."TIPType" WHERE "TIPTypeID" = serviceTagID));
 
 INSERT INTO service."Service"(
  	"serviceName", "serviceDisplayName", "globalServiceVersion", "validFrom", "validTill", "isPublished", "serviceTypeID", "createdAt", "createdBy", "legacyTipDetailID")
- 	VALUES (NEW.title, NEW.title, 1, startDate, endDate, NEW.active, 1, NOW(), userID, NEW.tipdetailid) ON CONFLICT DO NOTHING RETURNING "serviceID" INTO serviceID;
+ 	VALUES (NEW.tiptitle, NEW.tiptitle, 1, startDate, endDate, NEW.active, serviceTypeID, NOW(), userID, NEW.tipdetailid) ON CONFLICT DO NOTHING RETURNING "serviceID" INTO serviceID;
 	
 INSERT INTO service."ServiceTagMapping"(
 	"serviceID", "globalServiceVersion", "serviceTagID", "createdAt", "createdBy")
-	VALUES (serviceID, 1, serviceTagID, NOW(), userID) ON CONFLICT DO NOTHING;
+	VALUES (serviceID, 1, newServiceTagID, NOW(), userID) ON CONFLICT DO NOTHING;
 
 END IF;
 RETURN NEW;
