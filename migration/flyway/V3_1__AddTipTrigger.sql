@@ -1,0 +1,41 @@
+CREATE OR REPLACE FUNCTION ADD_TIP() RETURNS TRIGGER AS $$
+DECLARE thisisPK INTEGER;
+DECLARE userID INTEGER;
+DECLARE serviceTagID INTEGER;
+DECLARE startDate TIMESTAMP;
+DECLARE endDate TIMESTAMP := NULL;
+DECLARE serviceTypeID INTEGER;
+DECLARE newServiceTagID INTEGER;
+DECLARE serviceID INTEGER;
+BEGIN
+IF (TG_OP = 'INSERT') 
+THEN
+
+thisisPK = (select "TIPDetailRuleID" from attunityservice."TipDetailRule" where detailid = NEW."tipdetailid" ORDER BY "activeasof" DESC LIMIT 1);
+userID = (select "createUserID" from attunityservice."TIPDetailRuleOverview" where "TIPDetailRuleID" = thisisPK);
+serviceTagID = (select "TIPTypeID" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = thisisPK);
+startDate = (select "activeasof" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = thisisPK);
+endDate = (select "activethru" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = thisisPK);
+serviceTypeID = (SELECT "serviceTypeID" FROM service."ServiceType" WHERE "serviceType" = 'TIP');
+newServiceTagID = (SELECT "serviceTagID" FROM service."ServiceTag" WHERE "serviceTagName" = (SELECT "TipType" FROM attunityservice."TIPType" WHERE "TIPTypeID" = serviceTagID));
+
+INSERT INTO service."Service"(
+ 	"serviceName", "serviceDisplayName", "globalServiceVersion", "validFrom", "validTill", "isPublished", "serviceTypeID", "createdAt", "createdBy", "legacyTipDetailID")
+ 	VALUES (NEW.tiptitle, NEW.tiptitle, 1, startDate, endDate, NEW.active, serviceTypeID, NOW(), userID, NEW.tipdetailid) ON CONFLICT DO NOTHING RETURNING "serviceID" INTO serviceID;
+	
+INSERT INTO service."ServiceTagMapping"(
+	"serviceID", "globalServiceVersion", "serviceTagID", "createdAt", "createdBy")
+	VALUES (serviceID, 1, newServiceTagID, NOW(), userID) ON CONFLICT DO NOTHING;
+
+END IF;
+RETURN NEW;
+END;
+$$ LANGUAGE 'plpgsql';
+
+DROP TRIGGER IF EXISTS ADD_TIP
+ON "attunityservice"."TipDetail";
+
+CREATE TRIGGER ADD_TIP 
+AFTER INSERT OR UPDATE ON "attunityservice"."TipDetail"
+FOR EACH ROW
+EXECUTE PROCEDURE ADD_TIP();
