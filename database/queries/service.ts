@@ -1,7 +1,8 @@
 export const QServiceList = (sortBy, sortOrder) => {
 	return `SELECT * FROM (
         SELECT s."serviceID", s."isPublished", s."serviceName" , st."serviceType", t."serviceTagName",
-        CASE WHEN ("validFrom" > NOW() OR "validTill" <= NOW()) THEN 'Inactive' ELSE 'Active' END AS "status"
+        CASE WHEN ("validFrom" > NOW() OR "validTill" <= NOW()) THEN 'Inactive' ELSE 'Active' END AS "status",
+        s."legacyTIPDetailID"
         FROM (
             SELECT "serviceID", ARRAY_AGG("serviceTagName") AS "serviceTagName", "globalServiceVersion"
             FROM service."ServiceTagMapping" stm JOIN service."ServiceTag" st on st."serviceTagID" = stm."serviceTagID" GROUP BY ("serviceID", "globalServiceVersion")
@@ -10,7 +11,8 @@ export const QServiceList = (sortBy, sortOrder) => {
         JOIN service."ServiceType" st on s."serviceTypeID"=st."serviceTypeID"
         UNION
         SELECT s."serviceID", s."isPublished", s."serviceName" , st."serviceType", '{}' AS "serviceTagName",
-        CASE WHEN ("validFrom" > NOW() OR "validTill" <= NOW()) THEN 'Inactive' ELSE 'Active' END AS "status"
+        CASE WHEN ("validFrom" > NOW() OR "validTill" <= NOW()) THEN 'Inactive' ELSE 'Active' END AS "status",
+        s."legacyTIPDetailID"
         FROM service."Service" s JOIN service."ServiceType" st on s."serviceTypeID"=st."serviceTypeID"
         WHERE (s."serviceID", s."globalServiceVersion") NOT IN (SELECT  "serviceID", "globalServiceVersion" from service."ServiceTagMapping")
         ) ds

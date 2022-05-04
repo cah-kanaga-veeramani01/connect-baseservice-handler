@@ -42,4 +42,6 @@ export class Service extends Model<Service> {
 	@Default(Sequelize.fn('now')) @Column(DataType.DATE) updatedAt: Date;
 
 	@Column(DataType.STRING) updatedBy: string;
+
+	@Column(DataType.INTEGER) legacyTIPDetailID: number;
 }
