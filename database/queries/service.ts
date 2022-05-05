@@ -18,6 +18,7 @@ export const QServiceList = (sortBy, sortOrder) => {
         ) ds
     
     WHERE (ds."serviceID"::text ILIKE ALL (array[:searchKey])
+    OR ds."legacyTIPDetailID"::text ILIKE ALL (array[:searchKey])
         OR ds."serviceType" ILIKE ALL (array[:searchKey])
         OR ds."serviceName" ILIKE ALL (array[:searchKey])
         OR ds."serviceTagName"::text ILIKE ALL (array[:searchKey]))
