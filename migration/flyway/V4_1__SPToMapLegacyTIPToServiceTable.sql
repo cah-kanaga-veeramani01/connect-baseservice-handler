@@ -1,3 +1,14 @@
+TRUNCATE TABLE service."Service" CASCADE;
+
+TRUNCATE TABLE service."ServiceTagMapping" CASCADE;
+
+ALTER SEQUENCE service."Service_serviceID_seq" 
+RESTART WITH 1;
+
+ALTER SEQUENCE service."ServiceTagMapping_serviceTagMappingID_seq" 
+RESTART WITH 1;
+
+
 CREATE OR REPLACE PROCEDURE attunityservice.sp_map_ServiceFromLegacyTIP() 
 AS $$
 DECLARE legacyTIPDetail RECORD;
@@ -44,3 +55,10 @@ END LOOP;
 END 
 $$
 LANGUAGE 'plpgsql';
+
+CALL attunityservice.sp_map_ServiceFromLegacyTIP();
+
+
+SELECT setval('service."Service_serviceID_seq"', (SELECT MAX("serviceID") FROM service."Service"));  
+
+SELECT setval('service."ServiceTagMapping_serviceTagMappingID_seq"', (SELECT MAX("serviceTagMappingID") FROM service."ServiceTagMapping"));  
