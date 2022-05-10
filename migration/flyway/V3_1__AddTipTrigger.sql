@@ -11,7 +11,7 @@ BEGIN
 IF (TG_OP = 'INSERT') 
 THEN
 
-thisisPK = (select "TIPDetailRuleID" from attunityservice."TipDetailRule" where detailid = NEW."tipdetailid" ORDER BY "activeasof" DESC LIMIT 1);
+thisisPK = (select "TIPDetailRuleID" from attunityservice."TipDetailRule" where tipdetailid = NEW."tipdetailid" ORDER BY "activeasof" DESC LIMIT 1);
 userID = (select "createUserID" from attunityservice."TIPDetailRuleOverview" where "TIPDetailRuleID" = thisisPK);
 serviceTagID = (select "TIPTypeID" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = thisisPK);
 startDate = (select "activeasof" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = thisisPK);
