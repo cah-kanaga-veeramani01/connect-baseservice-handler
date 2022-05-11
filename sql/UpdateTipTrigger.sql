@@ -11,7 +11,7 @@ BEGIN
 IF(TG_OP = 'INSERT')
 THEN
 
-IF ((select COUNT(*) from attunityservice."TIPDetailRule" where tipdetailid = NEW."tipdetailid") > 1) THEN
+IF ((select COUNT(*) from attunityservice."TipDetailRule" where tipdetailid = NEW."tipdetailid") > 1) THEN
 
 tipName = (select "tiptitle" from attunityservice."TipDetail" where tipdetailid = NEW."tipdetailid");
 userID = (select "createUserID" from attunityservice."TIPDetailRuleOverview" where "TIPDetailRuleID" = NEW."TIPDetailRuleID");
