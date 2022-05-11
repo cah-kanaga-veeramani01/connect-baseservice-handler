@@ -6,6 +6,7 @@ DECLARE startDate TIMESTAMP;
 DECLARE endDate TIMESTAMP := NULL;
 DECLARE newServiceTagID INTEGER;
 DECLARE serviceID INTEGER;
+DECLARE tipStatus INTEGER = 0;
 BEGIN
 IF(TG_OP = 'INSERT')
 THEN
@@ -19,6 +20,11 @@ startDate = NEW."activeasof";
 endDate = NEW."activethru";
 newServiceTagID = (SELECT "serviceTagID" FROM service."ServiceTag" WHERE "serviceTagName" = (SELECT "TipType" FROM attunityservice."TIPType" WHERE "TIPTypeID" = serviceTagID));
 
+IF (NEW.active = true)
+THEN
+tipStatus = 1;
+END IF;
+
 UPDATE
    service."Service"
 SET
@@ -26,7 +32,7 @@ SET
    "serviceDisplayName" = tipName,
    "validFrom" = startDate,
    "validTill" = endDate,
-   "isPublished" = NEW.active,
+   "isPublished" = tipStatus,
    "updatedAt" = NOW(),
    "updatedBy" = userID
 WHERE

@@ -7,6 +7,7 @@ DECLARE endDate TIMESTAMP := NULL;
 DECLARE serviceTypeID INTEGER;
 DECLARE newServiceTagID INTEGER;
 DECLARE serviceID INTEGER;
+DECLARE tipStatus INTEGER = 0;
 BEGIN
 IF (TG_OP = 'INSERT') 
 THEN
@@ -19,9 +20,14 @@ endDate = (select "activethru" from attunityservice."TipDetailRule" where "TIPDe
 serviceTypeID = (SELECT "serviceTypeID" FROM service."ServiceType" WHERE "serviceType" = 'TIP');
 newServiceTagID = (SELECT "serviceTagID" FROM service."ServiceTag" WHERE "serviceTagName" = (SELECT "TipType" FROM attunityservice."TIPType" WHERE "TIPTypeID" = serviceTagID));
 
+IF (NEW.active = true)
+THEN
+tipStatus = 1;
+END IF;
+
 INSERT INTO service."Service"(
  	"serviceName", "serviceDisplayName", "globalServiceVersion", "validFrom", "validTill", "isPublished", "serviceTypeID", "createdAt", "createdBy", "legacyTIPDetailID")
- 	VALUES (NEW.tiptitle, NEW.tiptitle, 1, startDate, endDate, NEW.active, serviceTypeID, NOW(), userID, NEW.tipdetailid) ON CONFLICT DO NOTHING RETURNING "serviceID" INTO serviceID;
+ 	VALUES (NEW.tiptitle, NEW.tiptitle, 1, startDate, endDate, tipStatus, serviceTypeID, NOW(), userID, NEW.tipdetailid) ON CONFLICT DO NOTHING RETURNING "serviceID" INTO serviceID;
 	
 INSERT INTO service."ServiceTagMapping"(
 	"serviceID", "globalServiceVersion", "serviceTagID", "createdAt", "createdBy")
