@@ -123,3 +123,13 @@ export const getServiceListSchema = {
 	},
 	required: []
 };
+
+export const testSchema = {
+	$schema: definedSchema,
+	$id: 'http://cardinal-domain.com/schemas/program-config/testSchema.json',
+	title: 'Request Parameters get test API',
+	description: 'Request Parameters get test API',
+	type: 'object',
+	properties: {},
+	required: []
+};

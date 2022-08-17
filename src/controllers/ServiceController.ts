@@ -31,4 +31,13 @@ export default class ServiceController {
 			throw new HandleError({ name: 'ServiceListFetchError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
 		}
 	}
+
+	public test(req: Request, res: Response) {
+		try {
+			const response = 'This is test API';
+			res.json(response);
+		} catch (error: any) {
+			res.json(error);
+		}
+	}
 }
