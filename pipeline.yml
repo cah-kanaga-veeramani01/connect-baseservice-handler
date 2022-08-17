@@ -308,6 +308,11 @@
           node_env: ((base-service-config.node-env))
           auth_url: ((base-service-config.cf-auth-url))
           auth_route: ((base-service-config.cf-auth-internal-route))
+          keycloak_base_url: ((base-service-config.keycloak-base-url))
+          client_id: ((base-service-config.keycloak-client-id))
+          realm: ((base-service-config.keycloak-realm))
+          public_key: ((base-service-config.keycloak-public-key))
+          service_read_role: ((base-service-config.keycloak-service-read-role))
   jobs:
     - name: service-config-handler-stage
       serial: true

@@ -8,14 +8,29 @@ import { auth, contextStore, errorHandler, generateLogId, requestLogger } from '
 import { HandleError } from './utils';
 import csurf from 'csurf';
 import { InternalRouterManager } from './src/routes/internal/internal-router-manager';
-import { ExternalRouterManager } from './src/routes/external/external-router-manager';
 import config from 'config';
+import { initKeyclock } from './config/keycloak-config';
+import session from 'express-session';
 
+const memoryStore = new session.MemoryStore(),
+	keycloak = initKeyclock(memoryStore);
+
+import { ExternalRouterManager } from './src/routes/external/external-router-manager';
 dotenv.config();
 
-const PORT = Number(process.env.PORT) || 5000;
-const app: Express = express();
-console.log('Allowed origins---> ', config.get('allowedOrigins'));
+const PORT = Number(process.env.PORT) || 5000,
+	app: Express = express();
+
+app.use(
+	session({
+		secret: process.env.NODE_ENV,
+		resave: false,
+		saveUninitialized: true,
+		store: memoryStore,
+		cookie: { secure: true }
+	})
+);
+
 app.use(
 	cors({
 		credentials: true,
@@ -40,7 +55,7 @@ app.use(express.json());
 app.use(httpContext.middleware);
 app.use(contextStore);
 app.use(generateLogId);
-app.use(/(.*\/internal.*)/i, auth);
+app.use(/(.*\/internal.*)/i, auth); // authenticate all internal APIs
 
 app.get('/', (req: Request, res: Response) => {
 	res.send('<h1>Service Configuration is UP!</h1>');
@@ -53,6 +68,9 @@ app.get('/csrf', (req, res) => {
 	res.cookie('XSRF-TOKEN', req.csrfToken());
 	res.status(200).json({ success: true });
 });
+
+// keycloak-adapter middleware
+app.use(keycloak.middleware());
 
 app.use('/service/internal', InternalRouterManager);
 app.use('/service', ExternalRouterManager);
