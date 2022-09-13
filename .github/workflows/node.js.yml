@@ -5,9 +5,9 @@ name: connect-baseservice-handler
 
 on:
   push:
-    branches: [ HL-945 ]
+    branches: [ HL-945, develop, deploy/staging ]
   pull_request:
-    branches: [ HL-945 ]
+    branches: [ HL-945, develop, deploy/staging ]
   workflow_dispatch:
 
 jobs:
