@@ -1,0 +1,162 @@
+#! @formatter:off
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:assert", "assert")
+#@ load("@ytt:struct", "struct")
+#@ if data.values.slack.enabled:
+resource_types:
+  - name: slack-notification
+    type: registry-image
+    source:
+      repository: artifacts.cahcommtech.com/cfcommunity/slack-notification-resource
+      tag: latest
+      _:  #@ template.replace(data.values.artifacts_credentials)
+#@ end
+
+#@ def vaultify(secret_name, variables):
+#@   result = {}
+#@   for name, value in struct.decode(variables).items():
+#@     result.update({
+#@       name: "((" + secret_name + "." + value + "))"
+#@     })
+#@   end
+#@   return result
+#@ end
+
+resources:
+  #@ for/end image in data.values.docker_images:
+  - name: #@ image.name + "-" + image.tag + "-docker-hub"
+    type: docker-image
+    check_every: 24h
+    icon: docker
+    source:
+      repository: #@ image.repo
+      tag: #@ image.tag
+
+  #@ for/end image in data.values.docker_images:
+  - name: #@ image.name + "-" + image.tag + "-artifacts"
+    type: docker-image
+    check_every: 24h
+    icon: docker
+    source:
+      repository: #@ "artifacts.cahcommtech.com/" + image.repo
+      tag: #@ image.tag
+      _:  #@ template.replace(data.values.artifacts_credentials)
+
+  #@ if/end data.values.slack.enabled:
+  - name: slack-alert
+    type: slack-notification
+    icon: slack
+    source:
+      url: ((base-service-config.baseservice-config-slack-webhook-url))
+
+  - name: cf-p1
+    type: cf
+    source: #@ data.values.cf_params
+
+  #@ for environment in data.values.environments:
+  #@ if environment.enabled:
+  #@ for project in data.values.projects:
+  #@ if/end project.enabled:
+  - name: #@ "git-deploy-" + project.name + "-" + environment.name
+    type: git
+    source:
+      _: #@ template.replace(data.values.git_params)
+      branch: #@ "deploy/" + environment.name
+      paths:
+        - package.json
+        - #@ "manifest-" + environment.name + ".yml"
+
+  #@ end
+  #@ end
+  #@ end
+
+jobs:
+  #@ for/end image in data.values.docker_images:
+          - name: #@ "docker-import-" + image.name
+            plan:
+              - get: #@ image.name + "-" + image.tag + "-docker-hub"
+                params:
+                  save: true
+              - put: #@ image.name + "-" + image.tag + "-artifacts"
+                params:
+                  load: #@ image.name + "-" + image.tag + "-docker-hub"
+                  load_tag: #@ image.name + "-" + image.tag + "-docker-hub/tag"
+
+  #@ for project in data.values.projects:
+    #@ if project.enabled:
+      #@ for environment in data.values.environments:
+        #@ if environment.enabled:
+          #@ job_name = "deploy-" + project.name + "-" + environment.name
+          #@ git_resource = "git-" + job_name
+          - name: #@ job_name
+            serial: true
+            public: false
+            plan:
+              - get: #@ git_resource
+                trigger: #@ data.values.enable_triggers
+
+              - task: deploy
+                #@ if data.values.slack.enabled:
+                on_success:
+                  put: slack-alert
+                  params:
+                    channel: #@ data.values.slack.channel
+                    text: #@ "Deployment of " + project.name + " succeeded in " + environment.name
+                on_failure:
+                  put: slack-alert
+                  params:
+                    channel: #@ data.values.slack.channel
+                    text: #@ "Deployment of " + project.name + " FAILED in " + environment.name
+                #@ end
+                config:
+                  _: #@ template.replace(data.values.task_config)
+                  outputs:
+                    - name: workspace
+                      path: #@ project.workspace_dir
+                  run:
+                    path: /bin/sh
+                    args:
+                      - -c
+                      - #@ data.read(project.deploy_script)
+                input_mapping:
+                  project: #@ git_resource
+                params:
+                  PROJECT_NAME: #@ project.name
+                  NODE_ENV: #@ environment.name
+              - put: cf-p1
+                params:
+                  manifest: workspace/manifest.yml
+                  command: push
+                  app_name: #@ environment.pcf_app_prefix + project.name
+                  path: workspace
+                  buildpack: nodejs-buildpack
+                  #@ if/end project.environment_variables:
+                  environment_variables: #@ vaultify("base-service-config-" + environment.name, project.environment_variables)
+        #@ end
+      #@ end
+    #@ end
+  #@ end
+
+groups:
+  #@ for environment in data.values.environments:
+    #@ if environment.enabled:
+    - name: #@ "deploy-" + environment.name
+      jobs:
+      #@ for project in data.values.projects:
+        #@ if project.enabled:
+          - #@ "deploy-" + project.name + "-" + environment.name
+        #@ end
+      #@ end
+    #@ end
+  #@ end
+
+  #! needed to move public docker-hub images to our internal repo
+  #! only used for initial pipeline setup
+  #@ if data.values.docker_images:
+    - name: docker-imports
+      jobs:
+      #@ for image in data.values.docker_images:
+        - #@ "docker-import-" + image.name
+      #@ end
+  #@ end

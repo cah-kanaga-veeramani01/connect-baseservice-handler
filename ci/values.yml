@@ -1,0 +1,99 @@
+#@data/values
+---
+projects:
+  - name: connect-baseservice-handler
+    #! if false, project's pipeline resources and tasks will not be created.
+    enabled: true
+
+    #! name of the directory that will be the root for PCF deploy ("workspace")
+    workspace_dir: package
+
+    #! script file located in ci/scripts directory.  Will be injected into the deploy task's script.
+    deploy_script: "deploy-baseservice-handler.sh"
+
+    #! each item in this list will be injected into the PCF deploy as environment variable from a vault secret
+    #! e.g. including "some-property" will inject:
+    #!   SOME_PROPERTY: ((program-config-some-environment.some-property))
+    #!
+    #! See also vaultify() in the pipeline YAML
+    environment_variables:
+      DB_PORT: db_port
+      DB_HOST: db_host
+      DB_NAME: db_name
+      DB_SCHEMA: db_schema
+      DB_USERNAME_DDL: db_username_ddl
+      DB_PASSWORD_DDL: db_password_ddl
+      DB_USERNAME_DML: db_username_dml
+      DB_PASSWORD_DML: db_password_dml
+      DB_SSL: db_ssl
+      NODE_ENV: node_env
+      AUTH_URL: auth_url
+      AUTH_ROUTE: auth_route
+      KEYCLOAK_BASE_URL: keycloak_base_url
+      client_id: client_id
+      REALM: realm
+      PUBLIC_KEY: public_key
+      SERVICE_READ_ROLE: service_read_role
+
+environments:
+  - name: stage-phi
+    #! if false, no resources/jobs will be created for the test level
+    enabled: true
+
+    #! Appended to the beginning of app's name
+    pcf_app_prefix: stagephi-
+
+  - name: prod
+    enabled: true
+    pcf_app_prefix: ""
+
+git_params:
+  uri: https://github.com/cahcommercial/connect-baseservice-handler.git
+  username: ((github.username))
+  password: ((github.personal_access_token))
+
+cf_params:
+  api: api.system.fuseapps.io
+  space: ((base-service-config.cf-space))
+  organization: ((base-service-config.cf-organization))
+  password: ((base-service-config.cf-password))
+  username: ((base-service-config.cf-username))
+
+slack:
+  enabled: true
+  channel: "#hidden-leaf-deployments"
+
+artifacts_credentials:
+  username: ((artifacts.username))
+  password: ((artifacts.password))
+
+task_config:
+  platform: linux
+  image_resource:
+    type: docker-image
+    source:
+      repository: artifacts.cahcommtech.com/node
+      tag: 16.16.0
+      username: ((artifacts.username))
+      password: ((artifacts.password))
+
+  params:
+    NPM_PUBLISH_REGISTRY_URL: https://artifacts.cahcommtech.com/repository/commtech-npmjs-internal/
+    NPM_PUBLISH_EMAIL: ((base-service-config.email))
+    NPM_PUBLISH_USERNAME: ((artifacts.username))
+    NPM_PUBLISH_PASSWORD: ((artifacts.password))
+    PROJECT_NAME:
+
+  inputs:
+    - name: project
+
+
+#! set to false to disable automatically triggering builds.  This is useful
+#! for testing pipelines
+enable_triggers: true
+
+#! add items to this if you need to pull public docker images into CAH artifacts repo
+docker_images:
+  - name: node
+    repo: node
+    tag: 16.16.0
