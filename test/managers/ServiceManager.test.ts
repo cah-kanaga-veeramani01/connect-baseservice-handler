@@ -81,12 +81,19 @@ describe('get list of services', () => {
 					serviceID: 1,
 					serviceName: 'Automation Service 0001',
 					serviceType: 'TIP',
-					serviceTagName: ['TagA'],
-					status: 'Active'
+					statuses: [
+						{
+							"status": "ACTIVE",
+							"validFrom": "2021-09-17T12:52:37.898+00:00",
+							"validTill": null,
+							"isPublished": 1,
+							"globalServiceVersion": 1
+						}
+					]
 				}
 			];
 		};
-		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, '', 'Active')).toMatchObject({
+		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, '')).toMatchObject({
 			totalServices: 1,
 			nonFilteredServicesCount: 1,
 			services: [
@@ -94,8 +101,15 @@ describe('get list of services', () => {
 					serviceID: 1,
 					serviceName: 'Automation Service 0001',
 					serviceType: 'TIP',
-					serviceTagName: ['TagA'],
-					status: 'Active'
+					statuses: [
+						{
+							"status": "ACTIVE",
+							"validFrom": "2021-09-17T12:52:37.898+00:00",
+							"validTill": null,
+							"isPublished": 1,
+							"globalServiceVersion": 1
+						}
+					]
 				}
 			]
 		});
@@ -104,41 +118,22 @@ describe('get list of services', () => {
 		db.query = () => {
 			return [
 				{
-					serviceID: 2,
-					serviceName: 'Automation Service 0002',
-					serviceType: 'TIP',
-					serviceTagName: ['TagA', 'TagB'],
-					status: 'Inactive'
-				}
-			];
-		};
-		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'TagB', 'Inactive')).toMatchObject({
-			totalServices: 1,
-			nonFilteredServicesCount: 1,
-			services: [
-				{
-					serviceID: 2,
-					serviceName: 'Automation Service 0002',
-					serviceType: 'TIP',
-					serviceTagName: ['TagA', 'TagB'],
-					status: 'Inactive'
-				}
-			]
-		});
-	});
-	test('should return list of services matching status', async () => {
-		db.query = () => {
-			return [
-				{
 					serviceID: 1,
 					serviceName: 'Automation Service 0001',
 					serviceType: 'TIP',
-					serviceTagName: ['TagA'],
-					status: 'Active'
+					statuses: [
+						{
+							"status": "ACTIVE",
+							"validFrom": "2021-09-17T12:52:37.898+00:00",
+							"validTill": null,
+							"isPublished": 1,
+							"globalServiceVersion": 1
+						}
+					]
 				}
 			];
 		};
-		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'All', 'Active')).toMatchObject({
+		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'TagB')).toMatchObject({
 			totalServices: 1,
 			nonFilteredServicesCount: 1,
 			services: [
@@ -146,8 +141,15 @@ describe('get list of services', () => {
 					serviceID: 1,
 					serviceName: 'Automation Service 0001',
 					serviceType: 'TIP',
-					serviceTagName: ['TagA'],
-					status: 'Active'
+					statuses: [
+						{
+							"status": "ACTIVE",
+							"validFrom": "2021-09-17T12:52:37.898+00:00",
+							"validTill": null,
+							"isPublished": 1,
+							"globalServiceVersion": 1
+						}
+					]
 				}
 			]
 		});
@@ -156,7 +158,7 @@ describe('get list of services', () => {
 		db.query = () => {
 			return [];
 		};
-		expect(await serviceManager.getServiceList('serviceName', 'desc', 12, 1, 'All', 'Active')).toMatchObject({
+		expect(await serviceManager.getServiceList('serviceName', 'desc', 12, 1, 'All')).toMatchObject({
 			totalServices: 0,
 			nonFilteredServicesCount: 0,
 			services: []
@@ -168,7 +170,7 @@ describe('get list of services', () => {
 			throw new Error();
 		};
 		try {
-			await serviceManager.getServiceList('serviceName', 'asc', 12, 1, 'All', 'All');
+			await serviceManager.getServiceList('serviceName', 'asc', 12, 1, 'All');
 		} catch (error) {
 			expect(error.code).toBe('SCE011');
 			expect(error.name).toBe('ServiceListFetchError');
