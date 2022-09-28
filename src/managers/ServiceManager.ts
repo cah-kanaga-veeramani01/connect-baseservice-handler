@@ -82,38 +82,31 @@ export default class ServiceManager {
 		}
 	}
 
-	public async getServiceList(sortBy: string, sortOrder: string, offset: number, limit: number, keyword: string, statusFilter: string): Promise<ServiceListResponse> {
+	public async getServiceList(sortBy: string, sortOrder: string, offset: number, limit: number, keyword: string): Promise<ServiceListResponse> {
 		try {
 			let totalServices = [];
 			let services = [];
 			let nonFilteredServices = [];
-			let status = statusFilter.toLowerCase() === serviceList.defaultFilterBy.toLowerCase() ? serviceList.matchAll : statusFilter;
-			let searchKey =
-				keyword !== EMPTY_STRING
-					? keyword
-							.trim()
-							.split(' ')
-							.map((key) => serviceList.matchAll + key + serviceList.matchAll)
-					: serviceList.matchAll;
-
+			// let status = statusFilter.toLowerCase() === serviceList.defaultFilterBy.toLowerCase() ? serviceList.matchAll : statusFilter;
+			const searchKey = keyword !== EMPTY_STRING ? serviceList.matchAll + keyword.trim() + serviceList.matchAll : serviceList.matchAll;
 			// query to get total count of services filtered by status & search key
 			totalServices = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
 				type: QueryTypes.SELECT,
-				replacements: { searchKey, limit: null, offset: null, status, sortBy, sortOrder }
+				replacements: { searchKey, limit: null, offset: null }
 			});
 
 			//query to fetch all services matching all criteria
 			services = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
 				type: QueryTypes.SELECT,
-				replacements: { searchKey, limit, offset, status, sortBy, sortOrder }
+				replacements: { searchKey, limit, offset }
 			});
 
-			// query to get total count of services with no filter
-			status = serviceList.matchAll;
-			searchKey = serviceList.matchAll;
+			// // query to get total count of services with no filter
+			// // status = serviceList.matchAll;
+			// // searchKey = serviceList.matchAll;
 			nonFilteredServices = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
 				type: QueryTypes.SELECT,
-				replacements: { searchKey, limit: null, offset: null, status, sortBy, sortOrder }
+				replacements: { searchKey: serviceList.matchAll, limit: null, offset: null }
 			});
 
 			await Promise.all([totalServices, services, nonFilteredServices]);
