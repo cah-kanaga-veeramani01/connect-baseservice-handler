@@ -124,12 +124,24 @@ export const getServiceListSchema = {
 	required: []
 };
 
-export const testSchema = {
+export const createDraft = {
 	$schema: definedSchema,
-	$id: 'http://cardinal-domain.com/schemas/program-config/testSchema.json',
-	title: 'Request Parameters get test API',
-	description: 'Request Parameters get test API',
+	$id: 'http://cardinal-domain.com/schemas/service-config/draft.json',
+	title: 'Request Parameters for create draft API',
+	description: 'This is a schema for creating draft of service.',
 	type: 'object',
-	properties: {},
-	required: []
+	properties: {
+		body: {
+			type: 'object',
+			properties: {
+				serviceID: {
+					type: 'number',
+					pattern: '^[0-9]+$'
+				}
+			},
+			additionalProperties: false,
+			required: ['serviceID']
+		}
+	},
+	required: ['body']
 };

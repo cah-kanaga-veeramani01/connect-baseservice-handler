@@ -28,9 +28,6 @@ const mockServiceTagMappingRepository: Repository<ServiceTagMapping> = {
 const mockServiceRepository: Repository<Service> = {
 	findOne: jest.fn().mockImplementation(() => {
 		return Promise.resolve(null);
-	}),
-	create: jest.fn().mockImplementation(() => {
-		return Promise.resolve(createServicesResponse);
 	})
 };
 
@@ -43,6 +40,15 @@ const mockServiceRepository_error: Repository<Service> = {
 const mockService_duplicate_error_repo: Repository<Service> = {
 	findOne: jest.fn().mockImplementation(() => {
 		return Promise.resolve({ serviceID: 1, serviceName: 'Service A' });
+	})
+};
+
+const mockServiceRepositoryNewDraft: Repository<Service> = {
+	findOne: jest.fn().mockImplementation(() => {
+		return Promise.resolve({ serviceID: 1, serviceName: 'Service A' });
+	}),
+	create: jest.fn().mockImplementation(() => {
+		return Promise.reject({ serviceID: 1, serviceName: 'Service A', validFrom: null, validTill: null});
 	})
 };
 
@@ -172,6 +178,49 @@ describe('get list of services', () => {
 		} catch (error) {
 			expect(error.code).toBe('SCE011');
 			expect(error.name).toBe('ServiceListFetchError');
+		}
+	});
+});
+
+describe('Create draft', () => {
+
+	test('service does not exist error', async () => {
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTagMappingRepository, mockServiceTagRepository, mockServiceTypeRepository);
+		try {
+			await serviceManager.createDraft(11);
+		} catch (error: any) {
+			expect(error.name).toBe('ServiceDoesntExist');
+		}
+	});
+
+	test('draft already exists', async () => {
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNewDraft, mockServiceTagMappingRepository, mockServiceTagRepository, mockServiceTypeRepository);
+		try {
+			db.query = () => {
+				return [
+					{
+						activeVersion: 1,
+						draftVersion: 2,
+						scheduledVersion: null
+					}
+				];
+			};
+			expect(serviceManager.createDraft(1)).toMatchObject({
+				serviceID: 1,
+				serviceName: 'Service A',
+				activeVersion: 1,
+				draftVersion: 2,
+				scheduledVersion: null
+			});
+		} catch (error: any) {}
+	});
+
+	test('throw error', async () => {
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTagMappingRepository, mockServiceTagRepository, mockServiceTypeRepository);
+		try {
+			await serviceManager.createDraft(11);
+		} catch (error: any) {
+			expect(error.name).toBe('ServiceDraftFetchError');
 		}
 	});
 });

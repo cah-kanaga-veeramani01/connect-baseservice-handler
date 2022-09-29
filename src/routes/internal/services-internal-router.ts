@@ -8,10 +8,11 @@ import { Service } from '../../../database/models/Service';
 import { ServiceTagMapping } from '../../../database/models/ServiceTagMapping';
 import { ServiceTag } from '../../../database/models/ServiceTag';
 import { ServiceType } from '../../../database/models/ServiceType';
-import { addService, getServiceListSchema } from '../../models/schema';
+import { addService, createDraft, getServiceListSchema } from '../../models/schema';
 
 const serviceController = new ServiceController(new ServiceManager(db.getRepository(Service), db.getRepository(ServiceTagMapping), db.getRepository(ServiceTag), db.getRepository(ServiceType)));
 export const ServicesInternalRouter = Router({ mergeParams: true });
 
-ServicesInternalRouter.route('/').post(isAuthorized(UserAction.create, Subject.policy), validateRequest(addService), serviceController.createService.bind(serviceController));
-ServicesInternalRouter.route('/list').get(isAuthorized(UserAction.read, Subject.policy), validateRequest(getServiceListSchema), serviceController.getServiceList.bind(serviceController));
+ServicesInternalRouter.route('/').post(isAuthorized(UserAction.create, Subject.service), validateRequest(addService), serviceController.createService.bind(serviceController));
+ServicesInternalRouter.route('/list').get(isAuthorized(UserAction.read, Subject.service), validateRequest(getServiceListSchema), serviceController.getServiceList.bind(serviceController));
+ServicesInternalRouter.route('/draft').post(isAuthorized(UserAction.create, Subject.service), validateRequest(createDraft), serviceController.createDraft.bind(serviceController));
