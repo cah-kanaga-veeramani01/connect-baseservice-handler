@@ -59,3 +59,13 @@ ServiceListFetchError:
   code: 'SCE011'
   EN:
     message: 'Error while fetching service list.'
+
+ServiceDoesntExist:
+  code: 'SCE014'
+  EN:
+    message: 'Service does not exist.'
+
+ServiceDraftFetchError:
+  code: 'SCE015'
+  EN:
+    message: 'Error while fetching draft version.'

@@ -163,3 +163,55 @@ describe('get list of policies', () => {
 		}
 	});
 });
+
+describe('create draft', () => {
+
+	test('return the draft version', async () => {
+		jest.spyOn(serviceManager, 'createDraft').mockImplementation(() => {
+			return Promise.resolve({
+				activeVersion: 1,
+				scheduledVersion: null,
+				draftVersion: 2,
+				serviceID: 4,
+				serviceName: 'Test 4'
+			});
+		});
+		const req = mocks.createRequest({
+			method: 'POST',
+			url: '/draft',
+			body: {
+				serviceID: 4
+			}
+		}),
+			res = mocks.createResponse();
+
+		await serviceController.createDraft(req, res);
+		expect(res._getJSONData()).toMatchObject({
+			activeVersion: 1,
+			scheduledVersion: null,
+			draftVersion: 2,
+			serviceID: 4,
+			serviceName: 'Test 4'
+		});
+	});
+
+	test('should return error', async () => {
+		jest.spyOn(serviceManager, 'createDraft').mockImplementation(() => {
+			return Promise.reject(new Error());
+		});
+		const req = mocks.createRequest({
+			method: 'POST',
+			url: '/draft',
+			body: {
+				serviceID: 1
+			}
+		}),
+			res = mocks.createResponse();
+
+		try {
+			await serviceController.createDraft(req, res);
+		} catch (error) {
+			expect(error.name).toBe('ServiceDraftFetchError');
+		}
+	});
+});

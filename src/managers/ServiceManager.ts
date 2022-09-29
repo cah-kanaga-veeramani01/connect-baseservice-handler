@@ -1,7 +1,7 @@
 import { Repository } from 'sequelize-typescript';
 import { Service } from '../../database/models/Service';
 import { serviceList, EMPTY_STRING } from '../../utils/constants';
-import { QServiceList } from '../../database/queries/service';
+import { QServiceList, QServiceDetails } from '../../database/queries/service';
 import { Op, QueryTypes } from 'sequelize';
 import { ServiceTagMapping } from '../../database/models/ServiceTagMapping';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
@@ -119,6 +119,55 @@ export default class ServiceManager {
 			return response;
 		} catch (error) {
 			throw new HandleError({ name: 'ServiceListFetchError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
+		}
+	}
+
+	public async createDraft(serviceID: number) {
+		try {
+			logger.nonPhi.debug('Draft API invoked with following parameters', { serviceID });
+
+			const service = await this.serviceRepository.findOne({
+				attributes: ['serviceID', 'serviceName', 'serviceDisplayName', 'serviceTypeID', 'legacyTIPDetailID'],
+				where: {
+					serviceID
+				},
+				raw: true
+			});
+			if (!service) throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
+
+			const serviceDetails = await db.query(QServiceDetails, {
+				replacements: { serviceID: serviceID },
+				type: QueryTypes.SELECT
+			});
+
+			const result = { ...serviceDetails[0], ...service };
+
+			if (result.draftVersion || result.scheduledVersion) {
+				return result;
+			}
+
+			const selectedService = await this.serviceRepository.findOne({
+				where: {
+					serviceID: result.serviceID,
+					globalServiceVersion: result.activeVersion
+				},
+				raw: true
+			});
+
+			selectedService.isPublished = 0;
+			selectedService.validFrom = null;
+			selectedService.validTill = null;
+			selectedService.globalServiceVersion += 1;
+
+			const newDraftVersion = await this.serviceRepository.create(selectedService, {
+				returning: true,
+				fields: ['serviceID', 'serviceName', 'serviceDisplayName', 'globalServiceVersion', 'isPublished', 'serviceTypeID', 'legacyTIPDetailID', 'validFrom', 'validTill']
+			});
+			return { ...newDraftVersion, scheduledVersion: null, draftVersion: newDraftVersion.globalServiceVersion };
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'ServiceDraftFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
 }
