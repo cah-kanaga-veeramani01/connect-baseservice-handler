@@ -32,10 +32,11 @@ export default class ServiceController {
 		}
 	}
 
-	public test(req: Request, res: Response) {
+	public async createDraft(req: Request, res: Response) {
 		try {
-			const response = 'This is test API';
-			res.json(response);
+			const serviceID = req.body?.serviceID;
+			logger.nonPhi.debug('Create draft invoked with following parameter', { serviceID });
+			res.json(await this.serviceManager.createDraft(serviceID));
 		} catch (error: any) {
 			res.json(error);
 		}

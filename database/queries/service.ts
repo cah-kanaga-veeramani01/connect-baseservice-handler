@@ -50,3 +50,9 @@ export const QServiceList = (sortBy, sortOrder) => {
     order by ds."${sortBy}" ${sortOrder}
     limit :limit offset :offset;`;
 };
+
+export const QServiceDetails = `SELECT
+(SELECT "globalServiceVersion" FROM service."Service" WHERE "serviceID" = :serviceID AND "isPublished" = 1 AND ("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW()) AS "activeVersion",
+(SELECT "globalServiceVersion" FROM service."Service" WHERE "serviceID" = :serviceID AND "isPublished" = 1 AND "validFrom" > NOW()) AS "scheduledVersion",
+(SELECT "globalServiceVersion" FROM service."Service" WHERE "serviceID" = :serviceID AND "isPublished" = 0) AS "draftVersion";
+`;
