@@ -1,30 +1,53 @@
 export const QServiceList = (sortBy, sortOrder) => {
 	return `SELECT * FROM (
-        SELECT s."serviceID", s."isPublished", s."serviceName" , st."serviceType", t."serviceTagName",
-        CASE WHEN ("validFrom" > NOW() OR "validTill" <= NOW()) THEN 'Inactive' ELSE 'Active' END AS "status",
-        s."legacyTIPDetailID"
-        FROM (
-            SELECT "serviceID", ARRAY_AGG("serviceTagName") AS "serviceTagName", "globalServiceVersion"
-            FROM service."ServiceTagMapping" stm JOIN service."ServiceTag" st on st."serviceTagID" = stm."serviceTagID" GROUP BY ("serviceID", "globalServiceVersion")
-            ) t
-        JOIN service."Service" s ON s."serviceID" = t."serviceID" AND s."globalServiceVersion" = t."globalServiceVersion"
-        JOIN service."ServiceType" st on s."serviceTypeID"=st."serviceTypeID"
-        UNION
-        SELECT s."serviceID", s."isPublished", s."serviceName" , st."serviceType", '{}' AS "serviceTagName",
-        CASE WHEN ("validFrom" > NOW() OR "validTill" <= NOW()) THEN 'Inactive' ELSE 'Active' END AS "status",
-        s."legacyTIPDetailID"
-        FROM service."Service" s JOIN service."ServiceType" st on s."serviceTypeID"=st."serviceTypeID"
-        WHERE (s."serviceID", s."globalServiceVersion") NOT IN (SELECT  "serviceID", "globalServiceVersion" from service."ServiceTagMapping")
-        ) ds
+		SELECT 
+		  "Service"."serviceID", 
+		  "Service"."serviceName",
+	   	  "ServiceType"."serviceType",
+		  JSONB_AGG(
+			(
+			  SELECT 
+				X 
+			  FROM 
+				(
+				  SELECT 
+					"Service"."globalServiceVersion", 
+					"Service"."validFrom", 
+					"Service"."validTill", 
+					"Service"."isPublished", 
+					CASE WHEN (
+					  (
+						"Service"."validFrom" < now() 
+						AND "Service"."validTill" >= now()
+					  ) 
+					  OR (
+						"Service"."validFrom" < now() 
+						AND "Service"."validTill" IS NULL
+					  ) 
+					  AND "Service"."isPublished" = 1
+					) THEN 'ACTIVE' WHEN (
+					  "Service"."validFrom" > now() 
+					  AND "Service"."isPublished" = 1
+					) THEN 'SCHEDULED' WHEN ("Service"."isPublished" = 0) THEN 'DRAFT' ELSE 'INACTIVE' END AS "status"
+				) AS X
+			)
+		  ) AS "statuses" 
+		FROM 
+		  service."Service" 
+ 		  JOIN service."ServiceType" on "Service"."serviceTypeID" = "ServiceType"."serviceTypeID" 
+		where 
+		   "validTill" IS NULL 
+		  OR "validTill" > NOW() 
+		GROUP BY 
+		  "Service"."serviceID", 
+		  "Service"."serviceName",
+	   	  "ServiceType"."serviceType"
+	  ) ds
     
-    WHERE (ds."serviceID"::text ILIKE ALL (array[:searchKey])
-    OR ds."legacyTIPDetailID"::text ILIKE ALL (array[:searchKey])
-        OR ds."serviceType" ILIKE ALL (array[:searchKey])
-        OR ds."serviceName" ILIKE ALL (array[:searchKey])
-        OR ds."serviceTagName"::text ILIKE ALL (array[:searchKey]))
-        AND ds."status" ILIKE :status
-        AND ds."isPublished" = 1
-    order by "${sortBy}" ${sortOrder}
+    WHERE ds."serviceName" ILIKE :searchKey
+        OR ds."serviceID"::TEXT LIKE :searchKey
+        OR ds."serviceType"::TEXT ILIKE :searchKey
+    order by ds."${sortBy}" ${sortOrder}
     limit :limit offset :offset;`;
 };
 

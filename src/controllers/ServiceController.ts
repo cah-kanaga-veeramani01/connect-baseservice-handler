@@ -23,10 +23,10 @@ export default class ServiceController {
 				sortOrder = req.query.sortOrder ? String(req.query.sortOrder) : serviceList.defaultSortOrder,
 				from = req.query.from ? Number(req.query.from) : serviceList.defaultFrom,
 				limit = req.query.limit ? Number(req.query.limit) : serviceList.defaultLimit,
-				keyword = req.query.keyword ? String(req.query.keyword) : EMPTY_STRING,
-				statusFilter = req.query.statusFilter ? String(req.query.statusFilter) : serviceList.defaultFilterBy;
-
-			res.send(await this.serviceManager.getServiceList(sortBy, sortOrder, from, limit, keyword, statusFilter));
+				keyword = req.query.keyword ? String(req.query.keyword).replace(/_/g, '\\_') : EMPTY_STRING;
+			// statusFilter = req.query.statusFilter ? String(req.query.statusFilter) : serviceList.defaultFilterBy;
+			logger.nonPhi.debug('Service list invoked with following parameters', { sortBy, sortOrder, from, limit, keyword });
+			res.send(await this.serviceManager.getServiceList(sortBy, sortOrder, from, limit, keyword));
 		} catch (error) {
 			throw new HandleError({ name: 'ServiceListFetchError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
 		}

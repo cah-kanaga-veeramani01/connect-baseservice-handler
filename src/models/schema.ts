@@ -113,9 +113,6 @@ export const getServiceListSchema = {
 				},
 				keyword: {
 					type: 'string'
-				},
-				statusFilter: {
-					type: 'string'
 				}
 			},
 			required: []

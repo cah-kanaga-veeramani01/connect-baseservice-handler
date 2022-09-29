@@ -33,13 +33,14 @@ export const sortOrder = {
 
 export const sortServiceListBy = {
 	serviceName: 'serviceName',
-	status: 'status',
-	tag: 'serviceTagName',
-	type: 'serviceType'
+	// status: 'status',
+	// tag: 'serviceTagName',
+	type: 'serviceType',
+	serviceID: 'serviceID'
 };
 
 export const serviceList = {
-	defaultSortBy: 'status',
+	defaultSortBy: 'serviceName',
 	defaultSortOrder: 'asc',
 	defaultFrom: 0,
 	defaultLimit: 10,
