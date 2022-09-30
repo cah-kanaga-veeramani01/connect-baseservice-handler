@@ -159,11 +159,9 @@ export default class ServiceManager {
 			selectedService.validTill = null;
 			selectedService.globalServiceVersion += 1;
 
-			const newDraftVersion = await this.serviceRepository.create(selectedService, {
-				returning: true,
-				fields: ['serviceID', 'serviceName', 'serviceDisplayName', 'globalServiceVersion', 'isPublished', 'serviceTypeID', 'legacyTIPDetailID', 'validFrom', 'validTill']
-			});
-			return { ...newDraftVersion, scheduledVersion: null, draftVersion: newDraftVersion.globalServiceVersion };
+			const newDraftVersion: any = await this.serviceRepository.create(selectedService);
+
+			return { ...newDraftVersion.dataValues, scheduledVersion: null, draftVersion: newDraftVersion.globalServiceVersion };
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
