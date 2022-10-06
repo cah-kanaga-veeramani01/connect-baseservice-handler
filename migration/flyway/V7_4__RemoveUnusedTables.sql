@@ -1,3 +1,7 @@
+ALTER TABLE "attunityservice"."TipDetailRule" DISABLE TRIGGER EXPIRE_TIP;
+
+ALTER TABLE "attunityservice"."TIPDetailRuleOverview" DISABLE TRIGGER ADD_UPDATE_TIP;
+
 DROP TABLE IF EXISTS service."ServiceTag" CASCADE;
 
 DROP TABLE IF EXISTS service."ServiceTagHistories" CASCADE;
