@@ -1,10 +1,9 @@
-import { IService, IServiceTag, IServiceType } from '../src/interfaces/IServices';
+import { IService, IServiceType } from '../src/interfaces/IServices';
 
 export const servicePayload: IService = {
 	serviceName: 'Service A',
 	serviceDisplayName: 'Display A',
-	serviceTypeID: 1,
-	serviceTagIDs: [1]
+	serviceTypeID: 1
 };
 export const createServicesResponse = {
 	serviceID: 1,
@@ -14,33 +13,9 @@ export const createServicesResponse = {
 	globalServiceVersion: 1,
 	validFrom: '2021-09-15T12:28:45.465Z',
 	isPublished: true,
-	validTill: null,
-	serviceTagMappingIDs: [11, 22, 33],
-	serviceTagIDs: [1, 2, 3]
+	validTill: null
 };
-export const serviceTagPayload: IServiceTag = {
-	serviceTags: ['serviceTag A', 'serviceTag B']
-};
-export const serviceTagsResponse = [
-	{
-		createdAt: '2021-09-15T13:37:10.240Z',
-		updatedAt: '2021-09-15T13:37:10.240Z',
-		serviceTagID: 1,
-		serviceTagName: 'serviceTag A',
-		serviceTypeID: 1,
-		createdBy: 'admin',
-		updatedBy: null
-	},
-	{
-		createdAt: '2021-09-15T13:37:10.240Z',
-		updatedAt: '2021-09-15T13:37:10.240Z',
-		serviceTagID: 2,
-		serviceTagName: 'serviceTag B',
-		serviceTypeID: 1,
-		createdBy: 'admin',
-		updatedBy: null
-	}
-];
+
 export const serviceTypePayload: IServiceType = {
 	serviceType: 'CMR'
 };

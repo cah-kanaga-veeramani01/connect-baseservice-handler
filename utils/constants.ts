@@ -34,7 +34,6 @@ export const sortOrder = {
 export const sortServiceListBy = {
 	serviceName: 'serviceName',
 	// status: 'status',
-	// tag: 'serviceTagName',
 	type: 'serviceType',
 	serviceID: 'serviceID'
 };

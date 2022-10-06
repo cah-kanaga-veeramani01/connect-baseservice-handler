@@ -21,9 +21,6 @@ export const addService = {
 				serviceDisplayName: {
 					type: 'string'
 				},
-				serviceTagIDs: {
-					type: 'array'
-				},
 				serviceTypeID: {
 					type: 'number'
 				}
@@ -32,24 +29,7 @@ export const addService = {
 		}
 	}
 };
-export const addServiceTags = {
-	$schema: definedSchema,
-	$id: 'http://cardinal-domain.com/schemas/service-config/add-service-tags',
-	title: 'Add Service Tags Schema',
-	description: 'This is the schema for adding service tags API',
-	type: 'object',
-	properties: {
-		body: {
-			type: 'object',
-			properties: {
-				serviceTags: {
-					type: 'array'
-				}
-			},
-			required: ['serviceTags']
-		}
-	}
-};
+
 export const addServiceType = {
 	$schema: definedSchema,
 	$id: 'http://cardinal-domain.com/schemas/service-config/add-service-type',
@@ -67,14 +47,6 @@ export const addServiceType = {
 			required: ['serviceType']
 		}
 	}
-};
-
-export const getAllServiceTags = {
-	$schema: definedSchema,
-	$id: 'http://cardinal-domain.com/schemas/service-config/get-all-service-tags',
-	title: 'Get All Service Tags Schema',
-	description: 'This is the schema for getting all the service tags API',
-	type: 'object'
 };
 
 export const getAllServiceTypes = {

@@ -1,30 +1,18 @@
 import { Repository } from 'sequelize-mock';
 import { Service } from '../../database/models/Service';
-import { ServiceTag } from '../../database/models/ServiceTag';
-import { ServiceTagMapping } from '../../database/models/ServiceTagMapping';
 import { ServiceType } from '../../database/models/ServiceType';
 import ServiceManager from '../../src/managers/ServiceManager';
 import { createServicesResponse, servicePayload } from '../../test/TestData';
 import db from '../../database/DBManager';
 
-const serviceManager = new ServiceManager(db.getRepository(Service), db.getRepository(ServiceTagMapping), db.getRepository(ServiceType), db.getRepository(ServiceTag));
+const serviceManager = new ServiceManager(db.getRepository(Service), db.getRepository(ServiceType));
 
-const mockServiceTagRepository: Repository<ServiceTag> = {
-	findAll: jest.fn().mockImplementation(() => {
-		return Promise.resolve([{ serviceTagMappingID: 1 }]);
-	})
-};
 const mockServiceTypeRepository: Repository<ServiceType> = {
 	findOne: jest.fn().mockImplementation(() => {
 		return Promise.resolve({ serviceTypeID: 1 });
 	})
 };
 
-const mockServiceTagMappingRepository: Repository<ServiceTagMapping> = {
-	bulkCreate: jest.fn().mockImplementation(() => {
-		return Promise.resolve({ serviceID: 1, serviceTagID: 1 });
-	})
-};
 const mockServiceRepository: Repository<Service> = {
 	findOne: jest.fn().mockImplementation(() => {
 		return Promise.resolve(null);
@@ -48,18 +36,18 @@ const mockServiceRepositoryNewDraft: Repository<Service> = {
 		return Promise.resolve({ serviceID: 1, serviceName: 'Service A' });
 	}),
 	create: jest.fn().mockImplementation(() => {
-		return Promise.reject({ serviceID: 1, serviceName: 'Service A', validFrom: null, validTill: null});
+		return Promise.reject({ serviceID: 1, serviceName: 'Service A', validFrom: null, validTill: null });
 	})
 };
 
 describe('Create Service', () => {
 	// test('should create a service successfully ', async () => {
-	// 	const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTagMappingRepository, mockServiceTagRepository, mockServiceTypeRepository);
+	// 	const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTypeRepository);
 	// 	expect(await serviceManager.createService(servicePayload)).toMatchObject(createServicesResponse);
 	// });
 
 	test('should fail to create a service ', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTagMappingRepository, mockServiceTagRepository, mockServiceTypeRepository);
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTypeRepository);
 		try {
 			await serviceManager.createService(servicePayload);
 		} catch (error) {
@@ -69,7 +57,7 @@ describe('Create Service', () => {
 	});
 
 	test('should fail to create a duplicate service ', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockService_duplicate_error_repo, mockServiceTagMappingRepository, mockServiceTagRepository, mockServiceTypeRepository);
+		const serviceManager: ServiceManager = new ServiceManager(mockService_duplicate_error_repo, mockServiceTypeRepository);
 		try {
 			await serviceManager.createService(servicePayload);
 		} catch (error) {
@@ -89,11 +77,11 @@ describe('get list of services', () => {
 					serviceType: 'TIP',
 					statuses: [
 						{
-							"status": "ACTIVE",
-							"validFrom": "2021-09-17T12:52:37.898+00:00",
-							"validTill": null,
-							"isPublished": 1,
-							"globalServiceVersion": 1
+							status: 'ACTIVE',
+							validFrom: '2021-09-17T12:52:37.898+00:00',
+							validTill: null,
+							isPublished: 1,
+							globalServiceVersion: 1
 						}
 					]
 				}
@@ -109,11 +97,11 @@ describe('get list of services', () => {
 					serviceType: 'TIP',
 					statuses: [
 						{
-							"status": "ACTIVE",
-							"validFrom": "2021-09-17T12:52:37.898+00:00",
-							"validTill": null,
-							"isPublished": 1,
-							"globalServiceVersion": 1
+							status: 'ACTIVE',
+							validFrom: '2021-09-17T12:52:37.898+00:00',
+							validTill: null,
+							isPublished: 1,
+							globalServiceVersion: 1
 						}
 					]
 				}
@@ -129,17 +117,17 @@ describe('get list of services', () => {
 					serviceType: 'TIP',
 					statuses: [
 						{
-							"status": "ACTIVE",
-							"validFrom": "2021-09-17T12:52:37.898+00:00",
-							"validTill": null,
-							"isPublished": 1,
-							"globalServiceVersion": 1
+							status: 'ACTIVE',
+							validFrom: '2021-09-17T12:52:37.898+00:00',
+							validTill: null,
+							isPublished: 1,
+							globalServiceVersion: 1
 						}
 					]
 				}
 			];
 		};
-		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'TagB')).toMatchObject({
+		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'abc')).toMatchObject({
 			totalServices: 1,
 			nonFilteredServicesCount: 1,
 			services: [
@@ -149,11 +137,11 @@ describe('get list of services', () => {
 					serviceType: 'TIP',
 					statuses: [
 						{
-							"status": "ACTIVE",
-							"validFrom": "2021-09-17T12:52:37.898+00:00",
-							"validTill": null,
-							"isPublished": 1,
-							"globalServiceVersion": 1
+							status: 'ACTIVE',
+							validFrom: '2021-09-17T12:52:37.898+00:00',
+							validTill: null,
+							isPublished: 1,
+							globalServiceVersion: 1
 						}
 					]
 				}
@@ -185,9 +173,8 @@ describe('get list of services', () => {
 });
 
 describe('Create draft', () => {
-
 	test('service does not exist error', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTagMappingRepository, mockServiceTagRepository, mockServiceTypeRepository);
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTypeRepository);
 		try {
 			await serviceManager.createDraft(11);
 		} catch (error: any) {
@@ -196,7 +183,7 @@ describe('Create draft', () => {
 	});
 
 	test('draft already exists', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNewDraft, mockServiceTagMappingRepository, mockServiceTagRepository, mockServiceTypeRepository);
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNewDraft, mockServiceTypeRepository);
 		try {
 			db.query = () => {
 				return [
@@ -218,7 +205,7 @@ describe('Create draft', () => {
 	});
 
 	test('throw error', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTagMappingRepository, mockServiceTagRepository, mockServiceTypeRepository);
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTypeRepository);
 		try {
 			await serviceManager.createDraft(11);
 		} catch (error: any) {
