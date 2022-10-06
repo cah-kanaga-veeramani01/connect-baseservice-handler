@@ -2,7 +2,7 @@ import { Repository } from 'sequelize-typescript';
 import { Service } from '../../database/models/Service';
 import { serviceList, EMPTY_STRING } from '../../utils/constants';
 import { QServiceList, QServiceDetails } from '../../database/queries/service';
-import { Op, QueryTypes } from 'sequelize';
+import { QueryTypes } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
 import { IService, ServiceListResponse } from '../interfaces/IServices';
 import db from '../../database/DBManager';
