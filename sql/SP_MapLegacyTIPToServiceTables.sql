@@ -8,7 +8,6 @@ DECLARE maxDetail JSON;
 DECLARE createdBy INTEGER;
 DECLARE updatedBy INTEGER;
 DECLARE newServiceID INTEGER;
-DECLARE newServiceTagID INTEGER;
 DECLARE legacyTIPType VARCHAR;
 
 BEGIN
@@ -30,15 +29,11 @@ WHERE "TIPDetailRuleID" = (minDetail->>'f1')::INTEGER);
 updatedBy = (SELECT "createUserID" FROM attunityservice."TIPDetailRuleOverview" 
 WHERE "TIPDetailRuleID" = (maxDetail->>'f1')::INTEGER);
 
-newServiceTagID = (SELECT "serviceTagID" FROM service."ServiceTag" WHERE "serviceTagName" = 
-(SELECT "TipType" FROM attunityservice."TIPType" WHERE "TIPTypeID" = (maxDetail->>'f3')::INTEGER));
-
 INSERT INTO service."Service" ("serviceName","serviceDisplayName", "globalServiceVersion", "serviceTypeID","validFrom", "validTill",
  "isPublished", "createdAt","createdBy","updatedAt", "updatedBy","legacyTIPDetailID")
 VALUES(legacyTIPDetail."tiptitle", legacyTIPDetail."tiptitle", 1, serviceTypeID, (minDetail->>'f2')::timestamp, (maxDetail->>'f2')::timestamp, legacyTIPDetail."status",
 	   legacyTIPDetail."createdate", createdBy, (maxDetail->>'f4')::timestamp,updatedBy, legacyTIPDetail."tipdetailid") ON CONFLICT DO NOTHING RETURNING "serviceID" INTO newServiceID;
 
-INSERT INTO service."ServiceTagMapping" ("serviceID", "serviceTagID", "globalServiceVersion", "createdBy","updatedBy") VALUES (newServiceID,newServiceTagID,1, createdBy, updatedBy) ON CONFLICT DO NOTHING;
 END IF;
 END LOOP;
 END 

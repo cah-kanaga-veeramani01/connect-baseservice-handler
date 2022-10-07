@@ -1,7 +1,3 @@
-export interface IServiceTag {
-	serviceTags: string[];
-}
-
 export interface IServiceType {
 	serviceType: string;
 }
@@ -10,7 +6,6 @@ export interface IService {
 	serviceName: string;
 	serviceDisplayName: string;
 	serviceTypeID: number;
-	serviceTagIDs: number[];
 	// globalServiceVersion?: string;
 	// validFrom?: Date;
 	// validTill?: Date;
@@ -22,7 +17,6 @@ export interface ServiceResponse {
 	serviceName: string;
 	serviceType: string;
 	status: string;
-	serviceTagName: string[];
 }
 export interface ServiceListResponse {
 	totalServices: number;
