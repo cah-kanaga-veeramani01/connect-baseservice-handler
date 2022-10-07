@@ -4,11 +4,9 @@ import ServiceManager from '../../src/managers/ServiceManager';
 import ServiceController from '../../src/controllers/ServiceController';
 import db from '../../database/DBManager';
 import { createServicesResponse, servicePayload } from '../TestData';
-import { ServiceTagMapping } from '../../database/models/ServiceTagMapping';
 import { ServiceType } from '../../database/models/ServiceType';
-import { ServiceTag } from '../../database/models/ServiceTag';
 
-const serviceManager = new ServiceManager(db.getRepository(Service), db.getRepository(ServiceTagMapping), db.getRepository(ServiceType), db.getRepository(ServiceTag));
+const serviceManager = new ServiceManager(db.getRepository(Service), db.getRepository(ServiceType));
 const serviceController = new ServiceController(serviceManager);
 
 describe('Create a new service', () => {
@@ -49,21 +47,18 @@ describe('get list of policies', () => {
 						serviceID: 1,
 						serviceName: 'Automation Service 0001',
 						serviceType: 'TIP',
-						serviceTagName: ['TagA'],
 						status: 'Active'
 					},
 					{
 						serviceID: 2,
 						serviceName: 'Automation Service 0002',
 						serviceType: 'TIP',
-						serviceTagName: ['TagA', 'TagB'],
 						status: 'Inactive'
 					},
 					{
 						serviceID: 3,
 						serviceName: 'Automation Service 0003',
 						serviceType: 'CMR',
-						serviceTagName: ['TagB', 'TagC'],
 						status: 'Inactive'
 					}
 				]
@@ -92,21 +87,18 @@ describe('get list of policies', () => {
 					serviceID: 1,
 					serviceName: 'Automation Service 0001',
 					serviceType: 'TIP',
-					serviceTagName: ['TagA'],
 					status: 'Active'
 				},
 				{
 					serviceID: 2,
 					serviceName: 'Automation Service 0002',
 					serviceType: 'TIP',
-					serviceTagName: ['TagA', 'TagB'],
 					status: 'Inactive'
 				},
 				{
 					serviceID: 3,
 					serviceName: 'Automation Service 0003',
 					serviceType: 'CMR',
-					serviceTagName: ['TagB', 'TagC'],
 					status: 'Inactive'
 				}
 			]
@@ -165,7 +157,6 @@ describe('get list of policies', () => {
 });
 
 describe('create draft', () => {
-
 	test('return the draft version', async () => {
 		jest.spyOn(serviceManager, 'createDraft').mockImplementation(() => {
 			return Promise.resolve({
@@ -177,12 +168,12 @@ describe('create draft', () => {
 			});
 		});
 		const req = mocks.createRequest({
-			method: 'POST',
-			url: '/draft',
-			body: {
-				serviceID: 4
-			}
-		}),
+				method: 'POST',
+				url: '/draft',
+				body: {
+					serviceID: 4
+				}
+			}),
 			res = mocks.createResponse();
 
 		await serviceController.createDraft(req, res);
@@ -200,12 +191,12 @@ describe('create draft', () => {
 			return Promise.reject(new Error());
 		});
 		const req = mocks.createRequest({
-			method: 'POST',
-			url: '/draft',
-			body: {
-				serviceID: 1
-			}
-		}),
+				method: 'POST',
+				url: '/draft',
+				body: {
+					serviceID: 1
+				}
+			}),
 			res = mocks.createResponse();
 
 		try {
