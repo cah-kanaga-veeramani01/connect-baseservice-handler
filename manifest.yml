@@ -21,7 +21,7 @@
         AUTH_URL: ((auth_url))
         AUTH_ROUTE: ((auth_route))
         KEYCLOAK_BASE_URL: ((keycloak_base_url))
-        client_id: ((client_id))
+        CLIENT_ID: ((client_id))
         REALM: ((realm))
         PUBLIC_KEY: ((public_key))
         SERVICE_READ_ROLE: ((service_read_role))

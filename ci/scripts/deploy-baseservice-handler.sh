@@ -10,7 +10,7 @@ APP_NAME=$(echo -n "console.log(require('./project/package').name)" | node | tr 
 echo "Deploying ${APP_NAME} version ${APP_VERSION} to ${NODE_ENV}"
 
 {
-  echo "@program-config:registry=$NPM_PUBLISH_REGISTRY_URL"
+  echo "@service-config:registry=$NPM_PUBLISH_REGISTRY_URL"
   echo "registry=$NPM_PUBLISH_REGISTRY_URL"
   echo "email=$NPM_PUBLISH_EMAIL"
   echo "always-auth=true"

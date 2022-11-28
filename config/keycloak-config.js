@@ -6,7 +6,7 @@ let _keycloak;
 const keycloakURL = process.env.KEYCLOAK_BASE_URL + '/auth';
 
 const keycloakConfig = {
-    clientId: process.env.client_id,
+    clientId: process.env.CLIENT_ID,
     bearerOnly: true,
     serverUrl: keycloakURL,
     realm: process.env.REALM,

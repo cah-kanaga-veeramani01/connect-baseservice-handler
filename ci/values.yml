@@ -17,23 +17,23 @@ projects:
     #!
     #! See also vaultify() in the pipeline YAML
     environment_variables:
-      DB_PORT: db_port
-      DB_HOST: db_host
-      DB_NAME: db_name
-      DB_SCHEMA: db_schema
-      DB_USERNAME_DDL: db_username_ddl
-      DB_PASSWORD_DDL: db_password_ddl
-      DB_USERNAME_DML: db_username_dml
-      DB_PASSWORD_DML: db_password_dml
-      DB_SSL: db_ssl
-      NODE_ENV: node_env
-      AUTH_URL: auth_url
-      AUTH_ROUTE: auth_route
-      KEYCLOAK_BASE_URL: keycloak_base_url
-      client_id: client_id
-      REALM: realm
-      PUBLIC_KEY: public_key
-      SERVICE_READ_ROLE: service_read_role
+      DB_PORT: db-port
+      DB_HOST: db-host
+      DB_NAME: db-name
+      DB_SCHEMA: db-schema
+      DB_PASSWORD_DDL: db-password-ddl
+      DB_PASSWORD_DML: db-password-dml
+      DB_SSL: db-ssl
+      DB_USERNAME_DDL: db-username-ddl
+      DB_USERNAME_DML: db-username-dml
+      NODE_ENV: node-env
+      AUTH_URL: auth-url
+      AUTH_ROUTE: auth-route
+      KEYCLOAK_BASE_URL: keycloak-base-url
+      CLIENT_ID: keycloak-client-id
+      REALM: keycloak-realm
+      PUBLIC_KEY: keycloak-public-key
+      SERVICE_READ_ROLE: keycloak-service-read-role
 
 environments:
   - name: stage-phi
