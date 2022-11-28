@@ -1,9 +1,10 @@
-### Used by the Puppers team for P1 Concourse ops
+SHELL=/bin/bash
 CONCOURSE_TARGET=pup
-CONCOURSE_PIPELINE=connect-baseservice-handler
+CONCOURSE_PIPELINE=hl-connect-baseservice-handler
 CONCOURSE_PIPELINE_CONFIG=pipeline-p1.yml
 CONCOURSE_URL=https://concourse6.dev.cahcommtech.com
 CONCOURSE_TEAM_NAME=puppers
+
 
 YTT_SOURCES = \
   -f $(CONCOURSE_PIPELINE_CONFIG) \
@@ -17,25 +18,27 @@ _check_ytt:
 
 # fly helpers
 fly-login:
-	@fly6 --target $(CONCOURSE_TARGET) login --concourse-url $(CONCOURSE_URL) --team-name $(CONCOURSE_TEAM_NAME) -b
-
-fly-validate-pipeline: fly-save-pipeline
-	@fly6 --target $(CONCOURSE_TARGET) validate-pipeline --config $(CONCOURSE_PIPELINE_CONFIG)
-
-fly-set-pipeline: fly-validate-pipeline
-	@fly6 --target $(CONCOURSE_TARGET) set-pipeline --pipeline $(CONCOURSE_PIPELINE) --config $(CONCOURSE_PIPELINE_CONFIG)
+	fly login --target $(CONCOURSE_TARGET) --concourse-url $(CONCOURSE_URL) --team-name $(CONCOURSE_TEAM_NAME) -b
 
 fly-render-pipeline: _check_ytt
 	@$(YTT_CMD)
 
+fly-validate-pipeline: _check_ytt
+	@fly validate-pipeline --config <($(YTT_CMD))
+
+fly-set-pipeline: fly-validate-pipeline
+	@fly --target $(CONCOURSE_TARGET) set-pipeline \
+      --pipeline $(CONCOURSE_PIPELINE) \
+      --config <($(YTT_CMD))
+
 fly-job:
 	@if [ -z "$(job)" ]; then \
-  		echo 'Hint: use "make fly-job job=<jobname> from one of the jobs listed here...'; \
-  		echo ""; \
-  		fly6 --target $(CONCOURSE_TARGET) jobs -p $(CONCOURSE_PIPELINE); \
+		echo 'Hint: use "make fly-job job=<jobname> from one of the jobs listed here...'; \
+		echo ""; \
+		fly --target $(CONCOURSE_TARGET) jobs -p $(CONCOURSE_PIPELINE); \
     else \
-		fly6 --target $(CONCOURSE_TARGET) trigger-job --job $(CONCOURSE_PIPELINE)/$(job) --watch; \
+		fly --target $(CONCOURSE_TARGET) trigger-job --job $(CONCOURSE_PIPELINE)/$(job) --watch; \
 	fi
 
-fly-save-pipeline:
-	@if (ytt -f pipeline-p1.yml -f values.yml -f scripts > $(CONCOURSE_PIPELINE_CONFIG)); then echo 'rendered'; else rm -f $(CONCOURSE_PIPELINE_CONFIG) && exit 0; fi;
+fly-open:
+	@open $(CONCOURSE_URL)/teams/$(CONCOURSE_TEAM_NAME)/pipelines/$(CONCOURSE_PIPELINE)
