@@ -48,7 +48,7 @@ resources:
     type: slack-notification
     icon: slack
     source:
-      url: ((base-service-config.baseservice-config-slack-webhook-url))
+      url: ((base-service-config.slack-web-hook))
 
   - name: cf-p1
     type: cf
