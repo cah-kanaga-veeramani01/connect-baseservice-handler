@@ -27,8 +27,8 @@ projects:
       DB_USERNAME_DDL: db-username-ddl
       DB_USERNAME_DML: db-username-dml
       NODE_ENV: node-env
-      AUTH_URL: auth-url
-      AUTH_ROUTE: auth-route
+      AUTH_URL: cf-auth-url
+      AUTH_ROUTE: cf-auth-internal-route
       KEYCLOAK_BASE_URL: keycloak-base-url
       CLIENT_ID: keycloak-client-id
       REALM: keycloak-realm
