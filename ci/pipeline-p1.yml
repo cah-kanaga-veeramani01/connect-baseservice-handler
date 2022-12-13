@@ -144,7 +144,7 @@ jobs:
                   image_resource:
                     source:
                       repository: node
-                      tag: 16.14.0
+                      tag: 16.16.0
                     type: registry-image
                   inputs:
                     - name: workspace
