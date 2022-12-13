@@ -11,7 +11,8 @@ const userEditRoles: string[] = config.get('userEditRoles'),
  */
 export enum Subject {
 	all = 'all', // all represents any Subject
-	policy = 'Policy'
+	policy = 'Policy',
+	service = 'Service'
 }
 
 /**

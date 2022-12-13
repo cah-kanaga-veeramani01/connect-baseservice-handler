@@ -5,11 +5,6 @@ NotFound:
   ES:
     message: "¿Buscando algo?"
 
-CreateServiceClassError: 
-  code: 'SCE003'
-  EN: 
-    message: 'Error while creating service classes.'
-
 CreateServiceTypeError: 
   code: 'SCE004'
   EN: 
@@ -25,7 +20,32 @@ ServiceTypeFetchError:
   EN: 
     message: 'Error while fetching service types.'
 
-ServiceClassFetchError: 
-  code: 'SCE007'
-  EN: 
-    message: 'Error while creating service classes.'
+ServiceAlreadyExistsError:
+  code: 'SCE008'
+  EN:
+    message: 'Service already exists.'
+
+ServiceTypeAlreadyExistsError:
+  code: 'SCE010'
+  EN:
+    message: 'Service type already exists.'
+
+ServiceTypeNotFoundError:
+  code: 'SCE013'
+  EN:
+    message: 'Service Type does not exists.'
+    
+ServiceListFetchError:
+  code: 'SCE011'
+  EN:
+    message: 'Error while fetching service list.'
+
+ServiceDoesntExist:
+  code: 'SCE014'
+  EN:
+    message: 'Service does not exist.'
+
+ServiceDraftFetchError:
+  code: 'SCE015'
+  EN:
+    message: 'Error while fetching draft version.'

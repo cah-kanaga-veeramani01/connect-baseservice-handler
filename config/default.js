@@ -1,8 +1,7 @@
 const enums = require('./configEnums');
 
 const configs = {
-	//allowedOrigins should be an array or urls or patterns. null string is used for not allowing
-	allowedOrigins: 'null',
+	allowedOrigins: null,
 	supportedLanguages: [enums.language.en, enums.language.es],
 	language: enums.language.en,
 	defaultErrorMessage: 'Sorry, an error occurred',

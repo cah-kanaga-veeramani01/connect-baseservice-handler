@@ -15,13 +15,13 @@ export default class ServiceTypeController {
 		}
 	}
 
-	public async createServiceType(req: Request, res: Response, next: NextFunction) {
+	public async createServiceType(req: Request, res: Response) {
 		try {
 			const serviceTypePayload: IServiceType = req.body;
 			logger.nonPhi.info('ADD Service Type has been invoked with following parameter ', { ...serviceTypePayload });
 			res.send(await this.serviceTypeManager.createServiceType(serviceTypePayload));
 		} catch (error) {
-			next(error);
+			res.json(error);
 		}
 	}
 }

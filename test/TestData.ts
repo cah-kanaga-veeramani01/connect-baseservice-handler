@@ -1,4 +1,4 @@
-import { IService, IServiceClass, IServiceType } from '../src/interfaces/IServices';
+import { IService, IServiceType } from '../src/interfaces/IServices';
 
 export const servicePayload: IService = {
 	serviceName: 'Service A',
@@ -15,30 +15,7 @@ export const createServicesResponse = {
 	isPublished: true,
 	validTill: null
 };
-export const serviceClassPayload: IServiceClass = {
-	serviceTypeID: 1,
-	serviceClassNames: ['serviceClass A', 'serviceClass B']
-};
-export const serviceClassesResponse = [
-	{
-		createdAt: '2021-09-15T13:37:10.240Z',
-		updatedAt: '2021-09-15T13:37:10.240Z',
-		serviceClassID: 1,
-		serviceClassName: 'serviceClass A',
-		serviceTypeID: 1,
-		createdBy: 'admin',
-		updatedBy: null
-	},
-	{
-		createdAt: '2021-09-15T13:37:10.240Z',
-		updatedAt: '2021-09-15T13:37:10.240Z',
-		serviceClassID: 2,
-		serviceClassName: 'serviceClass B',
-		serviceTypeID: 1,
-		createdBy: 'admin',
-		updatedBy: null
-	}
-];
+
 export const serviceTypePayload: IServiceType = {
 	serviceType: 'CMR'
 };

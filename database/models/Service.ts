@@ -26,8 +26,8 @@ export class Service extends Model<Service> {
 	validTill: Date;
 
 	@AllowNull(false)
-	@Column(DataType.BOOLEAN)
-	isPublished: boolean;
+	@Column(DataType.INTEGER)
+	isPublished: number;
 
 	@ForeignKey(() => ServiceType)
 	@Column(DataType.INTEGER)
@@ -42,4 +42,6 @@ export class Service extends Model<Service> {
 	@Default(Sequelize.fn('now')) @Column(DataType.DATE) updatedAt: Date;
 
 	@Column(DataType.STRING) updatedBy: string;
+
+	@Column(DataType.INTEGER) legacyTIPDetailID: number;
 }

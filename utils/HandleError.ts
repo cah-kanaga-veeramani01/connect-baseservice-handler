@@ -17,13 +17,14 @@ export class HandleError extends Error {
 	code: string;
 	status = HTTP_STATUS_CODES.internalServerError;
 	applicationName = process.env.npm_package_name;
+	log: any;
 
 	/**
 	 * Constructor for the HandleError class.
 	 * @constructor
 	 * @param {object} customError Custom error object.
 	 */
-	constructor(customError: { name: string; message: string; stack: string | undefined; errorStatus?: number; applicationName?: string }) {
+	constructor(customError: { name: string; message: string; stack: string | undefined; errorStatus?: number; applicationName?: string; log?: any }) {
 		super();
 		this.name = customError.name;
 		this.message = errorTypes[customError.name] ? errorTypes[customError.name][httpContext.get('language') || config.get('language')].message : customError.message;
@@ -31,6 +32,9 @@ export class HandleError extends Error {
 		this.code = errorTypes[customError.name] ? errorTypes[customError.name].code : DEFAULT_ERROR_CODE;
 		this.status = customError.errorStatus || this.status;
 		this.applicationName = customError.applicationName || this.applicationName;
+		if (customError?.log) {
+			this.log = customError.log;
+		}
 	}
 
 	/**
