@@ -124,6 +124,47 @@ jobs:
                 params:
                   PROJECT_NAME: #@ project.name
                   NODE_ENV: #@ environment.name
+              - task: migration
+                #@ if data.values.slack.enabled:
+                on_success:
+                  put: slack-alert
+                  params:
+                    channel: #@ data.values.slack.channel
+                    text: #@ "Flyway migration of " + project.name + " succeeded in " + environment.name
+                on_failure:
+                  put: slack-alert
+                  params:
+                    channel: #@ data.values.slack.channel
+                    text: #@ "Flyway migration of " + project.name + " FAILED in " + environment.name
+                #@ end
+                config:
+                  container_limits:
+                    cpu: 0
+                    memory: 4294967296
+                  image_resource:
+                    source:
+                      repository: node
+                      tag: 16.16.0
+                    type: registry-image
+                  inputs:
+                    - name: workspace
+                  outputs:
+                    - name: workspace
+                  params: #@ vaultify("base-service-config-" + environment.name, project.environment_variables)
+                  platform: linux
+                  run:
+                    args:
+                    - -c
+                    - |
+                      mkdir workspace-flyway
+                      cp -r workspace workspace-flyway
+                      cd workspace-flyway/workspace
+                      ls
+                      echo "installing libraries for migration"
+                      npm i
+                      echo Started flyway migration
+                      npm run migrate
+                    path: /bin/sh
               - put: cf-p1
                 params:
                   manifest: workspace/manifest.yml
