@@ -33,5 +33,5 @@
 -- ALTER TABLE service."ServiceTagMapping"
 --     OWNER to pcdb_admin;
 
--- GRANT INSERT, SELECT, UPDATE, DELETE ON ALL TABLES IN SCHEMA service TO pcdb_dml;
--- GRANT ALL ON ALL SEQUENCES IN SCHEMA service TO pcdb_dml;
+GRANT INSERT, SELECT, UPDATE, DELETE ON ALL TABLES IN SCHEMA service TO pcdb_dml;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA service TO pcdb_dml;
