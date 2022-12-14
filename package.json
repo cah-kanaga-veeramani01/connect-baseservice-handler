@@ -1,10 +1,11 @@
 {
   "name": "@service-config/connect-baseservice-handler",
-  "version": "1.1.4",
+  "version": "1.1.7",
   "description": "Handler for Base Service Configuration",
   "main": "server.ts",
   "scripts": {
     "build": "rimraf build && tsc",
+    "build:server": "tsc",
     "preserve": "npm run build",
     "serve": "cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon -q build/server.js\"",
     "cache": "jest --clear-cache",
@@ -77,6 +78,7 @@
     "sequelize-mock": "^0.10.2",
     "ts-jest": "^27.0.5",
     "ts-node": "^8.10.2",
+    "tsc-hooks": "1.1.0",
     "typescript": "^4.5.5"
   }
 }
