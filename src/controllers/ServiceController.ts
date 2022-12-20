@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { HandleError, logger } from '../../utils';
 import { IService } from '../interfaces/IServices';
 import ServiceManager from '../managers/ServiceManager';
-import { serviceList, EMPTY_STRING } from '../../utils/constants';
+import { serviceList, EMPTY_STRING, HTTP_STATUS_CODES } from '../../utils/constants';
+import config from 'config';
 
 export default class ServiceController {
 	constructor(public serviceManager: ServiceManager) {}
@@ -39,6 +40,20 @@ export default class ServiceController {
 			res.json(await this.serviceManager.createDraft(serviceID));
 		} catch (error: any) {
 			res.json(error);
+		}
+	}
+
+	public async addModuleConfig(req: Request, res: Response) {
+		try {
+			const { moduleVersion } = req.body,
+				{ modules } = req.body,
+				{ serviceID }: any = req.params;
+			logger.nonPhi.debug('Update modules with module version invoked with following parameter', { moduleVersion, modules, serviceID });
+			await this.serviceManager.addModuleConfig(serviceID, moduleVersion, modules);
+			res.status(HTTP_STATUS_CODES.ok).json({ modules, moduleVersion, message: config.get('service.updateModules.success.message') });
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			res.json(error.message);
 		}
 	}
 }

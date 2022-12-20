@@ -56,3 +56,14 @@ export const QServiceDetails = `SELECT
 (SELECT "globalServiceVersion" FROM service."Service" WHERE "serviceID" = :serviceID AND "isPublished" = 1 AND "validFrom" > NOW()) AS "scheduledVersion",
 (SELECT "globalServiceVersion" FROM service."Service" WHERE "serviceID" = :serviceID AND "isPublished" = 0) AS "draftVersion";
 `;
+
+export const QCheckConfigCount = `SELECT count(*)
+FROM service."ServiceModuleConfig" WHERE "serviceID" = :serviceID AND "moduleID" = :moduleID`;
+
+export const QUpdateModuleConfig = `UPDATE service."ServiceModuleConfig"
+SET "moduleVersion"= :moduleVersion
+WHERE ("ServiceModuleConfig"."serviceID" = :serviceID AND "moduleID" = :moduleID);`;
+
+export const QAddModuleConfig = `INSERT INTO service."ServiceModuleConfig"(
+	"serviceID", "moduleID", "moduleVersion", status)
+	VALUES (:serviceID, :moduleID, :moduleVersion, null)`;
