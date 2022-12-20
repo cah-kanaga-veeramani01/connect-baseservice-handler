@@ -11,6 +11,8 @@ import { InternalRouterManager } from './src/routes/internal/internal-router-man
 import config from 'config';
 import { initKeyclock } from './config/keycloak-config';
 import session from 'express-session';
+import swaggerUi from 'swagger-ui-express';
+import * as swaggerDocument from './swagger.json';
 
 const memoryStore = new session.MemoryStore(),
 	keycloak = initKeyclock(memoryStore);
@@ -55,11 +57,17 @@ app.use(express.json());
 app.use(httpContext.middleware);
 app.use(contextStore);
 app.use(generateLogId);
+app.use(/\/((?!swagger).)*/, auth); // authenticate every route except /swagger
 app.use(/(.*\/internal.*)/i, auth); // authenticate all internal APIs
 
 app.get('/', (req: Request, res: Response) => {
 	res.send('<h1>Service Configuration is UP!</h1>');
 });
+
+/**
+ * Swagger route
+ */
+app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // keycloak-adapter middleware
 app.use(keycloak.middleware());
