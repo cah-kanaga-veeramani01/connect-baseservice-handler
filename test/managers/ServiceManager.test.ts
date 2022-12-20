@@ -261,13 +261,4 @@ describe('Update module Version', () => {
 			expect(error.name).toBe('ServiceDoesntExist');
 		}
 	});
-
-	test('throw error', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTypeRepository,mockServiceModuleConfigRepo);
-		try {
-			await serviceManager.addModuleConfig(1,1,1);
-		} catch (error: any) {
-			expect(error.name).toBe('ServiceModuleUpdateError');
-		}
-	});
 });

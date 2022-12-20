@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { HandleError, logger } from '../../utils';
 import { IService } from '../interfaces/IServices';
 import ServiceManager from '../managers/ServiceManager';
@@ -43,7 +43,7 @@ export default class ServiceController {
 		}
 	}
 
-	public async addModuleConfig(req: Request, res: Response, next: NextFunction) {
+	public async addModuleConfig(req: Request, res: Response) {
 		try {
 			const { moduleVersion } = req.body,
 				{ modules } = req.body,
@@ -53,6 +53,6 @@ export default class ServiceController {
 			res.status(HTTP_STATUS_CODES.ok).json({ modules, moduleVersion, message: config.get('service.updateModules.success.message') });
 		} catch (error: any) {
 			res.json(error.message);
+		}
 	}
-}
 }

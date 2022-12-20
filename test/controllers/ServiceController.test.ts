@@ -229,7 +229,7 @@ describe('Update module version', () => {
 			res = mocks.createResponse(),
 			next = jest.fn();
 
-		await serviceController.addModuleConfig(req, res, next);
+		await serviceController.addModuleConfig(req, res);
 		expect(res._getJSONData()).toMatchObject({
 			modules: 1,
 			moduleVersion: 1,
@@ -252,7 +252,7 @@ describe('Update module version', () => {
 			next = jest.fn();
 
 		try {
-			await serviceController.addModuleConfig(req, res, next);
+			await serviceController.addModuleConfig(req, res);
 		} catch (error) {
 			expect(error.name).toBe('ServiceModuleUpdateError');
 		}
