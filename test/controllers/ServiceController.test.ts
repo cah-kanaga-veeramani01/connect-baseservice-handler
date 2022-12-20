@@ -5,8 +5,9 @@ import ServiceController from '../../src/controllers/ServiceController';
 import db from '../../database/DBManager';
 import { createServicesResponse, servicePayload } from '../TestData';
 import { ServiceType } from '../../database/models/ServiceType';
+import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
 
-const serviceManager = new ServiceManager(db.getRepository(Service), db.getRepository(ServiceType));
+const serviceManager = new ServiceManager(db.getRepository(Service), db.getRepository(ServiceType), db.getRepository(ServiceModuleConfig));
 const serviceController = new ServiceController(serviceManager);
 
 describe('Create a new service', () => {
@@ -203,6 +204,57 @@ describe('create draft', () => {
 			await serviceController.createDraft(req, res);
 		} catch (error) {
 			expect(error.name).toBe('ServiceDraftFetchError');
+		}
+	});
+});
+
+describe('Update module version', () => {
+	test('retun the module config version', async () => {
+		jest.spyOn(serviceManager, 'addModuleConfig').mockImplementation((): any => {
+			return Promise.resolve({
+				modules: 1,
+				moduleVersion: 1,
+				message: "Module Configuration updated successfully"
+			});
+		});
+		const req = mocks.createRequest({
+				method: 'POST',
+				url: '/:serviceID/modules',
+				body: {
+					"moduleVersion": 1,
+					"modules": 1
+				
+				}
+			}),
+			res = mocks.createResponse(),
+			next = jest.fn();
+
+		await serviceController.addModuleConfig(req, res);
+		expect(res._getJSONData()).toMatchObject({
+			modules: 1,
+			moduleVersion: 1,
+			message: "Module Configuration updated successfully"
+		});
+	});
+
+	test('should return error', async () => {
+		jest.spyOn(serviceManager, 'addModuleConfig').mockImplementation(() => {
+			return Promise.reject(new Error());
+		});
+		const req = mocks.createRequest({
+				method: 'POST',
+				url: '/:serviceID/modules',
+				body: {
+					serviceID: 1
+				}
+			}),
+			res = mocks.createResponse(),
+			next = jest.fn();
+
+		try {
+			await serviceController.addModuleConfig(req, res);
+		} catch (error) {
+			expect(error.name).toBe('ServiceModuleUpdateError');
 		}
 	});
 });
