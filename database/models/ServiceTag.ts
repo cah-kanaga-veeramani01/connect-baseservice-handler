@@ -1,6 +1,5 @@
 import { Sequelize } from 'sequelize';
-import { AllowNull, AutoIncrement, BelongsTo, Column, DataType, Default, ForeignKey, Model, PrimaryKey, Table } from 'sequelize-typescript';
-import { ServiceType } from './ServiceType';
+import { AutoIncrement, Column, DataType, Default, Model, PrimaryKey, Table } from 'sequelize-typescript';
 
 @Table({ freezeTableName: true })
 export class ServiceTag extends Model<ServiceTag> {
@@ -22,5 +21,4 @@ export class ServiceTag extends Model<ServiceTag> {
 	@Default(Sequelize.fn('now')) @Column(DataType.DATE) updatedAt: Date;
 
 	@Column(DataType.STRING) updatedBy: string;
-
 }
