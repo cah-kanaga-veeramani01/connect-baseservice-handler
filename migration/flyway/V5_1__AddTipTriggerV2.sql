@@ -12,11 +12,11 @@ BEGIN
 IF (TG_OP = 'INSERT') 
 THEN
 
-thisisPK = (select "TIPDetailRuleID" from attunityservice."TipDetailRule" where tipdetailid = NEW."tipdetailid" ORDER BY "activeasof" DESC LIMIT 1);
+thisisPK = (select "TIPDetailRuleID" from attunityservice."TIPDetailRule" where tipdetailid = NEW."tipdetailid" ORDER BY "activeasof" DESC LIMIT 1);
 userID = (select "createUserID" from attunityservice."TIPDetailRuleOverview" where "TIPDetailRuleID" = thisisPK);
-serviceTagID = (select "TIPTypeID" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = thisisPK);
-startDate = (select "activeasof" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = thisisPK);
-endDate = (select "activethru" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = thisisPK);
+serviceTagID = (select "TIPTypeID" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" = thisisPK);
+startDate = (select "activeasof" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" = thisisPK);
+endDate = (select "activethru" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" = thisisPK);
 serviceTypeID = (SELECT "serviceTypeID" FROM service."ServiceType" WHERE "serviceType" = 'TIP');
 newServiceTagID = (SELECT "serviceTagID" FROM service."ServiceTag" WHERE "serviceTagName" = (SELECT "TipType" FROM attunityservice."TIPType" WHERE "TIPTypeID" = serviceTagID));
 
@@ -39,9 +39,9 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 DROP TRIGGER IF EXISTS ADD_TIP
-ON "attunityservice"."TipDetail";
+ON "attunityservice"."TIPDetail";
 
 CREATE TRIGGER ADD_TIP 
-AFTER INSERT OR UPDATE ON "attunityservice"."TipDetail"
+AFTER INSERT OR UPDATE ON "attunityservice"."TIPDetail"
 FOR EACH ROW
 EXECUTE PROCEDURE ADD_TIP();

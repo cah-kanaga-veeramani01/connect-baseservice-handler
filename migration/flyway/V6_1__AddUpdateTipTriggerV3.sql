@@ -13,17 +13,17 @@ BEGIN
 IF(TG_OP = 'INSERT')
 THEN
 
-tipID = (SELECT "tipdetailid" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID");
-IF ((select COUNT(*) from attunityservice."TipDetailRule" where "tipdetailid" = tipID) = 1) THEN
+tipID = (SELECT "tipdetailid" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID");
+IF ((select COUNT(*) from attunityservice."TIPDetailRule" where "tipdetailid" = tipID) = 1) THEN
 -- insert
-serviceTagID = (select "TIPTypeID" from attunityservice."TipDetailRule" where "TIPDetailRuleID" =  NEW."TIPDetailRuleID");
-startDate = (select "activeasof" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID");
-endDate = (select "activethru" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID");
+serviceTagID = (select "TIPTypeID" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" =  NEW."TIPDetailRuleID");
+startDate = (select "activeasof" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID");
+endDate = (select "activethru" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID");
 serviceTypeID = (SELECT "serviceTypeID" FROM service."ServiceType" WHERE "serviceType" = 'TIP');
 newServiceTagID = (SELECT "serviceTagID" FROM service."ServiceTag" WHERE "serviceTagName" = (SELECT "TipType" FROM attunityservice."TIPType" WHERE "TIPTypeID" = serviceTagID));
-tipName = (select "tiptitle" from attunityservice."TipDetail" where "tipdetailid" = tipID);
+tipName = (select "tiptitle" from attunityservice."TIPDetail" where "tipdetailid" = tipID);
 
-IF ((select "active" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID") = true)
+IF ((select "active" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID") = true)
 THEN
 tipStatus = 1;
 END IF;
@@ -39,15 +39,15 @@ INSERT INTO service."ServiceTagMapping"(
 	VALUES (serviceID, 1, newServiceTagID, NOW(), userID) ON CONFLICT DO NOTHING;
 END IF;
 
-IF ((select COUNT(*) from attunityservice."TipDetailRule" where "tipdetailid" = tipID) > 1) THEN
+IF ((select COUNT(*) from attunityservice."TIPDetailRule" where "tipdetailid" = tipID) > 1) THEN
 -- update
-serviceTagID = (select "TIPTypeID" from attunityservice."TipDetailRule" where "TIPDetailRuleID" =  NEW."TIPDetailRuleID");
-startDate = (select "activeasof" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID");
-endDate = (select "activethru" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID");
+serviceTagID = (select "TIPTypeID" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" =  NEW."TIPDetailRuleID");
+startDate = (select "activeasof" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID");
+endDate = (select "activethru" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID");
 newServiceTagID = (SELECT "serviceTagID" FROM service."ServiceTag" WHERE "serviceTagName" = (SELECT "TipType" FROM attunityservice."TIPType" WHERE "TIPTypeID" = serviceTagID));
-tipName = (select "tiptitle" from attunityservice."TipDetail" where "tipdetailid" = tipID);
+tipName = (select "tiptitle" from attunityservice."TIPDetail" where "tipdetailid" = tipID);
 
-IF ((select "active" from attunityservice."TipDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID") = true)
+IF ((select "active" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID") = true)
 THEN
 tipStatus = 1;
 END IF;

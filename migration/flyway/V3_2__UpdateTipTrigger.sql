@@ -12,7 +12,7 @@ THEN
 
 IF ((select COUNT(*) from attunityservice."TIPDetailRule" where tipdetailid = NEW."tipdetailid") > 1) THEN
 
-tipName = (select "tiptitle" from attunityservice."TipDetail" where tipdetailid = NEW."tipdetailid");
+tipName = (select "tiptitle" from attunityservice."TIPDetail" where tipdetailid = NEW."tipdetailid");
 userID = (select "createUserID" from attunityservice."TIPDetailRuleOverview" where "TIPDetailRuleID" = NEW."TIPDetailRuleID");
 serviceTagID = NEW."TIPTypeID";
 startDate = NEW."activeasof";
@@ -49,9 +49,9 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 DROP TRIGGER IF EXISTS UPDATE_TIP
-ON "attunityservice"."TipDetailRule";
+ON "attunityservice"."TIPDetailRule";
 
 CREATE TRIGGER UPDATE_TIP 
-AFTER INSERT ON "attunityservice"."TipDetailRule"
+AFTER INSERT ON "attunityservice"."TIPDetailRule"
 FOR EACH ROW
 EXECUTE PROCEDURE UPDATE_TIP();
