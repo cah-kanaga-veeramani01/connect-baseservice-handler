@@ -117,7 +117,7 @@ export const createDraft = {
 
 export const updateModuleconfig = {
 	$schema: definedSchema,
-	$id: 'http://cardinal-domain.com/schemas/program-config/updateModuleConfig-service-docs.json',
+	$id: 'http://cardinal-domain.com/schemas/service-config/updateModuleConfig-service-docs.json',
 	title: 'Request Parameters to update the moduleID and moduleVersion of the service',
 	description: 'This is a schema for updating the moduleID and version of service.',
 	type: 'object',

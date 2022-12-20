@@ -42,7 +42,7 @@ const mockServiceRepositoryNewDraft: Repository<Service> = {
 	})
 };
 
-const mockServiceRepositoryNoProgram: Repository<Service> = {
+const mockServiceRepositoryNoService: Repository<Service> = {
 	count: jest.fn().mockReturnValue(0),
 	findOne: jest.fn().mockImplementation(() => {
 		return Promise.resolve();
@@ -254,7 +254,7 @@ describe('Create draft', () => {
 
 describe('Update module Version', () => {
 	test('service does not exist error', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNoProgram, mockServiceTypeRepository,mockServiceModuleConfigRepo);
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNoService, mockServiceTypeRepository,mockServiceModuleConfigRepo);
 		try {
 			await serviceManager.addModuleConfig(1,1,1);
 		} catch (error: any) {

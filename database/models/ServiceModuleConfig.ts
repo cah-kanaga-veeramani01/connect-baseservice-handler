@@ -2,12 +2,12 @@ import { Table, Column, Model, AllowNull, DataType, Default, Sequelize, ForeignK
 import { Service } from './Service';
 import { ServiceModule } from './ServiceModule';
 
-@Table({ freezeTableName: true, schema: 'program' })
+@Table({ freezeTableName: true, schema: 'service' })
 export class ServiceModuleConfig extends Model {
 	@PrimaryKey
 	@AutoIncrement
 	@Column
-	programModuleConfigID: number;
+	serviceModuleConfigID: number;
 
 	@AllowNull(false)
 	@ForeignKey(() => Service)
