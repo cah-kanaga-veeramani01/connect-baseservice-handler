@@ -15,12 +15,12 @@
 --     *, 
 --     CASE WHEN "active" is true THEN 1 ELSE 0 END as status 
 --   FROM 
---     attunityservice."TipDetail"
+--     attunityservice."TIPDetail"
 -- ) LOOP IF EXISTS (
 --   SELECT 
 --     1 
 --   FROM 
---     attunityservice."TipDetailRule" 
+--     attunityservice."TIPDetailRule" 
 --   WHERE 
 --     "tipdetailid" = legacyTIPDetail."tipdetailid"
 -- ) THEN minDetail = (
@@ -31,14 +31,14 @@
 --       SELECT 
 --         ("TIPDetailRuleID", "activeasof") as item 
 --       FROM 
---         attunityservice."TipDetailRule" 
+--         attunityservice."TIPDetailRule" 
 --       WHERE 
 --         tipdetailid = legacyTIPDetail."tipdetailid" 
 --         AND "TIPDetailRuleID" = (
 --           SELECT 
 --             MIN("TIPDetailRuleID") 
 --           FROM 
---             attunityservice."TipDetailRule" 
+--             attunityservice."TIPDetailRule" 
 --           WHERE 
 --             tipdetailid = legacyTIPDetail."tipdetailid"
 --         )
@@ -55,14 +55,14 @@
 --           "TIPTypeID", "activeasof"
 --         ) as item 
 --       FROM 
---         attunityservice."TipDetailRule" 
+--         attunityservice."TIPDetailRule" 
 --       WHERE 
 --         tipdetailid = legacyTIPDetail."tipdetailid" 
 --         and "TIPDetailRuleID" = (
 --           SELECT 
 --             MAX("TIPDetailRuleID") 
 --           FROM 
---             attunityservice."TipDetailRule" 
+--             attunityservice."TIPDetailRule" 
 --           WHERE 
 --             tipdetailid = legacyTIPDetail."tipdetailid"
 --         )

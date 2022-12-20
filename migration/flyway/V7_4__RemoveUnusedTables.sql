@@ -1,4 +1,4 @@
-ALTER TABLE "attunityservice"."TipDetailRule" DISABLE TRIGGER EXPIRE_TIP;
+ALTER TABLE "attunityservice"."TIPDetailRule" DISABLE TRIGGER EXPIRE_TIP;
 
 ALTER TABLE "attunityservice"."TIPDetailRuleOverview" DISABLE TRIGGER ADD_UPDATE_TIP;
 

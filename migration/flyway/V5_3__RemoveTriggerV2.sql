@@ -1,5 +1,5 @@
 DROP TRIGGER IF EXISTS ADD_TIP
-ON "attunityservice"."TipDetail";
+ON "attunityservice"."TIPDetail";
 
 DROP TRIGGER IF EXISTS UPDATE_TIP
-ON "attunityservice"."TipDetailRule";
+ON "attunityservice"."TIPDetailRule";

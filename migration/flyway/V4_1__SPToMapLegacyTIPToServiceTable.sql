@@ -25,15 +25,15 @@ DECLARE legacyTIPType VARCHAR;
 BEGIN
 
 serviceTypeID = (SELECT "serviceTypeID" FROM service."ServiceType" WHERE "serviceType" = 'TIP');
-FOR legacyTIPDetail IN (SELECT * ,CASE WHEN "active" is true THEN 1 ELSE 0 END as status FROM attunityservice."TipDetail")
+FOR legacyTIPDetail IN (SELECT * ,CASE WHEN "active" is true THEN 1 ELSE 0 END as status FROM attunityservice."TIPDetail")
 LOOP
-IF EXISTS (SELECT 1 FROM attunityservice."TipDetailRule" WHERE "tipdetailid" = legacyTIPDetail."tipdetailid")
+IF EXISTS (SELECT 1 FROM attunityservice."TIPDetailRule" WHERE "tipdetailid" = legacyTIPDetail."tipdetailid")
 THEN
-minDetail = (SELECT row_to_json(res.item) FROM (SELECT ("TIPDetailRuleID","activeasof") as item FROM attunityservice."TipDetailRule" WHERE tipdetailid = legacyTIPDetail."tipdetailid" AND 
-			 "TIPDetailRuleID" = (SELECT MIN("TIPDetailRuleID") FROM attunityservice."TipDetailRule" WHERE tipdetailid = legacyTIPDetail."tipdetailid")) res);
+minDetail = (SELECT row_to_json(res.item) FROM (SELECT ("TIPDetailRuleID","activeasof") as item FROM attunityservice."TIPDetailRule" WHERE tipdetailid = legacyTIPDetail."tipdetailid" AND 
+			 "TIPDetailRuleID" = (SELECT MIN("TIPDetailRuleID") FROM attunityservice."TIPDetailRule" WHERE tipdetailid = legacyTIPDetail."tipdetailid")) res);
 
-maxDetail = (SELECT row_to_json(res.item) FROM (SELECT ("TIPDetailRuleID","activethru", "TIPTypeID", "activeasof") as item FROM attunityservice."TipDetailRule" WHERE tipdetailid = legacyTIPDetail."tipdetailid" and 
-			 "TIPDetailRuleID" = (SELECT MAX("TIPDetailRuleID") FROM attunityservice."TipDetailRule" WHERE tipdetailid = legacyTIPDetail."tipdetailid")) res );
+maxDetail = (SELECT row_to_json(res.item) FROM (SELECT ("TIPDetailRuleID","activethru", "TIPTypeID", "activeasof") as item FROM attunityservice."TIPDetailRule" WHERE tipdetailid = legacyTIPDetail."tipdetailid" and 
+			 "TIPDetailRuleID" = (SELECT MAX("TIPDetailRuleID") FROM attunityservice."TIPDetailRule" WHERE tipdetailid = legacyTIPDetail."tipdetailid")) res );
 
 createdBy = (SELECT "createUserID" FROM attunityservice."TIPDetailRuleOverview" 
 WHERE "TIPDetailRuleID" = (minDetail->>'f1')::INTEGER);
