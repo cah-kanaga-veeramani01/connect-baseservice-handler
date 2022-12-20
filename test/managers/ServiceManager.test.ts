@@ -262,32 +262,12 @@ describe('Update module Version', () => {
 		}
 	});
 
-	test('update module version', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNewDraft, mockServiceTypeRepository,mockServiceModuleConfigRepo);
-		try{
-			db.query = () => {
-				[ { count: '1' } ]
-			};
-			expect(serviceManager.addModuleConfig(1,1,1)).toBe({
-				serviceID: 1,
-				moduleID: 1,
-				moduleVersion: 1
-			});
-		} catch (error: any) {}
-		
-	});
-
-	test('insert module version', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNewDraft, mockServiceTypeRepository,mockServiceModuleConfigRepoForInsert);
-		try{
-			db.query = () => {
-				[ { count: '0' } ]
-			};
-			expect(serviceManager.addModuleConfig(1,1,1)).toBe({
-				serviceID: 1,
-				moduleID: 1,
-				moduleVersion: 1
-			});
-		} catch (error: any) {}
+	test('throw error', async () => {
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTypeRepository,mockServiceModuleConfigRepo);
+		try {
+			await serviceManager.addModuleConfig(1,1,1);
+		} catch (error: any) {
+			expect(error.name).toBe('ServiceModuleUpdateError');
+		}
 	});
 });

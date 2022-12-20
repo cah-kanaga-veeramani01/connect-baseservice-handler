@@ -150,6 +150,7 @@ export default class ServiceManager {
 	 */
 	async addModuleConfig(serviceID: number, moduleVersion: number, modules: number) {
 		try {
+			logger.nonPhi.debug('AddModuleConfig API invoked with following parameters', { serviceID, moduleVersion, modules });
 			const params: any = { serviceID: serviceID };
 			if ((await this.serviceRepository.count({ where: params })) === 0) {
 				throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
