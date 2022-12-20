@@ -284,19 +284,10 @@ describe('Update module Version', () => {
 				[ { count: '0' } ]
 			};
 			expect(serviceManager.addModuleConfig(1,1,1)).toBe({
-				modules: 1,
-				moduleVersion: 1,
-				message: "Module Configuration updated successfully"
+				serviceID: 1,
+				moduleID: 1,
+				moduleVersion: 1
 			});
 		} catch (error: any) {}
-	});
-
-	test('throw error', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTypeRepository,mockServiceModuleConfigRepo);
-		try {
-			await serviceManager.addModuleConfig(1,1,1);
-		} catch (error: any) {
-			expect(error.name).toBe('ServiceModuleUpdateError');
-		}
 	});
 });
