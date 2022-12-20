@@ -52,7 +52,7 @@ export default class ServiceController {
 			await this.serviceManager.addModuleConfig(serviceID, moduleVersion, modules);
 			res.status(HTTP_STATUS_CODES.ok).json({ modules, moduleVersion, message: config.get('service.updateModules.success.message') });
 		} catch (error: any) {
-			next(error);
-		}
+			res.json(error.message);
 	}
+}
 }
