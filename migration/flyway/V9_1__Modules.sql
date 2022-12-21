@@ -4,6 +4,13 @@
 
 CREATE SEQUENCE IF NOT EXISTS service."Modules_moduleID_seq";
 
+ALTER SEQUENCE service."Modules_moduleID_seq"
+    OWNER TO pcdb_admin;
+
+GRANT ALL ON SEQUENCE service."Modules_moduleID_seq" TO pcdb_admin;
+
+GRANT ALL ON SEQUENCE service."Modules_moduleID_seq" TO pcdb_dml;
+
 CREATE TABLE IF NOT EXISTS service."Modules"
 (
     "moduleID" integer NOT NULL DEFAULT nextval('service."Modules_moduleID_seq"'::regclass),

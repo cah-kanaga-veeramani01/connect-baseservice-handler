@@ -6,6 +6,13 @@ CREATE TYPE service."enum_AttributesMaster_serviceType" AS ENUM ('TIP','CMR');
 
 CREATE SEQUENCE IF NOT EXISTS service."AttributesMaster_attributesMasterID_seq";
 
+ALTER SEQUENCE service."AttributesMaster_attributesMasterID_seq"
+    OWNER TO pcdb_admin;
+
+GRANT ALL ON SEQUENCE service."AttributesMaster_attributesMasterID_seq" TO pcdb_admin;
+
+GRANT ALL ON SEQUENCE service."AttributesMaster_attributesMasterID_seq" TO pcdb_dml;
+
 CREATE TABLE service."AttributesMaster"
 (
     "attributesMasterID" integer NOT NULL DEFAULT nextval('"AttributesMaster_attributesMasterID_seq"'::regclass),

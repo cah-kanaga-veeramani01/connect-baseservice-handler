@@ -2,7 +2,7 @@
 
 -- DROP SEQUENCE service."ServiceTag_serviceTagID_seq";
 
-CREATE SEQUENCE service."ServiceTag_serviceTagID_seq"
+CREATE SEQUENCE IF NOT EXISTS service."ServiceTag_serviceTagID_seq"
     INCREMENT 1
     START 1
     MINVALUE 1
