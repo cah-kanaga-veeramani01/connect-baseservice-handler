@@ -28,7 +28,7 @@
                 "summary": "Module configuration for base service",
                 "parameters": [
                     {
-                        "name": "cookies",
+                        "name": "cookie",
                         "in": "header",
                         "description": "cookies for authentication",
                         "required": true,
