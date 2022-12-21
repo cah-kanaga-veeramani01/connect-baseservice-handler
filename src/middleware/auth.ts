@@ -31,6 +31,7 @@ export const auth = async (req: Request, _res: Response, next: NextFunction) => 
 			throw new HandleError({ name: 'AuthenticationError', errorStatus: HTTP_STATUS_CODES.unauthenticated, message: 'Error while authenticating', stack: 'Error while authenticating' });
 		}
 	} catch (error: any) {
+		logger.nonPhi.error(error.message, { _error: error });
 		if (error instanceof HandleError) next(error);
 		else next(new HandleError({ name: 'AuthenticationError', errorStatus: HTTP_STATUS_CODES.unauthenticated, message: 'Error while authenticating', stack: 'Error while authenticating' }));
 	}
