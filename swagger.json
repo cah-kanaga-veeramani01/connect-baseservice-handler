@@ -28,6 +28,15 @@
                 "summary": "Module configuration for base service",
                 "parameters": [
                     {
+                        "name": "cookies",
+                        "in": "header",
+                        "description": "cookies for authentication",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "name": "serviceID",
                         "in": "path",
                         "description": "Service ID for the base service",
