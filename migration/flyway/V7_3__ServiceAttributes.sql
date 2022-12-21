@@ -2,6 +2,13 @@ DROP TABLE IF EXISTS service."BaseServiceAttributes" CASCADE;
 
 CREATE SEQUENCE IF NOT EXISTS service."ServiceAttributes_serviceAttributesID_seq";
 
+ALTER SEQUENCE service."ServiceAttributes_serviceAttributesID_seq"
+    OWNER TO pcdb_admin;
+
+GRANT ALL ON SEQUENCE service."ServiceAttributes_serviceAttributesID_seq" TO pcdb_admin;
+
+GRANT ALL ON SEQUENCE service."ServiceAttributes_serviceAttributesID_seq" TO pcdb_dml;
+
 CREATE TABLE service."ServiceAttributes"
 (
     "serviceAttributesID" integer NOT NULL DEFAULT nextval('"ServiceAttributes_serviceAttributesID_seq"'::regclass),

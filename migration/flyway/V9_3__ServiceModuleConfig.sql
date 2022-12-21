@@ -14,6 +14,13 @@ ALTER TYPE service."enum_Service_status"
 
 CREATE SEQUENCE IF NOT EXISTS service."ServiceModuleConfig_serviceModuleConfigID_seq";
 
+ALTER SEQUENCE service."ServiceModuleConfig_serviceModuleConfigID_seq"
+    OWNER TO pcdb_admin;
+
+GRANT ALL ON SEQUENCE service."ServiceModuleConfig_serviceModuleConfigID_seq" TO pcdb_admin;
+
+GRANT ALL ON SEQUENCE service."ServiceModuleConfig_serviceModuleConfigID_seq" TO pcdb_dml;
+
 
 CREATE TABLE IF NOT EXISTS service."ServiceModuleConfig"
 (
