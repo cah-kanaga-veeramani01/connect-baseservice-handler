@@ -1,4 +1,4 @@
-import { ErrorRequestHandler, Request, Response } from 'express';
+import { ErrorRequestHandler, NextFunction, Request, Response } from 'express';
 import { HandleError, logger } from '../../utils';
 import { HTTP_STATUS_CODES, DEFAULT_ERROR_CODE } from '../../utils/constants';
 
@@ -20,7 +20,7 @@ import { HTTP_STATUS_CODES, DEFAULT_ERROR_CODE } from '../../utils/constants';
  * ```
  * @returns {object} JSON error object.
  */
-export const errorHandler: ErrorRequestHandler = (err: HandleError, _req: Request, res: Response): object => {
+export const errorHandler: ErrorRequestHandler = (err: HandleError, _req: Request, res: Response, next: NextFunction): object => {
 	logger.nonPhi.error(err.message, { _error: err });
 	return res.status(err.status || HTTP_STATUS_CODES.internalServerError).json({ name: err.name, code: err.code || DEFAULT_ERROR_CODE, message: err.message });
 };
