@@ -4,6 +4,13 @@
 
 CREATE SEQUENCE IF NOT EXISTS service."ServiceTypeModule_serviceTypeModuleID_seq";
 
+ALTER SEQUENCE service."ServiceTypeModule_serviceTypeModuleID_seq"
+    OWNER TO pcdb_admin;
+
+GRANT ALL ON SEQUENCE service."ServiceTypeModule_serviceTypeModuleID_seq" TO pcdb_admin;
+
+GRANT ALL ON SEQUENCE service."ServiceTypeModule_serviceTypeModuleID_seq" TO pcdb_dml;
+
 
 CREATE TABLE IF NOT EXISTS service."ServiceTypeModule"
 (

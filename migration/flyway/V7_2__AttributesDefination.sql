@@ -2,6 +2,13 @@ DROP TABLE IF EXISTS service."AttributesDefinition" CASCADE;
 
 CREATE SEQUENCE IF NOT EXISTS service."AttributesDefinition_attributesDefinitionID_seq";
 
+ALTER SEQUENCE service."AttributesDefinition_attributesDefinitionID_seq"
+    OWNER TO pcdb_admin;
+
+GRANT ALL ON SEQUENCE service."AttributesDefinition_attributesDefinitionID_seq" TO pcdb_admin;
+
+GRANT ALL ON SEQUENCE service."AttributesDefinition_attributesDefinitionID_seq" TO pcdb_dml;
+
 DROP TYPE IF EXISTS service."enum_AttributesDefinition_categoryName";
 
 CREATE TYPE service."enum_AttributesDefinition_categoryName" AS ENUM ('MEASURE');
