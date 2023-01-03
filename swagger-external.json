@@ -1,0 +1,113 @@
+{
+	"openapi": "3.0.0",
+	"info": {
+		"version": "1.0.0",
+		"title": "External Base Service APIs",
+		"description": "External APIs for product partners",
+		"license": {
+			"name": "MIT",
+			"url": "https://opensource.org/licenses/MIT"
+		}
+	},
+	"servers": [
+		{
+			"url": "/",
+			"description": "Local Dev"
+		}
+	],
+	"tags": [
+		{
+			"name": "BaseService",
+			"description": "API for Services in the system"
+		}
+	],
+	"security": [
+		{
+		   "bearerAuth": []
+		}
+	],
+	"paths": {
+        "/service/external/{serviceID}/modules": {
+            "post": {
+                "tags": ["Base Service"],
+                "summary": "Module configuration for base service",
+                "parameters": [
+                    {
+                        "name": "serviceID",
+                        "in": "path",
+                        "description": "Service ID for the base service",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "base service",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SaveBaseServiceInfo"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "base service attributes added",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AddBaseServiceAttributesResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+       
+    },
+    "components": {
+        "securitySchemes": {
+			"bearerAuth": {
+			  "type": "http",
+			  "scheme": "bearer",
+			  "bearerFormat": "JWT"
+			}
+		  },
+        "schemas": {
+            "SaveBaseServiceInfo": {
+                "type": "object",
+                "properties": {
+                    "moduleVersion": {
+                        "type": "integer",
+                        "description": "represents specific version of the base service"
+                    },
+                    "modules" : {
+                        "type": "number",
+                        "description": "represents specific modules of the base service"
+                    }
+                }
+            },
+            "AddBaseServiceAttributesResponse": {
+                "type": "object",
+                "properties": {
+                    "modules": {
+                        "type": "number",
+                        "description": "represents specific modules of the base service"
+                    },
+                    "moduleVersion": {
+                        "type": "integer",
+                        "description": "represents specific version of the base service"
+                    },
+                    "message" : {
+                        "type": "string",
+                        "description": "success message"
+                    }
+                }
+            }
+        }
+    }
+}
