@@ -27,7 +27,7 @@
 		}
 	],
 	"paths": {
-        "/service/external/{serviceID}/modules": {
+        "/service/external/{serviceID}/module/:moduleID": {
             "post": {
                 "tags": ["Base Service"],
                 "summary": "Module configuration for base service",
@@ -36,6 +36,15 @@
                         "name": "serviceID",
                         "in": "path",
                         "description": "Service ID for the base service",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "moduleID",
+                        "in": "path",
+                        "description": "moduleID",
                         "required": true,
                         "schema": {
                             "type": "string"
@@ -84,17 +93,13 @@
                     "moduleVersion": {
                         "type": "integer",
                         "description": "represents specific version of the base service"
-                    },
-                    "modules" : {
-                        "type": "number",
-                        "description": "represents specific modules of the base service"
                     }
                 }
             },
             "AddBaseServiceAttributesResponse": {
                 "type": "object",
                 "properties": {
-                    "modules": {
+                    "moduleID": {
                         "type": "number",
                         "description": "represents specific modules of the base service"
                     },

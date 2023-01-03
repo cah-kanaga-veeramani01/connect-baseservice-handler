@@ -17,22 +17,23 @@ export const updateModuleConfig = {
 				serviceID: {
 					type: 'string',
 					pattern: '^[0-9]+$'
+				},
+				moduleID: {
+					type: 'string',
+					pattern: '^[0-9]+$'
 				}
 			},
 			additionalProperties: false,
-			required: ['serviceID']
+			required: ['serviceID', 'moduleID']
 		},
 		body: {
 			type: 'object',
 			properties: {
 				moduleVersion: {
 					type: 'number'
-				},
-				modules: {
-					type: 'number'
 				}
 			},
-			required: ['modules']
+			required: ['moduleVersion']
 		}
 	},
 	required: ['body']

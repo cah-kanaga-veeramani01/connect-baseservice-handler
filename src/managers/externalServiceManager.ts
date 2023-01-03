@@ -14,29 +14,29 @@ export default class externalServiceManager {
 	 * @function post
 	 * @async
 	 * @param {number} serviceID -  serviceID of for the service moduleConfig
-	 * @param {number} modules -  modules that containing the moduleID in the serviceModuleConfig
+	 * @param {number} moduleID -  containing the moduleID in the serviceModuleConfig
 	 * @param {number} moduleVersion - moduleVersion is same as globalServiceVersion of the service
 	 */
-	async addModuleConfig(serviceID: number, moduleVersion: number, modules: number) {
+	async addModuleConfig(serviceID: number, moduleVersion: number, moduleID: number) {
 		try {
-			logger.nonPhi.debug('AddModuleConfig API invoked with following parameters', { serviceID, moduleVersion, modules });
+			logger.nonPhi.debug('AddModuleConfig API invoked with following parameters', { serviceID, moduleVersion, moduleID });
 			const serviceDetails: any = await this.serviceRepository.findOne({ where: { serviceID, globalServiceVersion: moduleVersion } });
 			if (!serviceDetails) {
 				throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
 			}
 			const configCount = await db.query(QCheckConfigCount, {
-				replacements: { serviceID: serviceID, moduleID: modules },
+				replacements: { serviceID: serviceID, moduleID },
 				type: QueryTypes.SELECT
 			});
 			if (Number(configCount[0].count) > 0) {
 				await db.query(QUpdateModuleConfig, {
-					replacements: { serviceID, moduleID: modules, moduleVersion },
+					replacements: { serviceID, moduleID, moduleVersion },
 					type: QueryTypes.UPDATE,
 					raw: true
 				});
 			} else {
 				await db.query(QAddModuleConfig, {
-					replacements: { serviceID, moduleID: modules, moduleVersion },
+					replacements: { serviceID, moduleID, moduleVersion },
 					type: QueryTypes.INSERT,
 					raw: true
 				});

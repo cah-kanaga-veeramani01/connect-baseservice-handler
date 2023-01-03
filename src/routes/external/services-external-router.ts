@@ -13,4 +13,8 @@ const externalController = new externalServiceController(new externalServiceMana
 	SERVICE_API_CREATE = process.env.SERVICE_CREATE_ROLE;
 export const ServicesExternalRouter = Router({ mergeParams: true });
 
-ServicesExternalRouter.route('/:serviceID/modules').post(keycloak.protect(SERVICE_API_CREATE), validateRequest(updateModuleConfig), externalController.addModuleConfig.bind(externalController));
+ServicesExternalRouter.route('/:serviceID/module/:moduleID').post(
+	keycloak.protect(SERVICE_API_CREATE),
+	validateRequest(updateModuleConfig),
+	externalController.addModuleConfig.bind(externalController)
+);
