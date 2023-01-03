@@ -148,3 +148,28 @@ export const updateModuleconfig = {
 	},
 	required: ['body']
 };
+
+export const getModuleEntriesSchema = {
+	$schema: definedSchema,
+	$id: 'http://cardinal-domain.com/schema/service-config/get-missingModuleEntry-details.json',
+	title: 'Request Parameters for get module entries detail API',
+	description: 'This is a schema for get module entries detail request api.',
+	type: 'object',
+	properties: {
+		query: {
+			type: 'object',
+			properties: {
+				serviceID: {
+					type: 'string',
+					pattern: '^[0-9]+$'
+				},
+				globalServiceVersion: {
+					type: 'string',
+					pattern: '^[0-9]+$'
+				}
+			},
+			additionalProperties: false,
+			required: ['serviceID', 'globalServiceVersion']
+		}
+	}
+};

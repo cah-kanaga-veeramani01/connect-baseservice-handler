@@ -1,7 +1,7 @@
 import { Repository } from 'sequelize-typescript';
 import { Service } from '../../database/models/Service';
 import { serviceList, EMPTY_STRING } from '../../utils/constants';
-import { QServiceList, QServiceDetails, QAddModuleConfig, QCheckConfigCount, QUpdateModuleConfig } from '../../database/queries/service';
+import { QServiceList, QServiceDetails, QAddModuleConfig, QCheckConfigCount, QUpdateModuleConfig, QMissingModules, QServiceActiveOrInActive } from '../../database/queries/service';
 import { QueryTypes } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
 import { IService, ServiceListResponse } from '../interfaces/IServices';
@@ -186,6 +186,40 @@ export default class ServiceManager {
 			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceModuleUpdateError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+
+	async getMissingModules(serviceID: number, globalServiceVersion: number) {
+		try {
+			console.log('hiii-----', serviceID, globalServiceVersion);
+			const serviceDetails: any = await this.serviceRepository.findOne({ where: { serviceID, globalServiceVersion } });
+			if (!serviceDetails) {
+				throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
+			}
+			let missingModules;
+			console.log('missing modules', missingModules);
+
+			const activeOrInActiveService = await db.query(QServiceActiveOrInActive, {
+				replacements: { serviceID: serviceID },
+				type: QueryTypes.SELECT,
+				raw: true
+			});
+			console.log('activeOrInActiveService====', activeOrInActiveService);
+			if (activeOrInActiveService.length > 0) {
+				missingModules = [];
+			} else {
+				missingModules = await db.query(QMissingModules, {
+					replacements: { serviceID: serviceID, globalServiceVersion: globalServiceVersion },
+					type: QueryTypes.SELECT,
+					raw: true
+				});
+				console.log('missing modules', missingModules);
+			}
+			return { serviceID, globalServiceVersion, missingModules };
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'ModuleConfigFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
 }
