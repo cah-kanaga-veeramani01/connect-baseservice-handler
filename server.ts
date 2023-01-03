@@ -1,4 +1,4 @@
-import express, { Express, NextFunction, Request, Response } from 'express';
+import express, { Application, NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -13,15 +13,15 @@ import { initKeyclock } from './config/keycloak-config';
 import session from 'express-session';
 import swaggerUi from 'swagger-ui-express';
 import * as swaggerDocument from './swagger.json';
+import * as swaggerExternalDocument from './swagger-external.json';
 
 const memoryStore = new session.MemoryStore(),
-	keycloak = initKeyclock(memoryStore);
+	keycloak = initKeyclock(memoryStore),
+	PORT = Number(process.env.PORT) || 5000,
+	app: Application = express();
 
 import { ExternalRouterManager } from './src/routes/external/external-router-manager';
 dotenv.config();
-
-const PORT = Number(process.env.PORT) || 5000,
-	app: Express = express();
 
 app.use(
 	session({
@@ -57,7 +57,7 @@ app.use(express.json());
 app.use(httpContext.middleware);
 app.use(contextStore);
 app.use(generateLogId);
-app.use(/\/((?!swagger).)*/, auth); // authenticate every route except /swagger
+app.use(/^((?!external|swagger).)*$/i, auth); // authenticate every route except /swagger
 app.use(/(.*\/internal.*)/i, auth); // authenticate all internal APIs
 
 app.get('/', (req: Request, res: Response) => {
@@ -67,21 +67,22 @@ app.get('/', (req: Request, res: Response) => {
 /**
  * Swagger route
  */
+var swaggerOptions = {};
+app.use('/external-swagger', swaggerUi.serveFiles(swaggerExternalDocument, swaggerOptions), swaggerUi.setup(swaggerExternalDocument));
 app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // keycloak-adapter middleware
 app.use(keycloak.middleware());
+app.use('/service', ExternalRouterManager);
+app.use(csurf({ cookie: true }));
 
 app.use('/service/internal', InternalRouterManager);
 
-app.use(csurf({ cookie: true }));
 // set csrf token in the cookie
 app.get('/csrf', (req, res) => {
 	res.cookie('XSRF-TOKEN', req.csrfToken());
 	res.status(200).json({ success: true });
 });
-
-app.use('/service', ExternalRouterManager);
 
 /**
  * NotFound Route
@@ -90,4 +91,4 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 	next(new HandleError({ name: 'NotFound', message: 'You have landed on an incorrect route.', stack: 'Not Found', errorStatus: 404 }));
 });
 app.use(errorHandler);
-app.listen(PORT);
+app.listen(PORT, () => process.stdout.write(`Base Service config server started at ${PORT}`));
