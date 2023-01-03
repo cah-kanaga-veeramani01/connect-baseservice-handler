@@ -1,15 +1,16 @@
 import { Router } from 'express';
-// import ServiceController from '../../controllers/ServiceController';
-// import { validateRequest } from '../../middleware';
-// import ServiceManager from '../../managers/ServiceManager';
-// import db from '../../../database/DBManager';
-// import { Service } from '../../../database/models/Service';
-// import { ServiceType } from '../../../database/models/ServiceType';
-// import { getKeycloak } from '../../../config/keycloak-config';
+import externalServiceController from '../../controllers/externalServiceController';
+import { validateRequest } from '../../middleware';
+import externalServiceManager from '../../managers/externalServiceManager';
+import db from '../../../database/DBManager';
+import { getKeycloak } from '../../../config/keycloak-config';
+import { updateModuleConfig } from '../../models/externalSchema';
+import { Service } from '../../../database/models/Service';
+import { ServiceModuleConfig } from '../../../database/models/ServiceModuleConfig';
 
-// const serviceController = new ServiceController(new ServiceManager(db.getRepository(Service)), db.getRepository(ServiceType))),
-// 	keycloak = getKeycloak(),
-// 	SERVICE_API_READ = process.env.SERVICE_READ_ROLE;
+const externalController = new externalServiceController(new externalServiceManager(db.getRepository(Service), db.getRepository(ServiceModuleConfig))),
+	keycloak = getKeycloak(),
+	SERVICE_API_CREATE = process.env.SERVICE_CREATE_ROLE;
 export const ServicesExternalRouter = Router({ mergeParams: true });
 
-// ServicesExternalRouter.route('/test').get(keycloak.protect(SERVICE_API_READ), validateRequest(testSchema), serviceController.test.bind(serviceController));
+ServicesExternalRouter.route('/:serviceID/modules').post(keycloak.protect(SERVICE_API_CREATE), validateRequest(updateModuleConfig), externalController.addModuleConfig.bind(externalController));
