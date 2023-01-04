@@ -258,3 +258,54 @@ describe('Update module version', () => {
 		}
 	});
 });
+
+describe('Get module entries', () => {
+	test('retun the missing modules', async () => {
+		jest.spyOn(serviceManager, 'getMissingModules').mockImplementation((): any => {
+			return Promise.resolve({
+				"serviceID": 1,
+				"globalServiceVersion": 1,
+				"missingModules": []
+			});
+		});
+		const req = mocks.createRequest({
+				method: 'GET',
+				url: '/unmappedModules',
+				query: {
+					serviceID: 1,
+					globalServiceVersion: 1,
+				}
+			}),
+			res = mocks.createResponse(),
+			next = jest.fn();
+
+		await serviceController.getModuleEntries(req, res, next);
+		expect(res._getData()).toMatchObject({
+			"serviceID": 1,
+			"globalServiceVersion": 1,
+			"missingModules": []
+		});
+	});
+
+	test('should return error', async () => {
+		jest.spyOn(serviceManager, 'getMissingModules').mockImplementation(() => {
+			return Promise.reject(new Error());
+		});
+		const req = mocks.createRequest({
+				method: 'GET',
+				url: '/unmappedModules',
+				query: {
+					serviceID: 1345,
+					globalServiceVersion: 1,
+				}
+			}),
+			res = mocks.createResponse(),
+			next = jest.fn();
+
+		try {
+			await serviceController.getModuleEntries(req, res, next);
+		} catch (error) {
+			expect(error.name).toBe('ModuleConfigFetchError');
+		}
+	});
+});
