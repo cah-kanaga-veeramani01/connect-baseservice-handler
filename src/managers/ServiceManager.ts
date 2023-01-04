@@ -151,19 +151,9 @@ export default class ServiceManager {
 	async addModuleConfig(serviceID: number, moduleVersion: number, modules: number) {
 		try {
 			logger.nonPhi.debug('AddModuleConfig API invoked with following parameters', { serviceID, moduleVersion, modules });
-			const params: any = { serviceID: serviceID };
-			if ((await this.serviceRepository.count({ where: params })) === 0) {
+			const serviceDetails: any = await this.serviceRepository.findOne({ where: { serviceID, globalServiceVersion: moduleVersion } });
+			if (!serviceDetails) {
 				throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
-			}
-			if (moduleVersion) params.globalServiceVersion = moduleVersion;
-
-			if ((await this.serviceRepository.count({ where: params })) === 0) {
-				throw new HandleError({
-					name: 'ServiceModuleVersionDoesNotExist',
-					message: 'service Module Version does not exist',
-					stack: 'service Module Version does not exist',
-					errorStatus: HTTP_STATUS_CODES.notFound
-				});
 			}
 			const configCount = await db.query(QCheckConfigCount, {
 				replacements: { serviceID: serviceID, moduleID: modules },
@@ -191,20 +181,18 @@ export default class ServiceManager {
 
 	async getMissingModules(serviceID: number, globalServiceVersion: number) {
 		try {
-			console.log('hiii-----', serviceID, globalServiceVersion);
+			logger.nonPhi.debug('GetModuleEntry API invoked with following parameters', { serviceID, globalServiceVersion });
 			const serviceDetails: any = await this.serviceRepository.findOne({ where: { serviceID, globalServiceVersion } });
 			if (!serviceDetails) {
 				throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
 			}
 			let missingModules;
-			console.log('missing modules', missingModules);
 
 			const activeOrInActiveService = await db.query(QServiceActiveOrInActive, {
 				replacements: { serviceID: serviceID },
 				type: QueryTypes.SELECT,
 				raw: true
 			});
-			console.log('activeOrInActiveService====', activeOrInActiveService);
 			if (activeOrInActiveService.length > 0) {
 				missingModules = [];
 			} else {
@@ -213,7 +201,6 @@ export default class ServiceManager {
 					type: QueryTypes.SELECT,
 					raw: true
 				});
-				console.log('missing modules', missingModules);
 			}
 			return { serviceID, globalServiceVersion, missingModules };
 		} catch (error: any) {
