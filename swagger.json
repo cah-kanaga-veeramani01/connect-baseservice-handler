@@ -70,7 +70,54 @@
                     }
                 }
             }
-        }
+        },
+        "/service/internal/unmappedModules": {
+			"get": {
+				"tags": ["Programs"],
+				"summary": "Get all unmapped modules in base service",
+				"parameters": [
+					{
+						"name": "serviceID",
+						"in": "query",
+						"description": "used to identify the services in base services",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "globalServiceVersion",
+						"in": "query",
+						"description": "used to identify the global program version of base service",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+                    {
+						"name": "cookies",
+						"in": "header",
+						"description": "cookies for authentication",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "List of unmapped modules for base service",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnmappedModules"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
        
     },
     "components": {
@@ -104,7 +151,36 @@
                         "description": "success message"
                     }
                 }
-            }
+            },
+            "UnmappedModules": {
+				"type": "object",
+				"properties": {
+					"serviceID": {
+						"type": "integer",
+						"description": "Unique id of the base service"
+					},
+					"globalServiceVersion": {
+						"type": "integer",
+						"description": "represents specific version of the base service"
+					},
+                    "missingModules" : {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "moduleID": {
+                                    "type": "integer",
+                                    "description": "Unique modules of the base service"
+                                },
+                                "moduleName": {
+                                    "type": "string",
+                                    "description": "Name of the modules in base service"
+                                }
+                            }
+                        }
+                    }	
+				}
+			}
         }
     }
 }

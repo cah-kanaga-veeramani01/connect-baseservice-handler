@@ -67,3 +67,10 @@ WHERE ("ServiceModuleConfig"."serviceID" = :serviceID AND "moduleID" = :moduleID
 export const QAddModuleConfig = `INSERT INTO service."ServiceModuleConfig"(
 	"serviceID", "moduleID", "moduleVersion", status)
 	VALUES (:serviceID, :moduleID, :moduleVersion, null)`;
+
+export const QMissingModules = `SELECT "Modules"."moduleID", "Modules"."moduleName" FROM service."Modules" WHERE "Modules"."moduleID" NOT IN 
+	(SELECT "ServiceModuleConfig"."moduleID" FROM service."ServiceModuleConfig" WHERE  "ServiceModuleConfig"."moduleID" = "Modules"."moduleID" AND  "ServiceModuleConfig"."serviceID" = :serviceID AND "ServiceModuleConfig"."moduleVersion" = :globalServiceVersion)
+	AND "Modules"."isMandatory" = true`;
+
+export const QServiceActiveOrInActive =
+	'SELECT "globalServiceVersion" FROM service."Service" WHERE "serviceID" = :serviceID AND "isPublished" = 1 and ((("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW()) OR ("validTill" IS NOT NULL and "validTill" < NOW()));';

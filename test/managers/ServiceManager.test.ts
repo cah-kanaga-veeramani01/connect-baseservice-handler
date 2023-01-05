@@ -60,6 +60,13 @@ const mockServiceModuleConfigRepo: Repository<ServiceModuleConfig> = {
 			moduleVersion: 1
 		});
 	}),
+	create: jest.fn().mockImplementation(() => {
+		return Promise.resolve({
+			serviceID: 1,
+			moduleID: 1,
+			moduleVersion: 1
+		});
+	}),
 	update: jest.fn().mockImplementation(() => {
 		return Promise.resolve(1);
 	})
@@ -261,4 +268,83 @@ describe('Update module Version', () => {
 			expect(error.name).toBe('ServiceDoesntExist');
 		}
 	});
+
+	test('Update module version', async () => {
+		const updateSpy = jest.spyOn(mockServiceModuleConfigRepo, 'update');
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNewDraft,mockServiceTypeRepository,mockServiceModuleConfigRepo);
+		db.query = () => {
+			return [ { count: '1' } ];
+		};
+		await serviceManager.addModuleConfig(1, 2, 1);
+		expect(updateSpy).toBeCalledTimes(0);
+	});
+
+	test('Create module version', async () => {
+		const updateSpy = jest.spyOn(mockServiceModuleConfigRepoForInsert, 'create');
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNewDraft,mockServiceTypeRepository,mockServiceModuleConfigRepoForInsert);
+		db.query = () => {
+			return [ { count: '0' } ];
+		};
+		await serviceManager.addModuleConfig(2, 1, 1);
+		expect(updateSpy).toBeCalledTimes(0);
+	});
+});
+
+describe('Get module entries', () => {
+	test('service does not exist error', async () => {
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNoService, mockServiceTypeRepository,mockServiceModuleConfigRepo);
+		try {
+			await serviceManager.getMissingModules(1,1);
+		} catch (error: any) {
+			expect(error.name).toBe('ServiceDoesntExist');
+		}
+	});
+
+	test('should return empty result', async () => {
+		db.query = () => {
+			return [ { globalServiceVersion: 1 } ];
+		};
+		expect(await serviceManager.getMissingModules(1,1)).toMatchObject({
+			"serviceID": 1,
+			"globalServiceVersion": 1,
+			"missingModules": []
+		}
+		);
+	});
+
+
+	test('should return missing modules', async () => {
+		try {
+			db.query = () => {
+				return [];
+			};
+			expect(serviceManager.getMissingModules(1,1)).toMatchObject({
+				"serviceID": 1345,
+				"globalServiceVersion": 1,
+				"missingModules": [
+					{
+						"moduleID": 1,
+						"moduleName": "Base Service Info                                                                                   "
+					}
+				]
+			}
+			);
+		} catch (error: any) {}
+	});
+
+	test('Program module update error', async () => {
+		let obj = new ServiceManager(mockServiceRepositoryNewDraft,mockServiceTypeRepository,mockServiceModuleConfigRepoForInsert);
+		db.query = () => {
+			{
+			  throw new Error();
+			};
+		};
+
+		try {
+		  expect(await obj.getMissingModules(1, 1))
+		  } catch (error: any) {
+		  expect(error.name).toEqual('ModuleConfigFetchError');
+		}
+	  });
+
 });
