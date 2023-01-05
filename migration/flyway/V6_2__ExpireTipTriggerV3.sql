@@ -26,9 +26,9 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 DROP TRIGGER IF EXISTS EXPIRE_TIP
-ON "attunityservice"."TipDetailRule";
+ON "attunityservice"."TIPDetailRule";
 
 CREATE TRIGGER EXPIRE_TIP 
-AFTER UPDATE ON "attunityservice"."TipDetailRule"
+AFTER UPDATE ON "attunityservice"."TIPDetailRule"
 FOR EACH ROW
 EXECUTE PROCEDURE EXPIRE_TIP();

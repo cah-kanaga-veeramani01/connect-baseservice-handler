@@ -5,6 +5,13 @@ const configs = {
 	supportedLanguages: [enums.language.en, enums.language.es],
 	language: enums.language.en,
 	defaultErrorMessage: 'Sorry, an error occurred',
+	service: {
+		updateModules: {
+			success: {
+				message: 'Module Configuration updated successfully'
+			},
+		},
+	},
 	userEditRoles: ['Client Services', 'Clinical Services/QA'],
 	userReadRoles: ['Finance', 'Director/Manager', 'Marketing', 'Network Performance', 'Patient Engagement Team', 'Program Performance', 'Provider Resources']
 };

@@ -49,3 +49,18 @@ ServiceDraftFetchError:
   code: 'SCE015'
   EN:
     message: 'Error while fetching draft version.'
+
+ServiceModuleVersionDoesNotExist:
+  code: "SCE016"
+  EN:
+    message: "service Module Version does not exist."
+
+ServiceModuleUpdateError:
+  code: "SCE017"
+  EN:
+    message: "An error occurred while updating modules for the service."
+
+ModuleConfigFetchError:
+  code: "SCE018"
+  EN:
+    message: "An error occurred while fetching the modules for the service."

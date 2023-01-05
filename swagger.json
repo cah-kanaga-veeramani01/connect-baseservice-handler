@@ -1,0 +1,186 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "Connect base service handler",
+        "description": "Backend app for the base service application",
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        }
+    },
+    "servers": [
+        {
+            "url": "/",
+            "description": "Local Dev"
+        }
+    ],
+    "tags": [
+        {
+            "name": "Base service",
+            "description": "API for base service in the system"
+        }
+    ],
+    "paths": {
+        "/service/internal/{serviceID}/modules": {
+            "post": {
+                "tags": ["Base Service"],
+                "summary": "Module configuration for base service",
+                "parameters": [
+                    {
+                        "name": "cookie",
+                        "in": "header",
+                        "description": "cookies for authentication",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "serviceID",
+                        "in": "path",
+                        "description": "Service ID for the base service",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "base service",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SaveBaseServiceInfo"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "base service attributes added",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AddBaseServiceAttributesResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/service/internal/unmappedModules": {
+			"get": {
+				"tags": ["Programs"],
+				"summary": "Get all unmapped modules in base service",
+				"parameters": [
+					{
+						"name": "serviceID",
+						"in": "query",
+						"description": "used to identify the services in base services",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "globalServiceVersion",
+						"in": "query",
+						"description": "used to identify the global program version of base service",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+                    {
+						"name": "cookies",
+						"in": "header",
+						"description": "cookies for authentication",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "List of unmapped modules for base service",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UnmappedModules"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+       
+    },
+    "components": {
+        "schemas": {
+            "SaveBaseServiceInfo": {
+                "type": "object",
+                "properties": {
+                    "moduleVersion": {
+                        "type": "integer",
+                        "description": "represents specific version of the base service"
+                    },
+                    "modules" : {
+                        "type": "number",
+                        "description": "represents specific modules of the base service"
+                    }
+                }
+            },
+            "AddBaseServiceAttributesResponse": {
+                "type": "object",
+                "properties": {
+                    "modules": {
+                        "type": "number",
+                        "description": "represents specific modules of the base service"
+                    },
+                    "moduleVersion": {
+                        "type": "integer",
+                        "description": "represents specific version of the base service"
+                    },
+                    "message" : {
+                        "type": "string",
+                        "description": "success message"
+                    }
+                }
+            },
+            "UnmappedModules": {
+				"type": "object",
+				"properties": {
+					"serviceID": {
+						"type": "integer",
+						"description": "Unique id of the base service"
+					},
+					"globalServiceVersion": {
+						"type": "integer",
+						"description": "represents specific version of the base service"
+					},
+                    "missingModules" : {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "moduleID": {
+                                    "type": "integer",
+                                    "description": "Unique modules of the base service"
+                                },
+                                "moduleName": {
+                                    "type": "string",
+                                    "description": "Name of the modules in base service"
+                                }
+                            }
+                        }
+                    }	
+				}
+			}
+        }
+    }
+}

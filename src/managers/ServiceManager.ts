@@ -1,16 +1,17 @@
 import { Repository } from 'sequelize-typescript';
 import { Service } from '../../database/models/Service';
 import { serviceList, EMPTY_STRING } from '../../utils/constants';
-import { QServiceList, QServiceDetails } from '../../database/queries/service';
+import { QServiceList, QServiceDetails, QAddModuleConfig, QCheckConfigCount, QUpdateModuleConfig, QMissingModules, QServiceActiveOrInActive } from '../../database/queries/service';
 import { QueryTypes } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
 import { IService, ServiceListResponse } from '../interfaces/IServices';
 import db from '../../database/DBManager';
 import httpContext from 'express-http-context';
 import { ServiceType } from '../../database/models/ServiceType';
+import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
 
 export default class ServiceManager {
-	constructor(public serviceRepository: Repository<Service>, public serviceTypeRepository: Repository<ServiceType>) {}
+	constructor(public serviceRepository: Repository<Service>, public serviceTypeRepository: Repository<ServiceType>, public ServiceModuleConfigRepository: Repository<ServiceModuleConfig>) {}
 
 	public async createService(servicePayload: IService) {
 		try {
@@ -136,6 +137,76 @@ export default class ServiceManager {
 			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceDraftFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+
+	/**
+	 * Function to update moduleID and version of the service
+	 * @function post
+	 * @async
+	 * @param {number} serviceID -  serviceID of for the service moduleConfig
+	 * @param {number} modules -  modules that containing the moduleID in the serviceModuleConfig
+	 * @param {number} moduleVersion - moduleVersion is same as globalServiceVersion of the service
+	 */
+	async addModuleConfig(serviceID: number, moduleVersion: number, modules: number) {
+		try {
+			logger.nonPhi.debug('AddModuleConfig API invoked with following parameters', { serviceID, moduleVersion, modules });
+			const serviceDetails: any = await this.serviceRepository.findOne({ where: { serviceID, globalServiceVersion: moduleVersion } });
+			if (!serviceDetails) {
+				throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
+			}
+			const configCount = await db.query(QCheckConfigCount, {
+				replacements: { serviceID: serviceID, moduleID: modules },
+				type: QueryTypes.SELECT
+			});
+			if (Number(configCount[0].count) > 0) {
+				await db.query(QUpdateModuleConfig, {
+					replacements: { serviceID, moduleID: modules, moduleVersion },
+					type: QueryTypes.UPDATE,
+					raw: true
+				});
+			} else {
+				await db.query(QAddModuleConfig, {
+					replacements: { serviceID, moduleID: modules, moduleVersion },
+					type: QueryTypes.INSERT,
+					raw: true
+				});
+			}
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'ServiceModuleUpdateError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+
+	async getMissingModules(serviceID: number, globalServiceVersion: number) {
+		try {
+			logger.nonPhi.debug('GetModuleEntry API invoked with following parameters', { serviceID, globalServiceVersion });
+			const serviceDetails: any = await this.serviceRepository.findOne({ where: { serviceID, globalServiceVersion } });
+			if (!serviceDetails) {
+				throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
+			}
+			let missingModules;
+
+			const activeOrInActiveService = await db.query(QServiceActiveOrInActive, {
+				replacements: { serviceID: serviceID },
+				type: QueryTypes.SELECT,
+				raw: true
+			});
+			if (activeOrInActiveService.length > 0) {
+				missingModules = [];
+			} else {
+				missingModules = await db.query(QMissingModules, {
+					replacements: { serviceID: serviceID, globalServiceVersion: globalServiceVersion },
+					type: QueryTypes.SELECT,
+					raw: true
+				});
+			}
+			return { serviceID, globalServiceVersion, missingModules };
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'ModuleConfigFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
 }

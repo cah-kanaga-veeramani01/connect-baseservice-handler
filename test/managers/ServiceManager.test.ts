@@ -4,8 +4,10 @@ import { ServiceType } from '../../database/models/ServiceType';
 import ServiceManager from '../../src/managers/ServiceManager';
 import { createServicesResponse, servicePayload } from '../../test/TestData';
 import db from '../../database/DBManager';
+import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
+import { count } from 'console';
 
-const serviceManager = new ServiceManager(db.getRepository(Service), db.getRepository(ServiceType));
+const serviceManager = new ServiceManager(db.getRepository(Service), db.getRepository(ServiceType), db.getRepository(ServiceModuleConfig));
 
 const mockServiceTypeRepository: Repository<ServiceType> = {
 	findOne: jest.fn().mockImplementation(() => {
@@ -40,6 +42,49 @@ const mockServiceRepositoryNewDraft: Repository<Service> = {
 	})
 };
 
+const mockServiceRepositoryNoService: Repository<Service> = {
+	count: jest.fn().mockReturnValue(0),
+	findOne: jest.fn().mockImplementation(() => {
+		return Promise.resolve();
+	})
+};
+
+const mockServiceModuleConfigRepo: Repository<ServiceModuleConfig> = {
+	findAll: jest.fn().mockImplementation(() => {
+		return Promise.resolve('');
+	}),
+	findOne: jest.fn().mockImplementation(() => {
+		return Promise.resolve({
+			serviceID: 1,
+			moduleID: 1,
+			moduleVersion: 1
+		});
+	}),
+	create: jest.fn().mockImplementation(() => {
+		return Promise.resolve({
+			serviceID: 1,
+			moduleID: 1,
+			moduleVersion: 1
+		});
+	}),
+	update: jest.fn().mockImplementation(() => {
+		return Promise.resolve(1);
+	})
+};
+
+const mockServiceModuleConfigRepoForInsert: Repository<ServiceModuleConfig> = {
+	findOne: jest.fn().mockImplementation(() => {
+		return Promise.resolve(null);
+	}),
+	create: jest.fn().mockImplementation(() => {
+		return Promise.resolve({
+			serviceID: 1,
+			moduleID: 1,
+			moduleVersion: 1
+		});
+	})
+};
+
 describe('Create Service', () => {
 	// test('should create a service successfully ', async () => {
 	// 	const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTypeRepository);
@@ -47,7 +92,7 @@ describe('Create Service', () => {
 	// });
 
 	test('should fail to create a service ', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTypeRepository);
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTypeRepository,mockServiceModuleConfigRepo);
 		try {
 			await serviceManager.createService(servicePayload);
 		} catch (error) {
@@ -57,7 +102,7 @@ describe('Create Service', () => {
 	});
 
 	test('should fail to create a duplicate service ', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockService_duplicate_error_repo, mockServiceTypeRepository);
+		const serviceManager: ServiceManager = new ServiceManager(mockService_duplicate_error_repo, mockServiceTypeRepository,mockServiceModuleConfigRepo);
 		try {
 			await serviceManager.createService(servicePayload);
 		} catch (error) {
@@ -174,7 +219,7 @@ describe('get list of services', () => {
 
 describe('Create draft', () => {
 	test('service does not exist error', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTypeRepository);
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTypeRepository,mockServiceModuleConfigRepo);
 		try {
 			await serviceManager.createDraft(11);
 		} catch (error: any) {
@@ -183,7 +228,7 @@ describe('Create draft', () => {
 	});
 
 	test('draft already exists', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNewDraft, mockServiceTypeRepository);
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNewDraft, mockServiceTypeRepository,mockServiceModuleConfigRepo);
 		try {
 			db.query = () => {
 				return [
@@ -205,11 +250,101 @@ describe('Create draft', () => {
 	});
 
 	test('throw error', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTypeRepository);
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTypeRepository,mockServiceModuleConfigRepo);
 		try {
 			await serviceManager.createDraft(11);
 		} catch (error: any) {
 			expect(error.name).toBe('ServiceDraftFetchError');
 		}
 	});
+});
+
+describe('Update module Version', () => {
+	test('service does not exist error', async () => {
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNoService, mockServiceTypeRepository,mockServiceModuleConfigRepo);
+		try {
+			await serviceManager.addModuleConfig(1,1,1);
+		} catch (error: any) {
+			expect(error.name).toBe('ServiceDoesntExist');
+		}
+	});
+
+	test('Update module version', async () => {
+		const updateSpy = jest.spyOn(mockServiceModuleConfigRepo, 'update');
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNewDraft,mockServiceTypeRepository,mockServiceModuleConfigRepo);
+		db.query = () => {
+			return [ { count: '1' } ];
+		};
+		await serviceManager.addModuleConfig(1, 2, 1);
+		expect(updateSpy).toBeCalledTimes(0);
+	});
+
+	test('Create module version', async () => {
+		const updateSpy = jest.spyOn(mockServiceModuleConfigRepoForInsert, 'create');
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNewDraft,mockServiceTypeRepository,mockServiceModuleConfigRepoForInsert);
+		db.query = () => {
+			return [ { count: '0' } ];
+		};
+		await serviceManager.addModuleConfig(2, 1, 1);
+		expect(updateSpy).toBeCalledTimes(0);
+	});
+});
+
+describe('Get module entries', () => {
+	test('service does not exist error', async () => {
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNoService, mockServiceTypeRepository,mockServiceModuleConfigRepo);
+		try {
+			await serviceManager.getMissingModules(1,1);
+		} catch (error: any) {
+			expect(error.name).toBe('ServiceDoesntExist');
+		}
+	});
+
+	test('should return empty result', async () => {
+		db.query = () => {
+			return [ { globalServiceVersion: 1 } ];
+		};
+		expect(await serviceManager.getMissingModules(1,1)).toMatchObject({
+			"serviceID": 1,
+			"globalServiceVersion": 1,
+			"missingModules": []
+		}
+		);
+	});
+
+
+	test('should return missing modules', async () => {
+		try {
+			db.query = () => {
+				return [];
+			};
+			expect(serviceManager.getMissingModules(1,1)).toMatchObject({
+				"serviceID": 1345,
+				"globalServiceVersion": 1,
+				"missingModules": [
+					{
+						"moduleID": 1,
+						"moduleName": "Base Service Info                                                                                   "
+					}
+				]
+			}
+			);
+		} catch (error: any) {}
+	});
+
+	test('Program module update error', async () => {
+		let obj = new ServiceManager(mockServiceRepositoryNewDraft,mockServiceTypeRepository,mockServiceModuleConfigRepoForInsert);
+		db.query = () => {
+			{
+			  throw new Error();
+			};
+		};
+
+		try {
+		  expect(await obj.getMissingModules(1, 1))
+		  } catch (error: any) {
+		  expect(error.name).toEqual('ModuleConfigFetchError');
+		}
+	  });
+
 });
