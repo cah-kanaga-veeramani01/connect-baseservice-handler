@@ -13,18 +13,16 @@ describe('Update module version', () => {
 	test('retun the module config version', async () => {
 		jest.spyOn(serviceManager, 'addModuleConfig').mockImplementation((): any => {
 			return Promise.resolve({
-				modules: 1,
+				moduleID: 1,
 				moduleVersion: 1,
 				message: "Module Configuration updated successfully"
 			});
 		});
 		const req = mocks.createRequest({
 				method: 'POST',
-				url: '/:serviceID/modules',
+				url: '/:serviceID/module/:moduleID',
 				body: {
-					"moduleVersion": 1,
-					"modules": 1
-				
+					"moduleVersion": 1				
 				}
 			}),
 			res = mocks.createResponse(),
@@ -32,7 +30,6 @@ describe('Update module version', () => {
 
 		await serviceController.addModuleConfig(req, res);
 		expect(res._getJSONData()).toMatchObject({
-			modules: 1,
 			moduleVersion: 1,
 			message: "Module Configuration updated successfully"
 		});
@@ -44,9 +41,9 @@ describe('Update module version', () => {
 		});
 		const req = mocks.createRequest({
 				method: 'POST',
-				url: '/:serviceID/modules',
+				url: '/:serviceID/module/:moduleID',
 				body: {
-					serviceID: 1
+					"moduleVersion": 1				
 				}
 			}),
 			res = mocks.createResponse(),

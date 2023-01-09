@@ -57,6 +57,18 @@ export default class ServiceController {
 			res.json(error.message);
 		}
 	}
+	public async getModuleEntries(req: Request, res: Response, next: NextFunction) {
+		try {
+			const serviceID = Number(req.query?.serviceID),
+				globalServiceVersion = Number(req.query?.globalServiceVersion);
+			logger.nonPhi.debug('Get serviceModule config invoked with following parameter', { serviceID, globalServiceVersion });
+			const serviceModule = await this.serviceManager.getMissingModules(serviceID, globalServiceVersion);
+			res.send(serviceModule);
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			next(error);
+		}
+	}
 
 	/**
 	 * schedule program
@@ -73,6 +85,7 @@ export default class ServiceController {
 			await this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(serviceID, globalServiceVersion, startDate, endDate, req.headers);
 			res.send(await this.serviceManager.schedule(serviceID, globalServiceVersion, startDate, endDate));
 		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
 			next(error);
 		}
 	}
