@@ -35,6 +35,7 @@ const mockService_duplicate_error_repo: Repository<Service> = {
 };
 
 const mockServiceRepositoryNewDraft: Repository<Service> = {
+	count: jest.fn().mockReturnValue(1),
 	findOne: jest.fn().mockImplementation(() => {
 		return Promise.resolve({ serviceID: 1, serviceName: 'Service A' });
 	}),
