@@ -67,3 +67,6 @@ WHERE ("ServiceModuleConfig"."serviceID" = :serviceID AND "moduleID" = :moduleID
 export const QAddModuleConfig = `INSERT INTO service."ServiceModuleConfig"(
 	"serviceID", "moduleID", "moduleVersion", status)
 	VALUES (:serviceID, :moduleID, :moduleVersion, null)`;
+
+export const QServiceActiveVersion =
+	'SELECT "globalServiceVersion" FROM service."Service" WHERE "serviceID" = :serviceID AND "isPublished" = 1 AND ("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW();';

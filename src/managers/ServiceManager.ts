@@ -1,7 +1,7 @@
 import { Repository } from 'sequelize-typescript';
 import { Service } from '../../database/models/Service';
-import { serviceList, EMPTY_STRING } from '../../utils/constants';
-import { QServiceList, QServiceDetails, QAddModuleConfig, QCheckConfigCount, QUpdateModuleConfig } from '../../database/queries/service';
+import { serviceList, EMPTY_STRING, CLIENT_TZ } from '../../utils/constants';
+import { QServiceList, QServiceDetails, QAddModuleConfig, QCheckConfigCount, QUpdateModuleConfig, QServiceActiveVersion } from '../../database/queries/service';
 import { QueryTypes } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
 import { IService, ServiceListResponse } from '../interfaces/IServices';
@@ -9,6 +9,8 @@ import db from '../../database/DBManager';
 import httpContext from 'express-http-context';
 import { ServiceType } from '../../database/models/ServiceType';
 import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
+import { endDateWithClientTZ, startDateWithClientTZ, utcToClientTZ } from '../../utils/tzFormatter';
+import moment from 'moment';
 
 export default class ServiceManager {
 	constructor(public serviceRepository: Repository<Service>, public serviceTypeRepository: Repository<ServiceType>, public ServiceModuleConfigRepository: Repository<ServiceModuleConfig>) {}
@@ -58,7 +60,7 @@ export default class ServiceManager {
 			let totalServices = [];
 			let services = [];
 			let nonFilteredServices = [];
-			// let status = statusFilter.toLowerCase() === serviceList.defaultFilterBy.toLowerCase() ? serviceList.matchAll : statusFilter;
+
 			const searchKey = keyword !== EMPTY_STRING ? serviceList.matchAll + keyword.trim() + serviceList.matchAll : serviceList.matchAll;
 			// query to get total count of services filtered by status & search key
 			totalServices = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
@@ -186,6 +188,81 @@ export default class ServiceManager {
 			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceModuleUpdateError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+	/**
+	 * Function to schedule program
+	 * @function put
+	 * @async
+	 * @param {number} serviceID - schedule for particular serviceID
+	 * @param {number} globalServiceVersion - schedule for particular serviceVersion
+	 * @returns {Promise<object>} - program schedule details
+	 */
+	async schedule(serviceID: number, globalServiceVersion: number, startDate: string, endDate: string | null): Promise<object> {
+		try {
+			const today: any = moment.tz(moment(), CLIENT_TZ).format('YYYY-MM-DD');
+			if (startDate <= today) {
+				throw new HandleError({
+					name: 'InvalidStartDate',
+					message: 'Invalid start date provided',
+					stack: 'Invalid start date provided',
+					errorStatus: HTTP_STATUS_CODES.badRequest
+				});
+			}
+
+			if (endDate && endDate < startDate) {
+				throw new HandleError({
+					name: 'InvalidEndDate',
+					message: 'Invalid end date provided',
+					stack: 'Invalid end date provided',
+					errorStatus: HTTP_STATUS_CODES.badRequest
+				});
+			}
+
+			const service = await this.serviceRepository.findOne({
+				attributes: ['serviceID', 'globalServiceVersion', 'serviceName', 'validFrom', 'validTill', 'isPublished'],
+				where: {
+					serviceID,
+					globalServiceVersion
+				},
+				raw: true
+			});
+			if (!service) throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Program does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
+
+			const existingStartDate = utcToClientTZ(service.validFrom),
+				existingEndDate = utcToClientTZ(service.validTill),
+				currentDate = moment.tz(moment(), CLIENT_TZ);
+
+			if (service.isPublished && existingStartDate && existingStartDate <= currentDate && ((existingEndDate && existingEndDate >= currentDate) || existingEndDate === null)) {
+				throw new HandleError({ name: 'ServiceIsActive', message: 'Service cannot be scheduled', stack: 'Service cannot be scheduled', errorStatus: HTTP_STATUS_CODES.badRequest });
+			}
+
+			if (service.isPublished && existingEndDate && existingEndDate < currentDate) {
+				throw new HandleError({ name: 'ServiceIsExpired', message: 'Service cannot be scheduled', stack: 'Service cannot be scheduled', errorStatus: HTTP_STATUS_CODES.badRequest });
+			}
+
+			const validTill = endDate ? endDateWithClientTZ(endDate) : null;
+			const result: any = await db.query(QServiceActiveVersion, {
+				replacements: { serviceID: serviceID },
+				type: QueryTypes.SELECT,
+				raw: true
+			});
+
+			if (globalServiceVersion > 1 && result.length > 0 && result[0].globalServiceVersion < globalServiceVersion) {
+				const activeVersion = result[0].globalServiceVersion;
+				const computedEndDate = moment(startDate).subtract(1, 'days').format('YYYY-MM-DD');
+				await this.serviceRepository.update({ validTill: endDateWithClientTZ(computedEndDate) }, { where: { serviceID, globalServiceVersion: activeVersion } });
+			}
+
+			const updatedProgram = await this.serviceRepository.update(
+				{ validFrom: startDateWithClientTZ(startDate), validTill: validTill, isPublished: 1 },
+				{ where: { serviceID, globalServiceVersion }, returning: true }
+			);
+			return updatedProgram[1][0];
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'ServiceScheduleError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
 }

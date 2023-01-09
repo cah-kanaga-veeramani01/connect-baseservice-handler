@@ -3,6 +3,7 @@ import { Service } from '../../database/models/Service';
 import externalServiceManager from '../../src/managers/externalServiceManager';
 import db from '../../database/DBManager';
 import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
+import {describe, expect, jest, test } from '@jest/globals'
 
 const serviceManager = new externalServiceManager(db.getRepository(Service), db.getRepository(ServiceModuleConfig));
 

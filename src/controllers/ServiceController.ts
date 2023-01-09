@@ -1,12 +1,13 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { HandleError, logger } from '../../utils';
 import { IService } from '../interfaces/IServices';
 import ServiceManager from '../managers/ServiceManager';
 import { serviceList, EMPTY_STRING, HTTP_STATUS_CODES } from '../../utils/constants';
 import config from 'config';
+import SNSServiceManager from '../managers/SNSServiceManager';
 
 export default class ServiceController {
-	constructor(public serviceManager: ServiceManager) {}
+	constructor(public serviceManager: ServiceManager, public snsServiceManager: SNSServiceManager) {}
 
 	public async createService(req: Request, res: Response) {
 		try {
@@ -54,6 +55,25 @@ export default class ServiceController {
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			res.json(error.message);
+		}
+	}
+
+	/**
+	 * schedule program
+	 * @function schedule
+	 * @async
+	 * @param {Request} req - request object need to contain programID, globalProgramVersion and startDate
+	 * @param {Response} res - response object consists of scheduled program details
+	 * @param {NextFunction} next - use to call the next middleware, error handler in this case
+	 */
+	public async schedule(req: Request, res: Response, next: NextFunction) {
+		try {
+			const { serviceID, globalServiceVersion, startDate, endDate } = req.body;
+			logger.nonPhi.debug('Schedule service invoked with following parameter', { serviceID, globalServiceVersion, startDate, endDate });
+			await this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(serviceID, globalServiceVersion, startDate, endDate, req.headers);
+			res.send(await this.serviceManager.schedule(serviceID, globalServiceVersion, startDate, endDate));
+		} catch (error: any) {
+			next(error);
 		}
 	}
 }

@@ -6,6 +6,7 @@ import { createServicesResponse, servicePayload } from '../../test/TestData';
 import db from '../../database/DBManager';
 import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
 import { count } from 'console';
+import {describe, expect, jest, test } from '@jest/globals'
 
 const serviceManager = new ServiceManager(db.getRepository(Service), db.getRepository(ServiceType), db.getRepository(ServiceModuleConfig));
 
@@ -77,6 +78,174 @@ const mockServiceModuleConfigRepoForInsert: Repository<ServiceModuleConfig> = {
 		});
 	})
 };
+
+const mockGetNoServiceRepository: Repository<Service> = {
+	findOne: jest.fn().mockImplementation(() => {
+		return null;
+	})
+};
+const mockGetServiceRepository: Repository<Service> = {
+		findAll: jest.fn().mockImplementation(() => {
+			return [];
+		}),
+		findOne: jest.fn().mockImplementation(() => {
+			return {
+				isPublished: 1
+			};
+		}),
+		update: jest.fn().mockImplementation(() => {
+			return [];
+		}),
+		count: jest.fn().mockReturnValue(0)
+	},
+	mockGetServiceRepositoryDetails: Repository<Service> = {
+		count: jest.fn().mockReturnValue(1),
+		findOne: jest.fn().mockImplementation(() => {
+			return Promise.resolve({
+				serviceID: 1,
+				globalServiceVersion: 1,
+				serviceName: 'Test',
+				validFrom: '2021-12-31T05:00:00.000Z',
+				validTill: null,
+				isPublished: 1
+			});
+		})
+	},
+	mockGetServiceRepositoryForUpdate: Repository<Service> = {
+		count: jest.fn().mockReturnValue(1).mockReturnValueOnce(1).mockReturnValueOnce(0).mockReturnValueOnce(1).mockReturnValueOnce(0),
+		findByPk: jest.fn().mockImplementation(() => {
+			return Promise.resolve({
+				serviceID: 1,
+				globalServiceVersion: 1,
+				serviceName: 'Test',
+				validFrom: '2021-12-31T05:00:00.000Z',
+				validTill: '2027-12-31T05:00:00.000Z',
+				isPublished: 1
+			});
+		}),
+		update: jest.fn().mockImplementation(() => {
+			return Promise.resolve('');
+		})
+	},
+	mockGetServiceRepositoryWithoutEndDate: Repository<Service> = {
+		count: jest.fn().mockReturnValue(1),
+		findOne: jest.fn().mockImplementation(() => {
+			return Promise.resolve({
+				serviceID: 1,
+				globalServiceVersion: 1,
+				serviceName: 'Test',
+				validFrom: '2021-12-31T05:00:00.000Z',
+				validTill: '2027-12-31T05:00:00.000Z',
+				isPublished: 1
+			});
+		})
+	},
+	mockGetServiceRepositoryActiveServiceWithEndDate: Repository<Service> = {
+		count: jest.fn().mockReturnValue(1),
+		findOne: jest.fn().mockImplementation(() => {
+			return Promise.resolve({
+				serviceID: 1,
+				globalServiceVersion: 1,
+				serviceName: 'Test',
+				validFrom: '2021-12-31T05:00:00.000Z',
+				validTill: '2025-12-31T05:00:00.000Z',
+				isPublished: 1
+			});
+		})
+	},
+	mockGetServiceRepositoryExpiredService: Repository<Service> = {
+		count: jest.fn().mockReturnValue(1),
+		findOne: jest.fn().mockImplementation(() => {
+			return Promise.resolve({
+				serviceID: 1,
+				globalServiceVersion: 2,
+				serviceName: 'Test',
+				validFrom: '2020-12-31T05:00:00.000Z',
+				validTill: '2021-12-31T05:00:00.000Z',
+				isPublished: 1
+			});
+		})
+	},
+	mockGetServiceRepositoryDraftService: Repository<Service> = {
+		count: jest.fn().mockReturnValue(1),
+		findOne: jest.fn().mockImplementation(() => {
+			return Promise.resolve({
+				serviceID: 1,
+				globalServiceVersion: 1,
+				serviceName: 'Test',
+				validFrom: '2021-12-31T05:00:00.000Z',
+				validTill: null,
+				isPublished: 0
+			});
+		}),
+		update: jest.fn().mockImplementation(() => {
+			return Promise.resolve([
+				1,
+				[
+					{
+						serviceID: 1,
+			globalServiceVersion: 1,
+			serviceName: 'Test',
+			isPublished: 1,
+			validFrom: '2024-12-31T05:00:00.000Z',
+			validTill: null,
+			createdAt: '2022-06-22T07:59:25.463Z',
+			createdBy: null,
+			updatedAt: '2022-07-06T10:15:51.320Z',
+			updatedBy: null
+					}
+				]
+			]);
+		})
+	},
+	mockGetServiceRepositoryDraftServiceOnTopOfActive: Repository<Service> = {
+		count: jest.fn().mockReturnValue(1),
+		findOne: jest.fn().mockImplementation(() => {
+			return Promise.resolve({
+				serviceID: 1,
+				programName: 'Test',
+				clientID: 1,
+				market: 'Test',
+				programType: 'Test',
+				globalServiceVersion: 2,
+				validFrom: null,
+				validTill: null,
+				isPublished: 0
+			});
+		}),
+		update: jest.fn().mockImplementation(() => {
+			return Promise.resolve([
+				1,
+				[
+					{
+						serviceID: 1,
+						globalServiceVersion: 2,
+						serviceName: 'Test',
+						isPublished: 1,
+						validFrom: '2024-12-31T05:00:00.000Z',
+						validTill: '2025-12-31T05:00:00.000Z',
+						createdAt: '2022-06-22T07:59:25.463Z',
+						createdBy: null,
+						updatedAt: '2022-07-06T10:15:51.320Z',
+						updatedBy: null
+					}
+				]
+			]);
+		})
+	},
+	mockGetServiceTypeRepository: Repository<ServiceType> = {
+		findAll: jest.fn().mockImplementation(() => {
+			return [];
+		}),
+		count: jest.fn().mockReturnValue(1)
+	},
+	mockGetServiceModuleConfigRepository: Repository<ServiceModuleConfig> = {
+		findAll: jest.fn().mockImplementation(() => {
+			return [];
+		}),
+		count: jest.fn().mockReturnValue(1)
+	};
+
 
 describe('Create Service', () => {
 	// test('should create a service successfully ', async () => {
@@ -261,4 +430,116 @@ describe('Update module Version', () => {
 			expect(error.name).toBe('ServiceDoesntExist');
 		}
 	});
+});
+
+describe('Schedule service', () => {
+	test('service does not exist error', async () => {
+		const serviceObj: ServiceManager = new ServiceManager(mockGetNoServiceRepository, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+		try {
+			await serviceObj.schedule(1, 1, '2025-01-01', null);
+		} catch (error: any) {
+			expect(error.name).toBe('ServiceDoesntExist');
+		}
+	});
+
+	test('service schedule error', async () => {
+		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepositoryForUpdate, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+		try {
+			await serviceObj.schedule(1, 1, '2025-01-01', null);
+		} catch (error: any) {
+			expect(error.name).toBe('ServiceScheduleError');
+		}
+	});
+
+	test('Invalid start date provided', async () => {
+		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepository, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+
+		try {
+			await serviceObj.schedule(1, 1, '2020-01-01', null);
+		} catch (error: any) {
+			expect(error.name).toBe('InvalidStartDate');
+		}
+	});
+
+	test('Invalid end date provided', async () => {
+		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepository, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+
+		try {
+			await serviceObj.schedule(1, 1, '2025-01-01', '2020-01-01');
+		} catch (error: any) {
+			expect(error.name).toBe('InvalidEndDate');
+		}
+	});
+
+	test('service cannot be scheduled - active service without end date', async () => {
+		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepositoryWithoutEndDate, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+
+		try {
+			await serviceObj.schedule(1, 1, '2025-01-01', null);
+		} catch (error: any) {
+			expect(error.name).toBe('ServiceIsActive');
+		}
+	});
+
+	test('service cannot be scheduled - active service with end date', async () => {
+		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepositoryActiveServiceWithEndDate, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+
+		try {
+			await serviceObj.schedule(1, 1, '2025-01-01', null);
+		} catch (error: any) {
+			expect(error.name).toBe('ServiceIsActive');
+		}
+	});
+
+	test('service cannot be scheduled - expired service', async () => {
+		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepositoryExpiredService, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+
+		try {
+			await serviceObj.schedule(1, 1, '2025-01-01', null);
+		} catch (error: any) {
+			expect(error.name).toBe('ServiceIsExpired');
+		}
+	});
+
+	test('service scheduled - draft service with version 1', async () => {
+		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepositoryDraftService, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+		db.query = () => {
+			return null;
+		};
+		expect(await serviceObj.schedule(1, 1, '2025-01-01', null)).toMatchObject({
+			serviceID: 1,
+			globalServiceVersion: 1,
+			serviceName: 'Test',
+			isPublished: 1,
+			validFrom: '2024-12-31T05:00:00.000Z',
+			validTill: null,
+			createdAt: '2022-06-22T07:59:25.463Z',
+			createdBy: null,
+			updatedAt: '2022-07-06T10:15:51.320Z',
+			updatedBy: null
+		});
+	});
+
+	test('service scheduled on top of active service', async () => {
+		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepositoryDraftServiceOnTopOfActive, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+		db.query = () => {
+			return [
+				{
+					globalServiceVersion: 2
+				}
+			];
+		};
+		expect(await serviceObj.schedule(1, 2, '2025-01-01', '2026-01-01')).toMatchObject({
+			serviceID: 1,
+			globalServiceVersion: 2,
+			serviceName: 'Test',
+			isPublished: 1,
+			validFrom: '2024-12-31T05:00:00.000Z',
+			validTill: '2025-12-31T05:00:00.000Z',
+			createdAt: '2022-06-22T07:59:25.463Z',
+			createdBy: null,
+			updatedAt: '2022-07-06T10:15:51.320Z',
+			updatedBy: null
+		});
+	}, 10000);
 });
