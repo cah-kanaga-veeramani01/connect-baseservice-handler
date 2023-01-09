@@ -148,7 +148,6 @@ export const updateModuleconfig = {
 	},
 	required: ['body']
 };
-
 export const getModuleEntriesSchema = {
 	$schema: definedSchema,
 	$id: 'http://cardinal-domain.com/schema/service-config/get-missingModuleEntry-details.json',
@@ -172,4 +171,36 @@ export const getModuleEntriesSchema = {
 			required: ['serviceID', 'globalServiceVersion']
 		}
 	}
+};
+export const scheduleService = {
+	$schema: definedSchema,
+	$id: 'http://cardinal-domain.com/schemas/service-config/schedule-service.json',
+	title: 'Request Parameters for schedule service API',
+	description: 'This is a schema for schedule service api request.',
+	type: 'object',
+	properties: {
+		body: {
+			type: 'object',
+			properties: {
+				serviceID: {
+					type: 'number'
+				},
+				globalServiceVersion: {
+					type: 'number'
+				},
+				startDate: {
+					type: 'string',
+					//format: "date"
+					pattern: '^[1-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]$'
+				},
+				endDate: {
+					type: 'string'
+					//format: "date"
+				}
+			},
+			additionalProperties: false,
+			required: ['serviceID', 'globalServiceVersion', 'startDate']
+		}
+	},
+	required: ['body']
 };

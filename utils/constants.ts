@@ -48,3 +48,5 @@ export const serviceList = {
 };
 
 export const EMPTY_STRING = '';
+
+export const CLIENT_TZ = 'America/New_York';
