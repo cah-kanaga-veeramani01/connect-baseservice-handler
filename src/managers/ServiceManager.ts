@@ -76,13 +76,11 @@ export default class ServiceManager {
 				type: QueryTypes.SELECT,
 				replacements: { searchKey, limit: null, offset: null }
 			});
-
 			//query to fetch all services matching all criteria
 			services = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
 				type: QueryTypes.SELECT,
 				replacements: { searchKey, limit, offset }
 			});
-
 			// // query to get total count of services with no filter
 			// // status = serviceList.matchAll;
 			// // searchKey = serviceList.matchAll;
@@ -90,7 +88,6 @@ export default class ServiceManager {
 				type: QueryTypes.SELECT,
 				replacements: { searchKey: serviceList.matchAll, limit: null, offset: null }
 			});
-
 			await Promise.all([totalServices, services, nonFilteredServices]);
 
 			const response: ServiceListResponse = {
@@ -267,7 +264,7 @@ export default class ServiceManager {
 				},
 				raw: true
 			});
-			if (!service) throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Program does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
+			if (!service) throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
 
 			const existingStartDate = utcToClientTZ(service.validFrom),
 				existingEndDate = utcToClientTZ(service.validTill),
