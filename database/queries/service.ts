@@ -2,38 +2,38 @@ export const QServiceList = (sortBy, sortOrder) => {
 	return `select * from (select 
 
  case 
- when (vs.statuses[0]->>'status')::text='ACTIVE' then (vs.statuses[0]->>'serviceName')::text 
- when ((vs.statuses[0]->>'status')::text='DRAFT' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'serviceName')::text 
- when (vs.statuses[0]->>'status')::text='DRAFT' then (vs.statuses[0]->>'serviceName')::text 
- when ((vs.statuses[0]->>'status')::text='SCHEDULED' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'serviceName')::text 
- when (vs.statuses[0]->>'status')::text='SCHEDULED' then (vs.statuses[0]->>'serviceName')::text 
- else (vs.statuses[1]->>'serviceName')::text end as servicename,
+ when (vs.statuses->0->>'status')::text='ACTIVE' then (vs.statuses->0->>'serviceName')::text 
+ when ((vs.statuses->0->>'status')::text='DRAFT' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'serviceName')::text 
+ when (vs.statuses->0->>'status')::text='DRAFT' then (vs.statuses->0->>'serviceName')::text 
+ when ((vs.statuses->0->>'status')::text='SCHEDULED' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'serviceName')::text 
+ when (vs.statuses->0->>'status')::text='SCHEDULED' then (vs.statuses->0->>'serviceName')::text 
+ else (vs.statuses->1->>'serviceName')::text end as servicename,
  case 
- when (vs.statuses[0]->>'status')::text='ACTIVE' then (vs.statuses[0]->>'serviceType')::text 
- when ((vs.statuses[0]->>'status')::text='DRAFT' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'serviceType')::text 
- when (vs.statuses[0]->>'status')::text='DRAFT' then (vs.statuses[0]->>'serviceType')::text 
- when ((vs.statuses[0]->>'status')::text='SCHEDULED' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'serviceType')::text 
- when (vs.statuses[0]->>'status')::text='SCHEDULED' then (vs.statuses[0]->>'serviceType')::text 
- else (vs.statuses[1]->>'serviceType')::text end as serviceType,
+ when (vs.statuses->0->>'status')::text='ACTIVE' then (vs.statuses->0->>'serviceType')::text 
+ when ((vs.statuses->0->>'status')::text='DRAFT' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'serviceType')::text 
+ when (vs.statuses->0->>'status')::text='DRAFT' then (vs.statuses->0->>'serviceType')::text 
+ when ((vs.statuses->0->>'status')::text='SCHEDULED' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'serviceType')::text 
+ when (vs.statuses->0->>'status')::text='SCHEDULED' then (vs.statuses->0->>'serviceType')::text 
+ else (vs.statuses->1->>'serviceType')::text end as serviceType,
  case 
- when (vs.statuses[0]->>'status')::text='ACTIVE' then (vs.statuses[0]->>'legacyTIPDetailID')::text 
- when ((vs.statuses[0]->>'status')::text='DRAFT' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'legacyTIPDetailID')::text 
- when (vs.statuses[0]->>'status')::text='DRAFT' then (vs.statuses[0]->>'legacyTIPDetailID')::text 
- when ((vs.statuses[0]->>'status')::text='SCHEDULED' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'legacyTIPDetailID')::text 
- when (vs.statuses[0]->>'status')::text='SCHEDULED' then (vs.statuses[0]->>'legacyTIPDetailID')::text 
- else (vs.statuses[1]->>'serviceType')::text end as legacyTIPDetailID,
+ when (vs.statuses->0->>'status')::text='ACTIVE' then (vs.statuses->0->>'legacyTIPDetailID')::text 
+ when ((vs.statuses->0->>'status')::text='DRAFT' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'legacyTIPDetailID')::text 
+ when (vs.statuses->0->>'status')::text='DRAFT' then (vs.statuses->0->>'legacyTIPDetailID')::text 
+ when ((vs.statuses->0->>'status')::text='SCHEDULED' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'legacyTIPDetailID')::text 
+ when (vs.statuses->0->>'status')::text='SCHEDULED' then (vs.statuses->0->>'legacyTIPDetailID')::text 
+ else (vs.statuses->1->>'serviceType')::text end as legacyTIPDetailID,
  vs."serviceID" as serviceID,
  vs."statuses" as statuses,
  (
     select json_agg("name") from "service"."AttributesDefinition" where "attributesDefinitionID"
 	in (select unnest(string_to_array(TRIM('[]' FROM metadata::json->>'attributes'),',')::int[])  from "service"."ServiceAttributes"
 		where "serviceID"=vs."serviceID" and "globalServiceVersion"=(case 
-		when (vs.statuses[0]->>'status')::text='ACTIVE' then (vs.statuses[0]->>'globalServiceVersion')::int 
-		when ((vs.statuses[0]->>'status')::text='DRAFT' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'globalServiceVersion')::int 
-		when (vs.statuses[0]->>'status')::text='DRAFT' then (vs.statuses[0]->>'globalServiceVersion')::int 
-		when ((vs.statuses[0]->>'status')::text='SCHEDULED' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'globalServiceVersion')::int 
-		when (vs.statuses[0]->>'status')::text='SCHEDULED' then (vs.statuses[0]->>'globalServiceVersion')::int 
-		else (vs.statuses[1]->>'globalServiceVersion')::int end)
+		when (vs.statuses->0->>'status')::text='ACTIVE' then (vs.statuses->0->>'globalServiceVersion')::int 
+		when ((vs.statuses->0->>'status')::text='DRAFT' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'globalServiceVersion')::int 
+		when (vs.statuses->0->>'status')::text='DRAFT' then (vs.statuses->0->>'globalServiceVersion')::int 
+		when ((vs.statuses->0->>'status')::text='SCHEDULED' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'globalServiceVersion')::int 
+		when (vs.statuses->0->>'status')::text='SCHEDULED' then (vs.statuses->0->>'globalServiceVersion')::int 
+		else (vs.statuses->1->>'globalServiceVersion')::int end)
 	)
 ) as "attributes"
 from (
