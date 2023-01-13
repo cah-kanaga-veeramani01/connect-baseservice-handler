@@ -1,53 +1,86 @@
 export const QServiceList = (sortBy, sortOrder) => {
-	return `SELECT * FROM (
-		SELECT 
-		  "Service"."serviceID", 
-		  "Service"."serviceName",
-	   	  "ServiceType"."serviceType",
-		  JSONB_AGG(
+	return `select * from (select 
+
+ case 
+ when (vs.statuses[0]->>'status')::text='ACTIVE' then (vs.statuses[0]->>'serviceName')::text 
+ when ((vs.statuses[0]->>'status')::text='DRAFT' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'serviceName')::text 
+ when (vs.statuses[0]->>'status')::text='DRAFT' then (vs.statuses[0]->>'serviceName')::text 
+ when ((vs.statuses[0]->>'status')::text='SCHEDULED' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'serviceName')::text 
+ when (vs.statuses[0]->>'status')::text='SCHEDULED' then (vs.statuses[0]->>'serviceName')::text 
+ else (vs.statuses[1]->>'serviceName')::text end as servicename,
+ case 
+ when (vs.statuses[0]->>'status')::text='ACTIVE' then (vs.statuses[0]->>'serviceType')::text 
+ when ((vs.statuses[0]->>'status')::text='DRAFT' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'serviceType')::text 
+ when (vs.statuses[0]->>'status')::text='DRAFT' then (vs.statuses[0]->>'serviceType')::text 
+ when ((vs.statuses[0]->>'status')::text='SCHEDULED' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'serviceType')::text 
+ when (vs.statuses[0]->>'status')::text='SCHEDULED' then (vs.statuses[0]->>'serviceType')::text 
+ else (vs.statuses[1]->>'serviceType')::text end as serviceType,
+ case 
+ when (vs.statuses[0]->>'status')::text='ACTIVE' then (vs.statuses[0]->>'legacyTIPDetailID')::text 
+ when ((vs.statuses[0]->>'status')::text='DRAFT' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'legacyTIPDetailID')::text 
+ when (vs.statuses[0]->>'status')::text='DRAFT' then (vs.statuses[0]->>'legacyTIPDetailID')::text 
+ when ((vs.statuses[0]->>'status')::text='SCHEDULED' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'legacyTIPDetailID')::text 
+ when (vs.statuses[0]->>'status')::text='SCHEDULED' then (vs.statuses[0]->>'legacyTIPDetailID')::text 
+ else (vs.statuses[1]->>'serviceType')::text end as legacyTIPDetailID,
+ vs."serviceID" as serviceID,
+ vs."statuses" as statuses,
+ (
+    select json_agg("name") from "service"."AttributesDefinition" where "attributesDefinitionID"
+	in (select unnest(string_to_array(TRIM('[]' FROM metadata::json->>'attributes'),',')::int[])  from "service"."ServiceAttributes"
+		where "serviceID"=vs."serviceID" and "globalServiceVersion"=(case 
+		when (vs.statuses[0]->>'status')::text='ACTIVE' then (vs.statuses[0]->>'globalServiceVersion')::int 
+		when ((vs.statuses[0]->>'status')::text='DRAFT' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'globalServiceVersion')::int 
+		when (vs.statuses[0]->>'status')::text='DRAFT' then (vs.statuses[0]->>'globalServiceVersion')::int 
+		when ((vs.statuses[0]->>'status')::text='SCHEDULED' AND (vs.statuses[1]->>'status')::text='ACTIVE') then (vs.statuses[1]->>'globalServiceVersion')::int 
+		when (vs.statuses[0]->>'status')::text='SCHEDULED' then (vs.statuses[0]->>'globalServiceVersion')::int 
+		else (vs.statuses[1]->>'globalServiceVersion')::int end)
+	)
+) as "attributes"
+from (
+select s1."serviceID",
+JSONB_AGG(
 			(
 			  SELECT 
 				X 
 			  FROM 
 				(
 				  SELECT 
-					"Service"."globalServiceVersion", 
-					"Service"."validFrom", 
-					"Service"."validTill", 
-					"Service"."isPublished", 
+                    s1."serviceName",
+					s1."globalServiceVersion", 
+					s1."validFrom", 
+					s1."validTill", 
+					s1."isPublished",
+					s1."legacyTIPDetailID",
+                    "ServiceType"."serviceType",
 					CASE WHEN (
 					  (
-						"Service"."validFrom" < now() 
-						AND "Service"."validTill" >= now()
+						s1."validFrom" < now() 
+						AND s1."validTill" >= now()
 					  ) 
 					  OR (
-						"Service"."validFrom" < now() 
-						AND "Service"."validTill" IS NULL
+						s1."validFrom" < now() 
+						AND s1."validTill" IS NULL
 					  ) 
-					  AND "Service"."isPublished" = 1
+					  AND s1."isPublished" = 1
 					) THEN 'ACTIVE' WHEN (
-					  "Service"."validFrom" > now() 
-					  AND "Service"."isPublished" = 1
-					) THEN 'SCHEDULED' WHEN ("Service"."isPublished" = 0) THEN 'DRAFT' ELSE 'INACTIVE' END AS "status"
+					  s1."validFrom" > now() 
+					  AND s1."isPublished" = 1
+					) THEN 'SCHEDULED' WHEN (s1."isPublished" = 0) THEN 'DRAFT' ELSE 'INACTIVE' END AS "status"
 				) AS X
-			)
-		  ) AS "statuses" 
-		FROM 
-		  service."Service" 
- 		  JOIN service."ServiceType" on "Service"."serviceTypeID" = "ServiceType"."serviceTypeID" 
-		where 
-		   "validTill" IS NULL 
-		  OR "validTill" > NOW() 
-		GROUP BY 
-		  "Service"."serviceID", 
-		  "Service"."serviceName",
-	   	  "ServiceType"."serviceType"
-	  ) ds
-    
-    WHERE ds."serviceName" ILIKE :searchKey
-        OR ds."serviceID"::TEXT LIKE :searchKey
-        OR ds."serviceType"::TEXT ILIKE :searchKey
-    order by ds."${sortBy}" ${sortOrder}
+                
+			) 
+		  ) AS "statuses"
+          
+from service."Service" s1
+    JOIN service."ServiceType" on s1."serviceTypeID" = "ServiceType"."serviceTypeID" 
+where (s1."validTill" IS NULL 
+		  OR s1."validTill" > NOW()) and 
+		  (s1."serviceName" ILIKE :searchKey OR s1."serviceID"::text like :searchKey OR "ServiceType"."serviceType" ILIKE :searchKey)
+      group by "serviceID" 
+        order by "serviceID" desc
+) vs
+) vvs
+order by ${sortBy} ${sortOrder}
     limit :limit offset :offset;`;
 };
 
