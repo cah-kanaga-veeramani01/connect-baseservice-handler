@@ -6,7 +6,7 @@ import ServiceManager from '../../managers/ServiceManager';
 import db from '../../../database/DBManager';
 import { Service } from '../../../database/models/Service';
 import { ServiceType } from '../../../database/models/ServiceType';
-import { addService, createDraft, getModuleEntriesSchema, getServiceListSchema, updateModuleconfig, scheduleService } from '../../models/schema';
+import { addService, createDraft, getModuleEntriesSchema, getServiceListSchema, updateModuleconfig, scheduleService, getServiceDetails } from '../../models/schema';
 import { ServiceModuleConfig } from '../../../database/models/ServiceModuleConfig';
 import SNSServiceManager from '../../managers/SNSServiceManager';
 
@@ -27,3 +27,4 @@ ServicesInternalRouter.route('/unmappedModules').get(
 	serviceController.getModuleEntries.bind(serviceController)
 );
 ServicesInternalRouter.route('/schedule').put(isAuthorized(UserAction.update, Subject.service), validateRequest(scheduleService), serviceController.schedule.bind(serviceController));
+ServicesInternalRouter.route('/details').get(isAuthorized(UserAction.read, Subject.service), validateRequest(getServiceDetails), serviceController.getDetails.bind(serviceController));

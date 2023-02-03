@@ -298,7 +298,45 @@
                     }
                 }
             }
-        }  
+        },
+        "/service/internal/details": {
+			"get": {
+				"tags": ["Base Service"],
+				"summary": "Get Service",
+				"parameters": [
+					{
+						"name": "serviceId",
+						"in": "query",
+						"description": "Get details for which serviceId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "cookie",
+						"in": "header",
+						"description": "cookies for authentication",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Service",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetService"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
     },
     "components": {
         "securitySchemes":{
@@ -340,42 +378,43 @@
                                 "serviceid": {
 									"type": "integer",
 									"description": "Unique id of the Base sevice"
-								}
-							},
-                            "statuses": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "description": "Status of the base services"
-                                        },
-                                        "validFrom": {
-                                            "type": "string",
-                                            "description": "starting date of the servcie"
-                                        },
-                                        "validTill": {
-                                            "type": "integer",
-                                            "description": "End date of the base service"
-                                        },
-                                        "serviceName": {
-                                            "type": "integer",
-                                            "description": "Base service name"
-                                        },
-                                        "serviceType": {
-                                            "type": "integer",
-                                            "description": "Servie type"
-                                        },
-                                        "legacyTIPDetailID": {
-                                            "type": "integer",
-                                            "description": "legacy tip detail ID"
-                                        },
-                                        "globalServiceVersion": {
-                                            "type": "integer",
-                                            "description": "Global service version of the base service"
+								},
+                                "statuses": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "status": {
+                                                "type": "string",
+                                                "description": "Status of the base services"
+                                            },
+                                            "validFrom": {
+                                                "type": "string",
+                                                "description": "starting date of the servcie"
+                                            },
+                                            "validTill": {
+                                                "type": "integer",
+                                                "description": "End date of the base service"
+                                            },
+                                            "serviceName": {
+                                                "type": "integer",
+                                                "description": "Base service name"
+                                            },
+                                            "serviceType": {
+                                                "type": "integer",
+                                                "description": "Servie type"
+                                            },
+                                            "legacyTIPDetailID": {
+                                                "type": "integer",
+                                                "description": "legacy tip detail ID"
+                                            },
+                                            "globalServiceVersion": {
+                                                "type": "integer",
+                                                "description": "Global service version of the base service"
+                                            }
                                         }
                                     }
+                                  
                                 },
                                 "attributes": {
                                     "type": "array",
@@ -384,7 +423,8 @@
                                         "type": "string"
                                     }
                                 }
-                            }
+							}
+                           
 						}
 					}
 				}
@@ -571,7 +611,58 @@
 						"description": "legacy tip detail ID"
 					}
                 }
-            }
+            },
+            "GetService": {
+				"type": "object",
+						"properties": {
+							"activeVersion": {
+								"type": "number",
+								"description": "active version of the service"
+							},
+							"scheduledVersion": {
+								"type": "number",
+								"description": "scheduled version of the service"
+							},
+							"draftVersion": {
+								"type": "number",
+								"description": "draft version of the service"
+							},
+							"activeStartDate": {
+								"type": "string",
+								"format": "date",
+								"description": "service start date"
+							},
+							"scheduledStartDate": {
+								"type": "string",
+								"format": "date",
+								"description": "scheduled service start date"
+							},
+							"serviceId": {
+								"type": "number",
+								"description": "Id of the service"
+							},
+							"serviceName": {
+								"type": "string",
+								"description": "Name of the service"
+							},
+                            "servicename": {
+                                "type": "string",
+                                "description": "Name of the service"
+                            },
+                            "serviceDisplayName": {
+                                "type": "string",
+                                "description": "Display name of the service"
+                            },
+                            "legacyTIPDetailID": {
+                                "type": "integer",
+                                "description": "legacy tip detail ID"
+                            },
+							"serviceType": {
+								"type": "string",
+								"description": "Type of the service is one of these: TIP"
+							}
+						}
+				}
+			}
         }
-    }
 }
