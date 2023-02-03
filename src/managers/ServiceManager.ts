@@ -103,14 +103,22 @@ export default class ServiceManager {
 
 	public async createDraft(serviceID: number) {
 		try {
-			logger.nonPhi.debug('Draft API invoked with following parameters', { serviceID });
+
+			logger.nonPhi.debug('createDraft invoked with following parameters', { serviceID });
 
 			const service = await this.serviceRepository.findOne({
 				attributes: ['serviceID', 'serviceName', 'serviceDisplayName', 'serviceTypeID', 'legacyTIPDetailID'],
 				where: {
 					serviceID
 				},
-				raw: true
+				raw: true,
+				include: [
+					{
+						model: this.serviceTypeRepository,
+						attributes: ['serviceType']
+					}
+				]
+				
 			});
 			if (!service) throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
 
@@ -119,7 +127,9 @@ export default class ServiceManager {
 				type: QueryTypes.SELECT
 			});
 
-			const result = { ...serviceDetails[0], ...service };
+			const result = { ...serviceDetails[0], ...service, serviceType : service["serviceType.serviceType"]};
+
+            delete result["serviceType.serviceType"];
 
 			if (result.draftVersion || result.scheduledVersion) {
 				return result;
@@ -139,8 +149,13 @@ export default class ServiceManager {
 			selectedService.globalServiceVersion += 1;
 
 			const newDraftVersion: any = await this.serviceRepository.create(selectedService);
-
-			return { ...newDraftVersion.dataValues, scheduledVersion: null, draftVersion: newDraftVersion.globalServiceVersion };
+			return {
+				...newDraftVersion.dataValues,
+				scheduledVersion: null,
+				draftVersion: newDraftVersion.globalProgramVersion,
+				activeStartDate: serviceDetails.activeStartDate,
+				scheduledStartDate: serviceDetails.scheduledStartDate
+			};
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
