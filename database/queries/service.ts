@@ -84,11 +84,52 @@ order by ${sortBy} ${sortOrder}
     limit :limit offset :offset;`;
 };
 
-export const QServiceDetails = `SELECT
-(SELECT "globalServiceVersion" FROM service."Service" WHERE "serviceID" = :serviceID AND "isPublished" = 1 AND ("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW()) AS "activeVersion",
-(SELECT "globalServiceVersion" FROM service."Service" WHERE "serviceID" = :serviceID AND "isPublished" = 1 AND "validFrom" > NOW()) AS "scheduledVersion",
-(SELECT "globalServiceVersion" FROM service."Service" WHERE "serviceID" = :serviceID AND "isPublished" = 0) AS "draftVersion";
-`;
+export const QServiceDetails = ` SELECT 
+s2."globalServiceVersion" AS "activeVersion", 
+s3."globalServiceVersion" AS "scheduledVersion", 
+s4."globalServiceVersion" AS "draftVersion", 
+s2."validFrom" AS "activeStartDate", 
+s3."validFrom" AS "scheduledStartDate" 
+FROM 
+service."Service" s1 
+LEFT JOIN service."Service" AS s2 ON s1."serviceID" = s2."serviceID" 
+AND s2."globalServiceVersion" IN (
+  SELECT 
+	"globalServiceVersion" 
+  FROM 
+	service."Service" 
+  WHERE 
+	"serviceID" = :serviceID 
+	AND "isPublished" = 1 
+	AND (
+	  "validTill" IS NULL 
+	  OR "validTill" >= now()
+	) 
+	AND "validFrom" <= now()
+) 
+LEFT JOIN service."Service" AS s3 ON s1."serviceID" = s3."serviceID" 
+AND s3."globalServiceVersion" IN (
+  SELECT 
+	"globalServiceVersion" 
+  FROM 
+	service."Service" 
+  WHERE 
+	"serviceID" = :serviceID
+	AND "isPublished" = 1 
+	AND "validFrom" > NOW()
+) 
+LEFT JOIN service."Service" AS s4 ON s1."serviceID" = s4."serviceID" 
+AND s4."globalServiceVersion" IN (
+  SELECT 
+	"globalServiceVersion" 
+  FROM 
+	service."Service" 
+  WHERE 
+	"serviceID" = :serviceID 
+	AND "isPublished" = 0
+) 
+WHERE 
+s1."serviceID" = :serviceID FETCH first row only`;
 
 export const QCheckConfigCount = `SELECT count(*)
 FROM service."ServiceModuleConfig" WHERE "serviceID" = :serviceID AND "moduleID" = :moduleID`;

@@ -204,3 +204,25 @@ export const scheduleService = {
 	},
 	required: ['body']
 };
+
+export const getServiceDetails = {
+	$schema: definedSchema,
+	$id: 'http://cardinal-domain.com/schemas/service-config/get-service-details.json',
+	title: 'Request Parameters for get service details API',
+	description: 'This is a schema for get service details request api.',
+	type: 'object',
+	properties: {
+		query: {
+			type: 'object',
+			properties: {
+				serviceID: {
+					type: 'string',
+					pattern: '^[0-9]+$'
+				}
+			},
+			additionalProperties: false,
+			required: ['serviceID']
+		}
+	},
+	required: ['query']
+};

@@ -26,7 +26,6 @@ export default class ServiceController {
 				from = req.query.from ? Number(req.query.from) : serviceList.defaultFrom,
 				limit = req.query.limit ? Number(req.query.limit) : serviceList.defaultLimit,
 				keyword = req.query.keyword ? String(req.query.keyword).replace(/_/g, '\\_') : EMPTY_STRING;
-			// statusFilter = req.query.statusFilter ? String(req.query.statusFilter) : serviceList.defaultFilterBy;
 			logger.nonPhi.debug('Service list invoked with following parameters', { sortBy, sortOrder, from, limit, keyword });
 			res.send(await this.serviceManager.getServiceList(sortBy, sortOrder, from, limit, keyword));
 		} catch (error) {
@@ -82,10 +81,28 @@ export default class ServiceController {
 		try {
 			const { serviceID, globalServiceVersion, startDate, endDate } = req.body;
 			logger.nonPhi.debug('Schedule service invoked with following parameter', { serviceID, globalServiceVersion, startDate, endDate });
-			//await this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(serviceID, globalServiceVersion, startDate, endDate, req.headers);
 			res.send(await this.serviceManager.schedule(serviceID, globalServiceVersion, startDate, endDate));
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
+			next(error);
+		}
+	}
+
+	/**
+	 * Get service details
+	 * @function getDetails
+	 * @async
+	 * @param {Request} req - request object need to contain queryParam serviceID
+	 * @param {Response} res - response object consists of service details that was requested
+	 * @param {NextFunction} next - use to call the next middleware, error handler in this case
+	 */
+	public async getDetails(req: Request, res: Response, next: NextFunction) {
+		try {
+			const serviceID = Number(req.query.serviceID);
+			logger.nonPhi.debug('Get service details invoked with following parameter', { serviceID });
+			const serviceDetails = await this.serviceManager.getDetails(serviceID);
+			res.send(serviceDetails);
+		} catch (error: any) {
 			next(error);
 		}
 	}
