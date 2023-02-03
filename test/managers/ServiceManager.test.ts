@@ -423,7 +423,7 @@ describe('Create draft', () => {
 		try {
 			await serviceManager.createDraft(11);
 		} catch (error: any) {
-			expect(error.name).toBe('ServiceDraftFetchError');
+			expect(error.name).toBe('ServiceDetailFetchError');
 		}
 	});
 });

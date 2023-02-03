@@ -103,42 +103,18 @@ export default class ServiceManager {
 
 	public async createDraft(serviceID: number) {
 		try {
-
 			logger.nonPhi.debug('createDraft invoked with following parameters', { serviceID });
 
-			const service = await this.serviceRepository.findOne({
-				attributes: ['serviceID', 'serviceName', 'serviceDisplayName', 'serviceTypeID', 'legacyTIPDetailID'],
-				where: {
-					serviceID
-				},
-				raw: true,
-				include: [
-					{
-						model: this.serviceTypeRepository,
-						attributes: ['serviceType']
-					}
-				]
-				
-			});
-			if (!service) throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
+			const serviceDetails: any = await this.getDetails(serviceID);
 
-			const serviceDetails = await db.query(QServiceDetails, {
-				replacements: { serviceID: serviceID },
-				type: QueryTypes.SELECT
-			});
-
-			const result = { ...serviceDetails[0], ...service, serviceType : service["serviceType.serviceType"]};
-
-            delete result["serviceType.serviceType"];
-
-			if (result.draftVersion || result.scheduledVersion) {
-				return result;
+			if (serviceDetails.draftVersion || serviceDetails.scheduledVersion) {
+				return serviceDetails;
 			}
 
 			const selectedService = await this.serviceRepository.findOne({
 				where: {
-					serviceID: result.serviceID,
-					globalServiceVersion: result.activeVersion
+					serviceID: serviceDetails.serviceID,
+					globalServiceVersion: serviceDetails.activeVersion
 				},
 				raw: true
 			});
@@ -151,8 +127,9 @@ export default class ServiceManager {
 			const newDraftVersion: any = await this.serviceRepository.create(selectedService);
 			return {
 				...newDraftVersion.dataValues,
+				activeVersion: serviceDetails.activeVersion,
 				scheduledVersion: null,
-				draftVersion: newDraftVersion.globalProgramVersion,
+				draftVersion: newDraftVersion.globalServiceVersion,
 				activeStartDate: serviceDetails.activeStartDate,
 				scheduledStartDate: serviceDetails.scheduledStartDate
 			};
@@ -315,6 +292,46 @@ export default class ServiceManager {
 			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceScheduleError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+
+	/**
+	 * Function to get the service details
+	 * @function get
+	 * @async
+	 * @param {number} serviceID - get details for particular programId
+	 * @returns {Promise<object>} - program details
+	 */
+	async getDetails(serviceID: number): Promise<object> {
+		try {
+			const service = await this.serviceRepository.findOne({
+				attributes: ['serviceID', 'serviceName', 'serviceDisplayName', 'serviceTypeID', 'legacyTIPDetailID'],
+				where: {
+					serviceID
+				},
+				raw: true,
+				include: [
+					{
+						model: this.serviceTypeRepository,
+						attributes: ['serviceType']
+					}
+				]
+			});
+			if (!service) throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
+
+			const serviceDetails = await db.query(QServiceDetails, {
+				replacements: { serviceID: serviceID },
+				type: QueryTypes.SELECT
+			});
+
+			const result = { ...serviceDetails[0], ...service, serviceType: service['serviceType.serviceType'] };
+
+			delete result['serviceType.serviceType'];
+			return result;
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'ServiceDetailFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
 }
