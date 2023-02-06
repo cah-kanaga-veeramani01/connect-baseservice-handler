@@ -305,7 +305,7 @@
 				"summary": "Get Service",
 				"parameters": [
 					{
-						"name": "serviceId",
+						"name": "serviceID",
 						"in": "query",
 						"description": "Get details for which serviceId",
 						"required": true,
