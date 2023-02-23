@@ -229,7 +229,7 @@
 					{
 						"name": "globalServiceVersion",
 						"in": "query",
-						"description": "used to identify the global program version of base service",
+						"description": "used to identify the global service version of base service",
 						"required": true,
 						"schema": {
 							"type": "string"

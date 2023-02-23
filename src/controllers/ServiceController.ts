@@ -70,11 +70,11 @@ export default class ServiceController {
 	}
 
 	/**
-	 * schedule program
+	 * schedule service
 	 * @function schedule
 	 * @async
-	 * @param {Request} req - request object need to contain programID, globalProgramVersion and startDate
-	 * @param {Response} res - response object consists of scheduled program details
+	 * @param {Request} req - request object need to contain serviceID, globalServiceVersion and startDate
+	 * @param {Response} res - response object consists of scheduled service details
 	 * @param {NextFunction} next - use to call the next middleware, error handler in this case
 	 */
 	public async schedule(req: Request, res: Response, next: NextFunction) {

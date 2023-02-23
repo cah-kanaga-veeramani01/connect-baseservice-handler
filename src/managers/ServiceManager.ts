@@ -101,17 +101,67 @@ export default class ServiceManager {
 		}
 	}
 
+	/**
+	 * Function to create a DraftVersion if draft version is not exists
+	 * @function createDraft
+	 * @async
+	 * @param {number} serviceID - get details for particular serviceID
+	 * @returns {Promise<object>} - service details
+	 */
 	public async createDraft(serviceID: number) {
 		try {
 			logger.nonPhi.debug('createDraft invoked with following parameters', { serviceID });
 
 			const serviceDetails: any = await this.getDetails(serviceID);
-
-			if (serviceDetails.draftVersion || serviceDetails.scheduledVersion) {
-				return serviceDetails;
+			logger.nonPhi.debug('Service details', { serviceDetails });
+			if (!serviceDetails) {
+				throw new HandleError({ name: 'ServicDetailsNotFound', message: 'Service details not found', stack: 'Service details not found', errorStatus: HTTP_STATUS_CODES.badRequest });
 			}
 
-			const selectedService = await this.serviceRepository.findOne({
+			if (serviceDetails.draftVersion) {
+				return serviceDetails;
+			} else if (serviceDetails.scheduledVersion) {
+				const scheduledService: any = await this.serviceRepository.findOne({
+					where: {
+						serviceID: serviceDetails.serviceID,
+						globalServiceVersion: serviceDetails.scheduledVersion
+					},
+					raw: true
+				});
+
+				if (!scheduledService) {
+					throw new HandleError({ name: 'ServicVersionNotFound', message: 'Service version is incorrect', stack: 'Service version not found', errorStatus: HTTP_STATUS_CODES.badRequest });
+				}
+				await this.serviceRepository.update(
+					{
+						isPublished: 0,
+						validFrom: null,
+						validTill: null
+					},
+					{
+						where: {
+							serviceID: serviceDetails.serviceID,
+							globalServiceVersion: serviceDetails.scheduledVersion
+						}
+					}
+				);
+				const draftService: any = await this.serviceRepository.findOne({
+					where: {
+						serviceID: serviceDetails.serviceID,
+						globalServiceVersion: serviceDetails.scheduledVersion
+					},
+					raw: true
+				});
+				return {
+					...draftService,
+					activeVersion: serviceDetails.activeVersion,
+					scheduledVersion: null,
+					draftVersion: draftService.globalServiceVersion,
+					activeStartDate: serviceDetails.activeStartDate,
+					scheduledStartDate: serviceDetails.scheduledStartDate
+				};
+			}
+			const activeService: any = await this.serviceRepository.findOne({
 				where: {
 					serviceID: serviceDetails.serviceID,
 					globalServiceVersion: serviceDetails.activeVersion
@@ -119,15 +169,17 @@ export default class ServiceManager {
 				raw: true
 			});
 
-			selectedService.isPublished = 0;
-			selectedService.validFrom = null;
-			selectedService.validTill = null;
-			selectedService.globalServiceVersion += 1;
+			if (!activeService) {
+				throw new HandleError({ name: 'ServicVersionNotFound', message: 'Service version is incorrect', stack: 'Service version not found', errorStatus: HTTP_STATUS_CODES.badRequest });
+			}
+			activeService.isPublished = 0;
+			activeService.validFrom = null;
+			activeService.validTill = null;
+			activeService.globalServiceVersion += 1;
 
-			const newDraftVersion: any = await this.serviceRepository.create(selectedService);
+			const newDraftVersion: any = await this.serviceRepository.create(activeService);
 			return {
 				...newDraftVersion.dataValues,
-				activeVersion: serviceDetails.activeVersion,
 				scheduledVersion: null,
 				draftVersion: newDraftVersion.globalServiceVersion,
 				activeStartDate: serviceDetails.activeStartDate,
@@ -220,12 +272,12 @@ export default class ServiceManager {
 	}
 
 	/**
-	 * Function to schedule program
+	 * Function to schedule Service
 	 * @function put
 	 * @async
 	 * @param {number} serviceID - schedule for particular serviceID
 	 * @param {number} globalServiceVersion - schedule for particular serviceVersion
-	 * @returns {Promise<object>} - program schedule details
+	 * @returns {Promise<object>} - Service schedule details
 	 */
 	async schedule(serviceID: number, globalServiceVersion: number, startDate: string, endDate: string | null): Promise<object> {
 		try {
@@ -299,8 +351,8 @@ export default class ServiceManager {
 	 * Function to get the service details
 	 * @function get
 	 * @async
-	 * @param {number} serviceID - get details for particular programId
-	 * @returns {Promise<object>} - program details
+	 * @param {number} serviceID - get details for particular serviceID
+	 * @returns {Promise<object>} - service details
 	 */
 	async getDetails(serviceID: number): Promise<object> {
 		try {
