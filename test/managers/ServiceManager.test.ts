@@ -17,10 +17,19 @@ const mockServiceTypeRepository: Repository<ServiceType> = {
 };
 
 const mockServiceRepository: Repository<Service> = {
+	count: jest.fn().mockReturnValue(1),
 	findOne: jest.fn().mockImplementation(() => {
-		return Promise.resolve(null);
+		return Promise.resolve({
+			serviceID: 1,
+			serviceName: 'Test',
+			serviceTypeID: 1,
+			globalServiceVersion: 1,
+			validFrom: '2021-12-31T05:00:00.000Z',
+			validTill: null,
+			isPublished: 1
+		});
 	})
-};
+}
 
 const mockServiceRepository_error: Repository<Service> = {
 	create: jest.fn().mockImplementation(() => {
@@ -387,12 +396,15 @@ describe('get list of services', () => {
 });
 
 describe('Create draft', () => {
-	test('service does not exist error', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+	test('service version does not exist for schedule', async () => {
+		const serviceManager: ServiceManager = new ServiceManager(mockGetNoServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo);
 		try {
-			await serviceManager.createDraft(11);
+			jest.spyOn(serviceManager, 'getDetails').mockImplementation(() => {
+				return Promise.resolve({ activeVersion: 1, scheduledVersion: 2, draftVersion: null, isExpired: false });
+			});
+			await serviceManager.createDraft(1);
 		} catch (error: any) {
-			expect(error.name).toBe('ServiceDoesntExist');
+			expect(error.name).toBe('ServicVersionNotFound');
 		}
 	});
 
@@ -418,8 +430,51 @@ describe('Create draft', () => {
 		} catch (error: any) {}
 	});
 
+	test('return the service details - draft details', async () => {
+		const baseService: ServiceManager = new ServiceManager(
+			mockServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo
+		);
+		try {
+			jest.spyOn(baseService, 'getDetails').mockImplementation(() => {
+				return Promise.resolve({ activeVersion: 1, scheduledVersion: 2, draftVersion: null, isExpired: false });
+			});
+			await baseService.createDraft(1);
+		} catch (error: any) {}
+	});
+
+	test('Select service details', async () => {
+		const baseService: ServiceManager = new ServiceManager(
+			mockGetNoServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		try {
+			jest.spyOn(baseService, 'getDetails').mockImplementation(() => {
+				return Promise.resolve({ activeVersion: 1, scheduledVersion: null, draftVersion: null, isExpired: false });
+			});
+			await baseService.createDraft(1);
+		} catch (error: any) {
+			expect(error.name).toBe('ServicVersionNotFound');
+		}
+	});
+
+	test('create draft version', async () => {
+		const baseService: ServiceManager = new ServiceManager(
+			mockServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo
+		);
+		try {
+			jest.spyOn(baseService, 'getDetails').mockImplementation(() => {
+				return Promise.resolve({ activeVersion: 1, scheduledVersion: null, draftVersion: null, isExpired: false });
+			});
+			await baseService.createDraft(1);
+		} catch (error: any) {}
+	});
+
+
 	test('throw error', async () => {
 		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		db.query = () => {
+			{
+				throw new Error();
+			}
+		};
 		try {
 			await serviceManager.createDraft(11);
 		} catch (error: any) {
