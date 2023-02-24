@@ -6,7 +6,7 @@ const definedSchema = 'http://json-schema.org/draft-07/schema#';
 
 export const updateModuleConfig = {
 	$schema: definedSchema,
-	$id: 'http://cardinal-domain.com/schemas/service-config/updateModuleConfig-external-service-docs.json',
+	$id: 'https://cardinal-domain.com/schemas/service-config/updateModuleConfig-external-service-docs.json',
 	title: 'Request Parameters to update the moduleID and moduleVersion of the service',
 	description: 'This is a schema for updating the moduleID and version of service.',
 	type: 'object',

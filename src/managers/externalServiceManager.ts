@@ -6,7 +6,7 @@ import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
 import db from '../../database/DBManager';
 import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
 
-export default class externalServiceManager {
+export default class ExternalServiceManager {
 	constructor(public serviceRepository: Repository<Service>, public ServiceModuleConfigRepository: Repository<ServiceModuleConfig>) {}
 
 	/**
