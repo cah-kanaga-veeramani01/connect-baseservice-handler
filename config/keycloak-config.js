@@ -17,7 +17,7 @@ export const initKeyclock = (memoryStore) => {
     if (_keycloak) {
         logger.nonPhi.info('trying to repeat init Keycloak!');
         return _keycloak;
-    };
+    }
 
     logger.nonPhi.info('intializing keycloak.....');
 
@@ -31,6 +31,6 @@ export const initKeyclock = (memoryStore) => {
 export const getKeycloak = () => {
     if (!_keycloak) {
         logger.nonPhi.error('Keycloak is not initialized, Please call init.')
-    };
+    }
     return _keycloak;
 };

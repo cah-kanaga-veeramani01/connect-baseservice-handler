@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import { logger } from './logger';
 /**
  *
  * @param {AxiosRequestConfig} reqConfig - Configuration required for api calls.
@@ -13,10 +14,11 @@ import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
  * ```
  * @returns {Promise<AxiosResponse<any>>}
  */
-export const invoke = (reqConfig: AxiosRequestConfig): Promise<AxiosResponse<any>> => {
+export const invoke = async (reqConfig: AxiosRequestConfig): Promise<AxiosResponse<any>> => {
 	try {
-		return axios(reqConfig);
-	} catch (error) {
+		return await axios(reqConfig);
+	} catch (error: any) {
+		logger.nonPhi.error(error.message, { _err: error });
 		throw error;
 	}
 };

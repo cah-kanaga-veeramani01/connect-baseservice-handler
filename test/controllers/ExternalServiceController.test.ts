@@ -1,13 +1,13 @@
 import mocks from 'node-mocks-http';
 import { Service } from '../../database/models/Service';
-import externalServiceController from '../../src/controllers/externalServiceController';
+import ExternalServiceController from '../../src/controllers/externalServiceController';
 import db from '../../database/DBManager';
 import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
-import externalServiceManager from '../../src/managers/externalServiceManager';
+import ExternalServiceManager from '../../src/managers/externalServiceManager';
 import {describe, expect, jest, test } from '@jest/globals'
 
-const serviceManager = new externalServiceManager(db.getRepository(Service), db.getRepository(ServiceModuleConfig));
-const serviceController = new externalServiceController(serviceManager);
+const serviceManager = new ExternalServiceManager(db.getRepository(Service), db.getRepository(ServiceModuleConfig));
+const serviceController = new ExternalServiceController(serviceManager);
 
 describe('Update module version', () => {
 	test('retun the module config version', async () => {
