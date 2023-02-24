@@ -82,6 +82,7 @@ export default class ServiceController {
 			const { serviceID, globalServiceVersion, startDate, endDate } = req.body;
 			logger.nonPhi.debug('Schedule service invoked with following parameter', { serviceID, globalServiceVersion, startDate, endDate });
 			res.send(await this.serviceManager.schedule(serviceID, globalServiceVersion, startDate, endDate));
+			this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(serviceID, globalServiceVersion, startDate, endDate, req.headers);
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			next(error);
