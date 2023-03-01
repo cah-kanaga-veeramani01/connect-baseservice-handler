@@ -680,3 +680,14 @@ describe('Schedule service', () => {
 		});
 	}, 10000);
 });
+
+describe('Get service details', () => {
+	test('service does not exist error', async () => {
+		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNoService, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		try {
+			await serviceManager.getDetails(1);
+		} catch (error: any) {
+			expect(error.name).toBe('ServiceDoesntExist');
+		}
+	});
+});

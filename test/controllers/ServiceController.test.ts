@@ -439,3 +439,52 @@ describe('Schedule Service', () => {
 		expect(next).toHaveBeenCalledTimes(1);
 	});
 });
+
+describe('Get service details', () => {
+	test('return the get service details', async () => {
+		jest.spyOn(serviceManager, 'getDetails').mockImplementation(() => {
+			return Promise.resolve({
+				serviceID: 1,
+				globalServiceVersion: 1,
+				serviceName: 'Test',
+				validFrom: '2021-12-31T05:00:00.000Z',
+				validTill: null,
+				isPublished: 0
+			});
+		});
+		const req = mocks.createRequest({
+				method: 'GET',
+				url: '/service/internal/details',
+				query: {
+					serviceID: '1'
+				}
+			}),
+			res = mocks.createResponse(),
+			next = jest.fn();
+		await serviceController.getDetails(req, res, next);
+		expect(res._getData()).toMatchObject({
+			serviceID: 1,
+			globalServiceVersion: 1,
+			serviceName: 'Test',
+			validFrom: '2021-12-31T05:00:00.000Z',
+			validTill: null,
+			isPublished: 0
+		});
+	});
+
+	test('throws error', async () => {
+		jest.spyOn(serviceManager, 'getDetails').mockRejectedValue(new Error('error'));
+		const req = mocks.createRequest({
+				method: 'GET',
+				url: '/service/internal/details',
+				query: {
+					serviceID: '1'
+				}
+			}),
+			res = mocks.createResponse(),
+			next = jest.fn();
+
+		await serviceController.getDetails(req, res, next);
+		expect(next).toHaveBeenCalledTimes(1);
+	});
+});
