@@ -11,6 +11,9 @@ export class ServiceTag extends Model<ServiceTag> {
 	@Column(DataType.STRING)
 	serviceTagName: string;
 
+	@Column(DataType.STRING)
+	serviceDisplayName: string;
+
 	@Default(Sequelize.fn('now')) @Column(DataType.DATE) createdAt: Date;
 
 	@Column(DataType.STRING) createdBy: string;

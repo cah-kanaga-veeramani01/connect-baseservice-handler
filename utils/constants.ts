@@ -25,3 +25,26 @@ export const HTTP_STATUS_CODES = {
 	unauthorized: 403,
 	gatewayTimeout: 504
 };
+
+export const sortOrder = {
+	asc: 'asc',
+	desc: 'desc'
+};
+
+export const sortServiceListBy = {
+	serviceName: 'serviceName',
+	// status: 'status',
+	type: 'serviceType',
+	serviceID: 'serviceID'
+};
+
+export const serviceList = {
+	defaultSortBy: 'serviceName',
+	defaultSortOrder: 'asc',
+	defaultFrom: 0,
+	defaultLimit: 10,
+	defaultFilterBy: 'All',
+	matchAll: '%'
+};
+
+export const EMPTY_STRING = '';

@@ -1,13 +1,11 @@
-const enums = require('./configEnums');
-const defaultConfigs = require('./default');
+const defaultConfigs = require('./default').default;
 
 const configs = {
 	...defaultConfigs
-	// add new configs
 };
 
 // Modify existing configs
-configs.allowedOrigins = ['https://service-config-client.apps.np1.fuseapps.io/'];
+configs.allowedOrigins = 'https://staging.outcomesmtm.com';
 
 // always Export the configs as default
 module.exports = configs;

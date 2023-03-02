@@ -4,6 +4,9 @@ import ServiceTypeManager from '../../src/managers/ServiceTypeManager';
 import { serviceTypePayload, serviceTypesResponse } from '../TestData';
 
 const mockServiceTypeRepository: Repository<ServiceType> = {
+	findOne: jest.fn().mockImplementation(() => {
+		return Promise.resolve(null);
+	}),
 	create: jest.fn().mockImplementation(() => {
 		return Promise.resolve(serviceTypesResponse);
 	}),
@@ -17,6 +20,12 @@ const mockServiceTypeRepository_reject: Repository<ServiceType> = {
 		return Promise.reject(new Error());
 	})
 };
+const mockServiceTypeRepository_duplicate: Repository<ServiceType> = {
+	findOne: jest.fn().mockImplementation(() => {
+		return Promise.resolve({ serviceTypeID: 1 });
+	})
+};
+
 describe('Service Type - Test', () => {
 	test('should create service type', async () => {
 		const serviceTypeManager: ServiceTypeManager = new ServiceTypeManager(mockServiceTypeRepository);
@@ -29,6 +38,15 @@ describe('Service Type - Test', () => {
 		} catch (error) {
 			expect(error.code).toEqual('SCE004');
 			expect(error.name).toEqual('CreateServiceTypeError');
+		}
+	});
+	test('should fail to create duplicate service type', async () => {
+		const serviceTypeManager: ServiceTypeManager = new ServiceTypeManager(mockServiceTypeRepository_duplicate);
+		try {
+			await serviceTypeManager.createServiceType(serviceTypePayload);
+		} catch (error) {
+			expect(error.code).toEqual('SCE010');
+			expect(error.name).toEqual('ServiceTypeAlreadyExistsError');
 		}
 	});
 	test('should return service type list', async () => {

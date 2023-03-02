@@ -1,5 +1,5 @@
 import ajv from 'ajv';
-import { HandleError, logger } from '../../utils';
+import { HandleError } from '../../utils';
 import { Request, Response, NextFunction } from 'express';
 import { HTTP_STATUS_CODES } from '../../utils/constants';
 
@@ -19,7 +19,6 @@ export function validateRequest(validationSchema: object) {
 			if (validity) {
 				next();
 			} else {
-				logger.nonPhi.error(ajvObj.errorsText());
 				next(
 					new HandleError({
 						name: 'Request Validation Failed',
@@ -30,7 +29,6 @@ export function validateRequest(validationSchema: object) {
 				);
 			}
 		} catch (error) {
-			logger.nonPhi.error(error.message, { _err: error });
 			next(new HandleError({ name: 'Request Validation Failed', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.badRequest }));
 		}
 	};
