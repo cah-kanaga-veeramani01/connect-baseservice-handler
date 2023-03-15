@@ -62,7 +62,11 @@
       platform: linux
       image_resource:
         type: registry-image
-        source: { repository: node, tag: "16.14.0" }
+        source:
+          repository: ((artifacts.url))/connect/node
+          tag: 16
+          username: ((artifacts.username))
+          password: ((artifacts.password))         
       container_limits:
         cpu: 0
         memory: 4294967296  
@@ -93,7 +97,11 @@
             platform: linux
             image_resource:
               type: registry-image
-              source: { repository: node, tag: "16.14.0" }
+              source:
+                repository: ((artifacts.url))/connect/node
+                tag: 16
+                username: ((artifacts.username))
+                password: ((artifacts.password))         
             container_limits:
               cpu: 0
               memory: 4294967296
@@ -125,7 +133,11 @@
             platform: linux
             image_resource:
               type: registry-image
-              source: { repository: node, tag: "16.14.0" }
+              source:
+                repository: ((artifacts.url))/connect/node
+                tag: 16
+                username: ((artifacts.username))
+                password: ((artifacts.password))         
             container_limits:
               cpu: 0
               memory: 4294967296
@@ -157,7 +169,11 @@
             platform: linux
             image_resource:
               type: registry-image
-              source: { repository: node, tag: "16.14.0" }
+              source:
+                repository: ((artifacts.url))/connect/node
+                tag: 16
+                username: ((artifacts.username))
+                password: ((artifacts.password))         
             container_limits:
               cpu: 0
               memory: 4294967296 
@@ -210,8 +226,10 @@
         memory: 4294967296
       image_resource:
         source:
-          repository: node
-          tag: 14.17.1
+          repository: ((artifacts.url))/connect/node
+          tag: 16
+          username: ((artifacts.username))
+          password: ((artifacts.password))         
         type: registry-image
       inputs:
       - name: service-config-handler-output
@@ -248,7 +266,11 @@
             platform: linux
             image_resource:
               type: registry-image
-              source: { repository: node, tag: "16.14.0" }
+              source:
+                repository: ((artifacts.url))/connect/node
+                tag: 16
+                username: ((artifacts.username))
+                password: ((artifacts.password))         
             container_limits:
               cpu: 0
               memory: 4294967296
