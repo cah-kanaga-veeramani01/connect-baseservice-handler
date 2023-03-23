@@ -64,3 +64,18 @@ ModuleConfigFetchError:
   code: "SCE018"
   EN:
     message: "An error occurred while fetching the modules for the service."
+
+ServiceDetailFetchError:
+  code: "SCE019"
+  EN:
+    message: "Sorry, we were not able to fetch the service details you were looking for."
+
+ServicDetailsNotFound:
+  code: "SCE020"
+  EN:
+    message: "Service details not found."
+
+ServicVersionNotFound:
+  code: "SCE021"
+  EN:
+    message: "Service version is incorrect."

@@ -1,6 +1,7 @@
 import { HandleError, logger } from '../../utils';
 import httpMocks from 'node-mocks-http';
 import { errorHandler } from '../../src/middleware';
+import {describe, expect, jest, test } from '@jest/globals'
 
 describe('error Handler middleware', () => {
 	test('should return provided error status', () => {

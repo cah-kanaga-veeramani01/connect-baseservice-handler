@@ -1,14 +1,14 @@
 import { Router } from 'express';
-import externalServiceController from '../../controllers/externalServiceController';
+import ExternalServiceController from '../../controllers/externalServiceController';
 import { validateRequest } from '../../middleware';
-import externalServiceManager from '../../managers/externalServiceManager';
+import ExternalServiceManager from '../../managers/externalServiceManager';
 import db from '../../../database/DBManager';
 import { getKeycloak } from '../../../config/keycloak-config';
 import { updateModuleConfig } from '../../models/externalSchema';
 import { Service } from '../../../database/models/Service';
 import { ServiceModuleConfig } from '../../../database/models/ServiceModuleConfig';
 
-const externalController = new externalServiceController(new externalServiceManager(db.getRepository(Service), db.getRepository(ServiceModuleConfig))),
+const externalController = new ExternalServiceController(new ExternalServiceManager(db.getRepository(Service), db.getRepository(ServiceModuleConfig))),
 	keycloak = getKeycloak(),
 	SERVICE_API_CREATE = process.env.SERVICE_CREATE_ROLE;
 export const ServicesExternalRouter = Router({ mergeParams: true });

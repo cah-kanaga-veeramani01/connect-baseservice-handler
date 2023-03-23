@@ -21,7 +21,148 @@
             "description": "API for base service in the system"
         }
     ],
+    "security":[
+		{
+		 "cookieAuth": []
+	}
+		
+],
     "paths": {
+        "/csrf":{
+			"get": {
+					"tags": ["Token Generator"],
+					"summary": "Get the cookie for the application",
+					"operationId": "getApiToken",
+					"responses":{
+						"204":{
+							"description": "successful token retrieval",
+							"headers":{
+								"Set-Cookie":{
+								"schema":{
+									"type": "string"
+								}
+								
+							}
+						}
+						
+					}  
+				}
+			}		
+		},
+        "/service/internal/list": {
+			"get": {
+				"tags": ["Base Service"],
+				"summary": "Get all the base service list",
+				"parameters": [
+					{
+						"name": "sortBy",
+						"in": "query",
+						"description": "Sort the response by which of these fields : servicename, serviceType, serviceID",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "sortOrder",
+						"in": "query",
+						"description": "Sort the response in which order : asc or desc",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "from",
+						"in": "query",
+						"description": "Offset of the first row to return",
+						"required": false,
+						"schema": {
+							"type": "number"
+						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"description": "Used to constrain the number of rows to return",
+						"required": false,
+						"schema": {
+							"type": "number"
+						}
+					},
+					{
+						"name": "keyword",
+						"in": "query",
+						"description": "keyword is used for search functionality",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "cookie",
+						"in": "header",
+						"description": "cookies for authentication",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "List of unmapped modules for base service",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/getServiceList"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/service/internal/draft": {
+            "post": {
+                "tags": ["Base Service"],
+                "summary": "Module configuration for base service",
+                "parameters": [
+                    {
+                        "name": "cookie",
+                        "in": "header",
+                        "description": "cookies for authentication",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "base service",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ServiceDraftVersion"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "draft version created for base service",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DraftVersionCreated"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/service/internal/{serviceID}/modules": {
             "post": {
                 "tags": ["Base Service"],
@@ -63,7 +204,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/AddBaseServiceAttributesResponse"
+                                    "$ref": "#/components/schemas/addModuleConfigResponse"
                                 }
                             }
                         }
@@ -73,7 +214,7 @@
         },
         "/service/internal/unmappedModules": {
 			"get": {
-				"tags": ["Programs"],
+				"tags": ["Base Service"],
 				"summary": "Get all unmapped modules in base service",
 				"parameters": [
 					{
@@ -88,7 +229,7 @@
 					{
 						"name": "globalServiceVersion",
 						"in": "query",
-						"description": "used to identify the global program version of base service",
+						"description": "used to identify the global service version of base service",
 						"required": true,
 						"schema": {
 							"type": "string"
@@ -117,11 +258,177 @@
 					}
 				}
 			}
+		},
+		"/service/internal/schedule": {
+            "put": {
+                "tags": ["Base Service"],
+                "summary": "Module configuration for base service",
+                "parameters": [
+                    {
+                        "name": "cookie",
+                        "in": "header",
+                        "description": "cookies for authentication",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "base service",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/scheduleDate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "base service attributes added",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/scheduledBaseServiceDate"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/service/internal/details": {
+			"get": {
+				"tags": ["Base Service"],
+				"summary": "Get Service",
+				"parameters": [
+					{
+						"name": "serviceID",
+						"in": "query",
+						"description": "Get details for which serviceId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "cookie",
+						"in": "header",
+						"description": "cookies for authentication",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Service",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/GetService"
+								}
+							}
+						}
+					}
+				}
+			}
 		}
-       
     },
     "components": {
+        "securitySchemes":{
+			"cookieAuth":  {
+				"type": "apiKey",
+			"in": "header",
+			"name": "X-XSRF-TOKEN"
+			}
+		},
         "schemas": {
+            "getServiceList": {
+				"type": "object",
+				"properties": {
+					"totalServices": {
+						"type": "integer",
+						"description": "Total number of service"
+					},
+                    "nonFilteredServicesCount": {
+						"type": "integer",
+						"description": "Total number of non filtered services"
+					},
+					"services": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"servicename": {
+									"type": "string",
+									"description": "Name of the Base service"
+								},
+                                "servicetype": {
+									"type": "string",
+									"description": "Base service type"
+								},
+                                "legacytipdetailid": {
+									"type": "integer",
+									"description": "legacy tip detail ID"
+								},
+                                "serviceid": {
+									"type": "integer",
+									"description": "Unique id of the Base sevice"
+								},
+                                "statuses": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "status": {
+                                                "type": "string",
+                                                "description": "Status of the base services"
+                                            },
+                                            "validFrom": {
+                                                "type": "string",
+                                                "description": "starting date of the servcie"
+                                            },
+                                            "validTill": {
+                                                "type": "integer",
+                                                "description": "End date of the base service"
+                                            },
+                                            "serviceName": {
+                                                "type": "integer",
+                                                "description": "Base service name"
+                                            },
+                                            "serviceType": {
+                                                "type": "integer",
+                                                "description": "Servie type"
+                                            },
+                                            "legacyTIPDetailID": {
+                                                "type": "integer",
+                                                "description": "legacy tip detail ID"
+                                            },
+                                            "globalServiceVersion": {
+                                                "type": "integer",
+                                                "description": "Global service version of the base service"
+                                            }
+                                        }
+                                    }
+                                  
+                                },
+                                "attributes": {
+                                    "type": "array",
+                                    "description": "List of attribites for the base services",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+							}
+                           
+						}
+					}
+				}
+			},
             "SaveBaseServiceInfo": {
                 "type": "object",
                 "properties": {
@@ -135,7 +442,7 @@
                     }
                 }
             },
-            "AddBaseServiceAttributesResponse": {
+            "addModuleConfigResponse": {
                 "type": "object",
                 "properties": {
                     "modules": {
@@ -180,7 +487,182 @@
                         }
                     }	
 				}
+			},
+			"ServiceDraftVersion": {
+                "type": "object",
+                "properties": {
+                    "serviceID": {
+                        "type": "integer",
+                        "description": "Unique id of the base service"
+                    }
+                }
+            },
+			"DraftVersionCreated": {
+                "type": "object",
+                "properties": {
+                    "activeVersion": {
+                        "type": "number",
+                        "description": "represents specific active version of the base service"
+                    },
+                    "scheduledVersion": {
+                        "type": "integer",
+                        "description": "represents scheduled version of the base service"
+                    },
+                    "draftVersion" : {
+                        "type": "string",
+                        "description": "represents draft version of the base service"
+                    },
+					"serviceID" : {
+                        "type": "string",
+                        "description": "Unique id of the base service"
+                    },
+					"serviceName" : {
+                        "type": "string",
+                        "description": "Name of the Base service"
+                    },
+					"serviceDisplayName" : {
+                        "type": "string",
+                        "description": "Name of the Base service"
+                    },
+					"serviceTypeID" : {
+                        "type": "string",
+                        "description": "Represent the typeID of the base service"
+                    },
+					"legacyTIPDetailID" : {
+                        "type": "string",
+                        "description": "legacyTipID from the TipDetail table"
+                    }
+                }
+            },
+			"scheduleDate": {
+                "type": "object",
+                "properties": {
+                    "serviceID": {
+                        "type": "integer",
+                        "description": "Unique id of the base service"
+                    },
+                    "globalServiceVersion" : {
+                        "type": "number",
+                        "description": "represents specific version of the base service"
+                    },
+					"startDate" : {
+                        "type": "number",
+                        "description": "starting date for base service"
+                    },
+					"endDate" : {
+                        "type": "number",
+                        "description": "ending date of the base service"
+                    }
+                }
+            },
+			"scheduledBaseServiceDate": {
+                "type": "object",
+                "properties": {
+					"serviceID": {
+                        "type": "integer",
+                        "description": "Unique id of the base service"
+                    },
+					"serviceName": {
+						"type": "integer",
+						"description": "Base service name"
+					},
+					"serviceDisplayName" : {
+                        "type": "string",
+                        "description": "Name of the Base service"
+                    },
+					"globalServiceVersion": {
+						"type": "integer",
+						"description": "Global service version of the base service"
+					},
+					"validFrom": {
+						"type": "string",
+						"description": "starting date of the servcie"
+					},
+					"validTill": {
+						"type": "integer",
+						"description": "End date of the base service"
+					},
+					"isPublished": {
+						"type": "integer",
+						"description": "Represent the base service is published or not"
+					},
+					"serviceTypeID" : {
+                        "type": "string",
+                        "description": "Represent the typeID of the base service"
+                    },
+					"createdAt": {
+						"type": "string",
+						"description": "created date of the baseServcie"
+					},
+					"createdBy": {
+						"type": "string",
+						"description": "created by specific ID/person"
+					},
+					"updatedAt": {
+						"type": "string",
+						"description": "date of the baseServcie is updated"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "the one who updated the feild"
+					},
+					"legacyTIPDetailID": {
+						"type": "integer",
+						"description": "legacy tip detail ID"
+					}
+                }
+            },
+            "GetService": {
+				"type": "object",
+						"properties": {
+							"activeVersion": {
+								"type": "number",
+								"description": "active version of the service"
+							},
+							"scheduledVersion": {
+								"type": "number",
+								"description": "scheduled version of the service"
+							},
+							"draftVersion": {
+								"type": "number",
+								"description": "draft version of the service"
+							},
+							"activeStartDate": {
+								"type": "string",
+								"format": "date",
+								"description": "service start date"
+							},
+							"scheduledStartDate": {
+								"type": "string",
+								"format": "date",
+								"description": "scheduled service start date"
+							},
+							"serviceId": {
+								"type": "number",
+								"description": "Id of the service"
+							},
+							"serviceName": {
+								"type": "string",
+								"description": "Name of the service"
+							},
+                            "servicename": {
+                                "type": "string",
+                                "description": "Name of the service"
+                            },
+                            "serviceDisplayName": {
+                                "type": "string",
+                                "description": "Display name of the service"
+                            },
+                            "legacyTIPDetailID": {
+                                "type": "integer",
+                                "description": "legacy tip detail ID"
+                            },
+							"serviceType": {
+								"type": "string",
+								"description": "Type of the service is one of these: TIP"
+							}
+						}
+				}
 			}
         }
-    }
 }
