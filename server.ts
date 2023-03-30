@@ -58,7 +58,6 @@ app.use(httpContext.middleware);
 app.use(contextStore);
 app.use(generateLogId);
 app.use(/^((?!external|swagger).)*$/i, auth); // authenticate every route except /swagger
-app.use(/(.*\/internal.*)/i, auth); // authenticate all internal APIs
 
 app.get('/', (req: Request, res: Response) => {
 	res.send('<h1>Service Configuration is UP!</h1>');
@@ -74,7 +73,7 @@ app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 // keycloak-adapter middleware
 app.use(keycloak.middleware());
 app.use('/service', ExternalRouterManager);
-app.use(csurf({ cookie: true }));
+app.use(csurf({ cookie: { secure: true, httpOnly: true } }));
 
 app.use('/service/internal', InternalRouterManager);
 

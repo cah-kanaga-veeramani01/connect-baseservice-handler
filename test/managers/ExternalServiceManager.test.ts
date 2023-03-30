@@ -1,10 +1,11 @@
 import { Repository } from 'sequelize-mock';
 import { Service } from '../../database/models/Service';
-import externalServiceManager from '../../src/managers/externalServiceManager';
+import ExternalServiceManager from '../../src/managers/externalServiceManager';
 import db from '../../database/DBManager';
 import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
+import {describe, expect, jest, test } from '@jest/globals'
 
-const serviceManager = new externalServiceManager(db.getRepository(Service), db.getRepository(ServiceModuleConfig));
+const serviceManager = new ExternalServiceManager(db.getRepository(Service), db.getRepository(ServiceModuleConfig));
 
 const mockServiceRepositoryNewDraft: Repository<Service> = {
 	findOne: jest.fn().mockImplementation(() => {
@@ -60,7 +61,7 @@ const mockServiceModuleConfigRepoForInsert: Repository<ServiceModuleConfig> = {
 
 describe('Update module Version', () => {
 	test('service does not exist error', async () => {
-		const serviceManager: externalServiceManager = new externalServiceManager(mockServiceRepositoryNoService,mockServiceModuleConfigRepo);
+		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepositoryNoService,mockServiceModuleConfigRepo);
 		try {
 			await serviceManager.addModuleConfig(1,1,1);
 		} catch (error: any) {
@@ -70,7 +71,7 @@ describe('Update module Version', () => {
 
 	test('Update module version', async () => {
 		const updateSpy = jest.spyOn(mockServiceModuleConfigRepo, 'update');
-		const serviceManager: externalServiceManager = new externalServiceManager(mockServiceRepositoryNewDraft,mockServiceModuleConfigRepo);
+		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepositoryNewDraft,mockServiceModuleConfigRepo);
 		db.query = () => {
 			return [ { count: '1' } ];
 		};
@@ -80,7 +81,7 @@ describe('Update module Version', () => {
 
 	test('Create module version', async () => {
 		const updateSpy = jest.spyOn(mockServiceModuleConfigRepoForInsert, 'create');
-		const serviceManager: externalServiceManager = new externalServiceManager(mockServiceRepositoryNewDraft,mockServiceModuleConfigRepoForInsert);
+		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepositoryNewDraft,mockServiceModuleConfigRepoForInsert);
 		db.query = () => {
 			return [ { count: '0' } ];
 		};

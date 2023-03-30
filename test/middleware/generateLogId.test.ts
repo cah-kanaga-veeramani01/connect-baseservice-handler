@@ -3,6 +3,7 @@ import { HEADERS, LOG_ID } from '../../utils/constants';
 import httpMocks from 'node-mocks-http';
 import faker from 'faker';
 import { generateLogId } from '../../src/middleware';
+import {describe, expect, jest, test } from '@jest/globals'
 
 describe('generateLogId', () => {
 	test('should generate and attach logId to response and log context', () => {

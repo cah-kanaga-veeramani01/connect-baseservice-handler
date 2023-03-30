@@ -2,6 +2,7 @@ import httpMocks from 'node-mocks-http';
 import { logger } from '../../utils';
 import EventEmitter from 'events';
 import { requestLogger } from '../../src/middleware';
+import {describe, expect, jest, test } from '@jest/globals'
 
 describe('requestLogger', () => {
 	test('should log info regarding request', () => {
