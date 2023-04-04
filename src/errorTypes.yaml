@@ -79,3 +79,18 @@ ServicVersionNotFound:
   code: "SCE021"
   EN:
     message: "Service version is incorrect."
+
+ServiceAttributesFetchError:
+  code: "SCE022"
+  EN:
+    message: "An error occurred while fetching attributes for the service."
+
+LegacyTipIDDoesntExist:
+  code: "SCE023"
+  EN:
+    message: "legacyTIPDetailID does not exist."
+
+ActiveServiceVersionDoesntExist:
+  code: "SCE024"
+  EN:
+    message: "Active Service version does not exist."
