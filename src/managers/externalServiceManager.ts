@@ -90,7 +90,7 @@ export default class ExternalServiceManager {
 					type: QueryTypes.SELECT,
 					raw: true
 				});
-				output = await this.GetAttributeNames(serviceAttributes, output);
+				output = await this.GetAttributeNames(serviceAttributes);
 			} else {
 				const serviceDetailsforLegacyID: any = await this.serviceRepository.findOne({ where: { legacyTIPDetailID } });
 				if (!serviceDetailsforLegacyID) {
@@ -119,7 +119,7 @@ export default class ExternalServiceManager {
 					type: QueryTypes.SELECT,
 					raw: true
 				});
-				output = await this.GetAttributeNames(serviceAttributes, output);
+				output = await this.GetAttributeNames(serviceAttributes);
 			}
 			return output;
 		} catch (error: any) {
@@ -129,7 +129,7 @@ export default class ExternalServiceManager {
 		}
 	}
 
-	private async GetAttributeNames(serviceAttributes: any, output: any) {
+	private async GetAttributeNames(serviceAttributes: any) {
 		const attrStr = serviceAttributes[0].attributes;
 		const result = attrStr.slice(1, -1).split(',').map(Number);
 
@@ -145,9 +145,8 @@ export default class ExternalServiceManager {
 			return acc;
 		}, {});
 
-		output = Object.keys(grouped).map((key) => ({
+		return Object.keys(grouped).map((key) => ({
 			[key]: grouped[key]
 		}));
-		return output;
 	}
 }
