@@ -1,12 +1,11 @@
+
 ---
 applications:
-  - name: connect-baseservice-info-handler
+  - name: service-config-handler
     command: npm run start
-    buildpack: https://github.com/cloudfoundry/nodejs-buildpack#v1.8.0
+    buildpack: https://github.com/cloudfoundry/nodejs-buildpack#v1.7.69
     random-route: false
     routes:
-      - route: connect-baseservice-info-handler.apps.fuseapps.io
-    memory: 512M
+      - route: service-config-handler.apps.fuseapps.io
+    memory: 1024M
     # Environment variables provided by Concourse/Vault
-
-

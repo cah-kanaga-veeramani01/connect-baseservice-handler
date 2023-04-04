@@ -4,7 +4,7 @@ import { validateRequest } from '../../middleware';
 import ExternalServiceManager from '../../managers/externalServiceManager';
 import db from '../../../database/DBManager';
 import { getKeycloak } from '../../../config/keycloak-config';
-import { updateModuleConfig } from '../../models/externalSchema';
+import { updateModuleConfig, getServiceAttributesSchema } from '../../models/externalSchema';
 import { Service } from '../../../database/models/Service';
 import { ServiceModuleConfig } from '../../../database/models/ServiceModuleConfig';
 
@@ -17,4 +17,10 @@ ServicesExternalRouter.route('/:serviceID/module/:moduleID').post(
 	keycloak.protect(SERVICE_API_CREATE),
 	validateRequest(updateModuleConfig),
 	externalController.addModuleConfig.bind(externalController)
+);
+
+ServicesExternalRouter.route('/serviceAttributes').get(
+	keycloak.protect(SERVICE_API_CREATE),
+	validateRequest(getServiceAttributesSchema),
+	externalController.getServiceAttributesDetails.bind(externalController)
 );
