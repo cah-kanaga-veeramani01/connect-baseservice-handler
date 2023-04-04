@@ -89,3 +89,8 @@ LegacyTipIDDoesntExist:
   code: "SCE023"
   EN:
     message: "legacyTIPDetailID does not exist."
+
+ActiveServiceVersionDoesntExist:
+  code: "SCE024"
+  EN:
+    message: "Active Service version does not exist."

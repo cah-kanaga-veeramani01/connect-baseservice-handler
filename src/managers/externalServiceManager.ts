@@ -77,6 +77,14 @@ export default class ExternalServiceManager {
 					type: QueryTypes.SELECT,
 					raw: true
 				});
+				if (!activeOrInActiveService[0]) {
+					throw new HandleError({
+						name: 'ActiveServiceVersionDoesntExist',
+						message: 'Active Service version does not exist',
+						stack: 'Active Service version does not exist',
+						errorStatus: HTTP_STATUS_CODES.badRequest
+					});
+				}
 				const serviceAttributes = await db.query(QGetServiceAttributesMetaData, {
 					replacements: { serviceID, globalServiceVersion: activeOrInActiveService[0].globalServiceVersion },
 					type: QueryTypes.SELECT,
@@ -98,6 +106,14 @@ export default class ExternalServiceManager {
 					type: QueryTypes.SELECT,
 					raw: true
 				});
+				if (!activeOrInActiveService[0]) {
+					throw new HandleError({
+						name: 'ActiveServiceVersionDoesntExist',
+						message: 'Active Service version does not exist',
+						stack: 'Active Service version does not exist',
+						errorStatus: HTTP_STATUS_CODES.badRequest
+					});
+				}
 				const serviceAttributes = await db.query(QGetServiceAttributesMetaData, {
 					replacements: { serviceID: activeOrInActiveService[0].serviceID, globalServiceVersion: activeOrInActiveService[0].globalServiceVersion },
 					type: QueryTypes.SELECT,

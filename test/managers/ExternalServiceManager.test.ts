@@ -130,6 +130,19 @@ describe('getServiceAttributesDetails', () => {
 	test('should retrun the active attributes version for serviceID', async () => {
 		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);
 		db.query = jest.fn().mockImplementationOnce(()=>{
+			return [ ];
+		});
+		try {
+			await serviceManager.getServiceAttributesDetails(1, null);
+		} catch (error: any) {
+			expect(error.name).toBe('ActiveServiceVersionDoesntExist');
+		}
+	});
+
+
+	test('should retrun the active attributes version for serviceID', async () => {
+		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);
+		db.query = jest.fn().mockImplementationOnce(()=>{
 			return [ { globalServiceVersion: 1 } ];
 		}).mockImplementationOnce(()=>[ { attributes: '[1,3,4,9,10]' } 
 	]).mockImplementationOnce(()=>[
@@ -154,6 +167,18 @@ describe('getServiceAttributesDetails', () => {
 			expect(error.name).toBe('LegacyTipIDDoesntExist');
 		}
 	});
+	test('should retrun the active attributes version for serviceID', async () => {
+		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);
+		db.query = jest.fn().mockImplementationOnce(()=>{
+			return [ ];
+		});
+		try {
+			await serviceManager.getServiceAttributesDetails(NaN, 1);
+		} catch (error: any) {
+			expect(error.name).toBe('ActiveServiceVersionDoesntExist');
+		}
+	});
+
 	test('should retrun the active attributes version for serviceID', async () => {
 		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);
 			db.query = jest.fn().mockImplementationOnce(()=>{
