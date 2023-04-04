@@ -92,8 +92,8 @@ export default class ExternalServiceManager {
 				});
 				output = await this.GetAttributeNames(serviceAttributes, output);
 			} else {
-				const serviceDetails1: any = await this.serviceRepository.findOne({ where: { legacyTIPDetailID } });
-				if (!serviceDetails1) {
+				const serviceDetailsforLegacyID: any = await this.serviceRepository.findOne({ where: { legacyTIPDetailID } });
+				if (!serviceDetailsforLegacyID) {
 					throw new HandleError({
 						name: 'LegacyTipIDDoesntExist',
 						message: 'legacyTIPDetailID does not exist',
