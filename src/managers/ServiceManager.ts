@@ -180,6 +180,7 @@ export default class ServiceManager {
 			const newDraftVersion: any = await this.serviceRepository.create(activeService);
 			return {
 				...newDraftVersion.dataValues,
+				activeVersion: serviceDetails.activeVersion,
 				scheduledVersion: null,
 				draftVersion: newDraftVersion.globalServiceVersion,
 				activeStartDate: serviceDetails.activeStartDate,
