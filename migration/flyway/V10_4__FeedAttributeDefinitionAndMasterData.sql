@@ -1,5 +1,5 @@
 DELETE FROM service."AttributesDefinition";
-DELETE FROM service."AttributesMaster"
+DELETE FROM service."AttributesMaster";
 
 DROP TYPE IF EXISTS service."enum_AttributesDefinition_categoryName" CASCADE;
 
