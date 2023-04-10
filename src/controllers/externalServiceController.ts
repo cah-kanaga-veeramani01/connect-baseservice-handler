@@ -18,4 +18,16 @@ export default class ExternalServiceController {
 			res.json(error.message);
 		}
 	}
+
+	public async getServiceAttributesDetails(req: Request, res: Response) {
+		try {
+			const serviceID = Number(req.query?.serviceID),
+				legacyTIPDetailID = Number(req.query?.legacyTIPDetailID);
+			logger.nonPhi.debug('get serive attributes deatils api invoked with following parameter', { serviceID, legacyTIPDetailID });
+			res.send(await this.ExternalServiceManager.getServiceAttributesDetails(serviceID, legacyTIPDetailID));
+		} catch (error) {
+			logger.nonPhi.error(error.message, { _err: error });
+			res.json(error.message);
+		}
+	}
 }

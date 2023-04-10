@@ -151,3 +151,12 @@ export const QServiceActiveOrInActive =
 
 export const QServiceActiveVersion =
 	'SELECT "globalServiceVersion" FROM service."Service" WHERE "serviceID" = :serviceID AND "isPublished" = 1 AND ("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW();';
+
+export const QGetServiceAttributesMetaData =
+	'SELECT metadata ->> \'attributes\' AS attributes FROM service."ServiceAttributes" where "serviceID" = :serviceID AND "globalServiceVersion" = :globalServiceVersion;';
+
+export const QGetServiceAttributesName = `select "name", "categoryName" from service."AttributesDefinition" 
+where "attributesDefinitionID" in (:attributesDefinitionID) ORDER BY "attributesDefinitionID"`;
+
+export const QServiceActiveVersionForLegacyId =
+	'SELECT "serviceID","globalServiceVersion" FROM service."Service" WHERE "legacyTIPDetailID" = :legacyTIPDetailID AND "isPublished" = 1 and ((("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW()) OR ("validTill" IS NOT NULL and "validTill" < NOW()));';

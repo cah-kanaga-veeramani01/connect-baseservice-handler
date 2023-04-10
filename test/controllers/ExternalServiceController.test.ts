@@ -56,3 +56,28 @@ describe('Update module version', () => {
 		}
 	});
 });
+
+describe('getServiceAttributesDetails', () => {
+		test('should return error', async () => {
+			jest.spyOn(serviceManager, 'getServiceAttributesDetails').mockImplementation(() => {
+				return Promise.reject(new Error());
+			});
+			const req = mocks.createRequest({
+				method: 'GET',
+				url: '/service/external/serviceAttributes',
+				query: {
+					serviceID: 1,
+					legacyTIPDetailID: 1,
+				
+				}
+			}),
+				res = mocks.createResponse(),
+				next = jest.fn();
+	
+			try {
+				await serviceController.getServiceAttributesDetails(req, res);
+			} catch (error) {
+				expect(error.name).toBe('ServiceAttributesFetchError');
+			}
+		});
+	});

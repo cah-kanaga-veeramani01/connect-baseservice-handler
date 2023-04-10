@@ -75,6 +75,46 @@
                     }
                 }
             }
+        },
+        "/service/external/serviceAttributes": {
+            "get": {
+                "tags": [
+                    "Base Service"
+                ],
+                "summary": "Get service attributes details in the system based on the serviceID",
+                "parameters": [
+                    {
+                        "name": "serviceID",
+                        "in": "query",
+                        "description": "serviceID",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "legacyTIPDetailID",
+                        "in": "query",
+                        "description": "legacyTIPDetailID",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Service Attributes details for serviceID or legacyTipID",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListOfServiceAttributes"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
        
     },
@@ -112,7 +152,29 @@
                         "description": "success message"
                     }
                 }
-            }
+            },
+            "ListOfServiceAttributes": {
+                "type": "array",
+				"properties": {
+						"items": {
+							"type": "object",
+                            "properties": {
+                                "key": {
+                                    "type": "string",
+                                    "description": "Attribute category"
+                                },
+                                "value": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "description": "Attribute list"
+                                    }
+                                }
+                            }
+						}
+					
+				}
+			}
         }
     }
 }
