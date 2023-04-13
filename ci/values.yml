@@ -34,7 +34,8 @@ projects:
       REALM: keycloak-realm
       PUBLIC_KEY: keycloak-public-key
       SERVICE_READ_ROLE: keycloak-service-read-role
-
+      PUBLISH_URL: publish-url
+      SNS_TOPIC: sns-topic      
 environments:
   - name: stage-phi
     #! if false, no resources/jobs will be created for the test level
