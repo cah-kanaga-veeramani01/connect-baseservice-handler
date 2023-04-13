@@ -335,6 +335,8 @@
           realm: ((base-service-config.keycloak-realm))
           public_key: ((base-service-config.keycloak-public-key))
           service_read_role: ((base-service-config.keycloak-service-read-role))
+          publish_url: ((base-service-config.publish-url))
+          sns_topic: ((base-service-config.sns-topic))
   jobs:
     - name: service-config-handler-stage
       serial: true
