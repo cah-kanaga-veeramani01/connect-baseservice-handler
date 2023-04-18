@@ -94,3 +94,8 @@ ActiveServiceVersionDoesntExist:
   code: "SCE024"
   EN:
     message: "Active Service version does not exist."
+
+ServiceDetailsFetchError:
+  code: "SCE025"
+  EN:
+    message: "An error occurred while fetching service details for the service."
