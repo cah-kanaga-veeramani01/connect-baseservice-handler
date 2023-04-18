@@ -152,11 +152,16 @@ describe('getServiceAttributesDetails', () => {
 		{ name: 'MEDREC', categoryName: 'Group' },
 		{ name: 'STAR', categoryName: 'Group' }
 	  ]) ;
-		expect(await serviceManager.getServiceAttributesDetails(1, NaN)).toStrictEqual([
-			{ Role: [ 'TECHELIGIBLE' ] },
-			{ Class: [ 'COSTALT', 'HIGHRISK' ] },
-			{ Group: [ 'MEDREC', 'STAR' ] }
-		  ]);
+		expect(await serviceManager.getServiceAttributesDetails(1, NaN)).toStrictEqual([{
+			"serviceID": 1,
+			"legacyTIPDetailID": undefined,
+			"Attributes": 
+			{ Role: [ 'TECHELIGIBLE' ] ,
+			Class: [ 'COSTALT', 'HIGHRISK' ] ,
+			Group: [ 'MEDREC', 'STAR' ] 
+			}
+			
+		}]);
 
 	});
 	test('legacyID does not exist error', async () => {
@@ -179,7 +184,7 @@ describe('getServiceAttributesDetails', () => {
 		}
 	});
 
-	test('should retrun the active attributes version for serviceID', async () => {
+	test('should retrun the active attributes deatils for leagacyTipID', async () => {
 		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);
 			db.query = jest.fn().mockImplementationOnce(()=>{
 				return [ { globalServiceVersion: 1 } ];
@@ -191,13 +196,59 @@ describe('getServiceAttributesDetails', () => {
 			{ name: 'MEDREC', categoryName: 'Group' },
 			{ name: 'STAR', categoryName: 'Group' }
 		  ]) ;
-			expect(await serviceManager.getServiceAttributesDetails(NaN, 1)).toStrictEqual([
-				{ Role: [ 'TECHELIGIBLE' ] },
-				{ Class: [ 'COSTALT', 'HIGHRISK' ] },
-				{ Group: [ 'MEDREC', 'STAR' ] }
-			  ]);
+			expect(await serviceManager.getServiceAttributesDetails(NaN, 1)).toStrictEqual([{
+				"serviceID": undefined,
+				"legacyTIPDetailID": 1,
+				"Attributes": 
+				{ Role: [ 'TECHELIGIBLE' ] ,
+				Class: [ 'COSTALT', 'HIGHRISK' ] ,
+				Group: [ 'MEDREC', 'STAR' ] 
+				}
+				
+			}]);
 	});
-	test('should retrun the active attributes version for serviceID', async () => {
+
+	test('should retrun the empty ettributes object for legacy ID', async () => {
+		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);
+			db.query = jest.fn().mockImplementationOnce(()=>{
+				return [ { globalServiceVersion: 1 } ];
+			}).mockImplementationOnce(()=>[ 
+		]).mockImplementationOnce(()=>[
+			{ name: 'TECHELIGIBLE', categoryName: 'Role' },
+			{ name: 'COSTALT', categoryName: 'Class' },
+			{ name: 'HIGHRISK', categoryName: 'Class' },
+			{ name: 'MEDREC', categoryName: 'Group' },
+			{ name: 'STAR', categoryName: 'Group' }
+		  ]) ;
+			expect(await serviceManager.getServiceAttributesDetails(NaN, 1)).toStrictEqual([{
+				"serviceID": undefined,
+				"legacyTIPDetailID": 1,
+				"Attributes": 
+				{ }
+				
+			}]);
+	});
+	test('should retrun the empty ettributes object for serviceID', async () => {
+		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);
+			db.query = jest.fn().mockImplementationOnce(()=>{
+				return [ { globalServiceVersion: 1 } ];
+			}).mockImplementationOnce(()=>[ 
+		]).mockImplementationOnce(()=>[
+			{ name: 'TECHELIGIBLE', categoryName: 'Role' },
+			{ name: 'COSTALT', categoryName: 'Class' },
+			{ name: 'HIGHRISK', categoryName: 'Class' },
+			{ name: 'MEDREC', categoryName: 'Group' },
+			{ name: 'STAR', categoryName: 'Group' }
+		  ]) ;
+			expect(await serviceManager.getServiceAttributesDetails(1, NaN)).toStrictEqual([{
+				"serviceID": 1,
+				"legacyTIPDetailID": undefined,
+				"Attributes": 
+				{ }
+				
+			}]);
+	});
+	test('should retrun ServiceAttributesFetchError', async () => {
 		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);
 		db.transaction = () => {
 			throw new Error();
@@ -206,6 +257,112 @@ describe('getServiceAttributesDetails', () => {
 			await serviceManager.getServiceAttributesDetails(1, NaN);
 		} catch (error: any) {
 			expect(error.name).toBe('ServiceAttributesFetchError');
+		}
+	});
+	
+});
+
+describe('getServiceDetails', () => {
+
+	test('service does not exist error', async () => {
+		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepositoryNoService,mockServiceModuleConfigRepo);
+		try {
+			await serviceManager.getServiceDetails(1,NaN);
+		} catch (error: any) {
+			expect(error.name).toBe('ServiceDoesntExist');
+		}
+	});
+
+
+	test('should retrun the active service details for serviceID', async () => {
+		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);
+		db.query = jest.fn().mockImplementationOnce(()=>{
+			return [
+				{ serviceID: 1, globalServiceVersion: 2, legacyTIPDetailID: 1817 }
+			  ];
+		}).mockImplementationOnce(()=>[
+			{
+			  serviceType: 'TIP',
+			  serviceID: 1,
+			  serviceDisplayName: 'Adherence Monitoring (Antiretroviral - Protease Inhibitor)',
+			  globalServiceVersion: 2,
+			  validFrom: '2023-04-10T04:59:59.999Z',
+			  validTill: '2025-04-10T04:59:59.999Z'
+			}
+		  ]);
+		expect(await serviceManager.getServiceDetails(1, NaN)).toStrictEqual({
+			"serviceDetails": [
+				{
+					"serviceType": "TIP",
+					"serviceID": 1,
+					"serviceDisplayName": "Adherence Monitoring (Antiretroviral - Protease Inhibitor)",
+					"globalServiceVersion": 2,
+					"validFrom": "2023-04-10T04:59:59.999Z",
+					"validTill": "2025-04-10T04:59:59.999Z"
+				}
+			]
+		});
+
+	});
+	test('legacyID does not exist error', async () => {
+		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepositoryNoService,mockServiceModuleConfigRepo);
+		try {
+			await serviceManager.getServiceDetails(NaN,1);
+		} catch (error: any) {
+			expect(error.name).toBe('LegacyTipIDDoesntExist');
+		}
+	});
+	test('should retrun the active service deatils for serviceID', async () => {
+		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);
+		db.query = jest.fn().mockImplementationOnce(()=>{
+			return [ ];
+		});
+		try {
+			await serviceManager.getServiceDetails(NaN, 1);
+		} catch (error: any) {
+			expect(error.name).toBe('ActiveServiceVersionDoesntExist');
+		}
+	});
+
+	test('should retrun the active service details for serviceID', async () => {
+		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);
+		db.query = jest.fn().mockImplementationOnce(()=>{
+			return [
+				{ serviceID: 1, globalServiceVersion: 2, legacyTIPDetailID: 1817 }
+			  ];
+		}).mockImplementationOnce(()=>[
+			{
+			  serviceType: 'TIP',
+			  serviceID: 1,
+			  serviceDisplayName: 'Adherence Monitoring (Antiretroviral - Protease Inhibitor)',
+			  globalServiceVersion: 2,
+			  validFrom: '2023-04-10T04:59:59.999Z',
+			  validTill: '2025-04-10T04:59:59.999Z'
+			}
+		  ]);
+		expect(await serviceManager.getServiceDetails(NaN, 1)).toStrictEqual({
+			"serviceDetails": [
+				{
+					"serviceType": "TIP",
+					"serviceID": 1,
+					"serviceDisplayName": "Adherence Monitoring (Antiretroviral - Protease Inhibitor)",
+					"globalServiceVersion": 2,
+					"validFrom": "2023-04-10T04:59:59.999Z",
+					"validTill": "2025-04-10T04:59:59.999Z"
+				}
+			]
+		});
+
+	});
+	test('should retrun ServiceDetailsFetchError', async () => {
+		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);
+		db.transaction = () => {
+			throw new Error();
+		};
+		try {
+			await serviceManager.getServiceDetails(1, NaN);
+		} catch (error: any) {
+			expect(error.name).toBe('ServiceDetailsFetchError');
 		}
 	});
 	
