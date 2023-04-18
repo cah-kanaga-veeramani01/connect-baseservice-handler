@@ -115,6 +115,46 @@
                     }
                 }
             }
+        },
+        "/service/external/serviceDetails": {
+            "get": {
+                "tags": [
+                    "Base Service"
+                ],
+                "summary": "Get service details in the system based on the serviceID or leagacyTipID",
+                "parameters": [
+                    {
+                        "name": "serviceID",
+                        "in": "query",
+                        "description": "serviceID",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "legacyTIPDetailID",
+                        "in": "query",
+                        "description": "legacyTIPDetailID",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Service details for serviceID or legacyTipID",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseServiceDetails"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
        
     },
@@ -159,20 +199,69 @@
 						"items": {
 							"type": "object",
                             "properties": {
-                                "key": {
-                                    "type": "string",
-                                    "description": "Attribute category"
+                                "serviceID": {
+                                    "type": "number",
+                                    "description": "represents specific ID of the base service"
                                 },
-                                "value": {
-                                    "type": "array",
-                                    "items": {
+                                "legacyTIPDetailID": {
+                                    "type": "number",
+                                    "description": "represents specific ID of the legacyTipID"
+                                },
+                                "Attributes":{
+                                    "type": "object",
+                                    "key": {
                                         "type": "string",
-                                        "description": "Attribute list"
+                                        "description": "Attribute category"
+                                    },
+                                    "value": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "description": "Attribute list"
+                                        }
                                     }
                                 }
+                               
                             }
 						}
-					
+				}
+			},
+            "BaseServiceDetails": {
+                "type": "object",
+				"properties": {
+                    "serviceDetails":{
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "serviceType": {
+                                    "type": "integer",
+                                    "description": "Service Type for base service"
+                                },
+                                "serviceID": {
+                                    "type": "integer",
+                                    "description": "Unique ID for base service"
+                                },
+                                "serviceDisplayName": {
+                                    "type": "string",
+                                    "description": "Name of the service which is present in legacyTip"
+                                },
+                                "globalServiceVersion": {
+                                    "type": "integer",
+                                    "description": "Unique version for base service"
+                                },
+                                "validFrom": {
+                                    "type": "string",
+                                    "description": "starting date of the servcie"
+                                },
+                                "validTill": {
+                                    "type": "integer",
+                                    "description": "End date of the base service"
+                                }
+                            }
+                        }
+
+                    }
 				}
 			}
         }

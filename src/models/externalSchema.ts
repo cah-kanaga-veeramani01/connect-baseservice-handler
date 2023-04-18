@@ -62,3 +62,27 @@ export const getServiceAttributesSchema = {
 	},
 	required: ['query']
 };
+
+export const getServiceDetailsSchema = {
+	$schema: definedSchema,
+	$id: 'https://cardinal-domain.com/schema/program-config/getBaseServiceDetails.json',
+	title: 'Request Parameters to get the service detaials API',
+	description: 'This is a schema to get service details api.',
+	type: 'object',
+	properties: {
+		query: {
+			type: 'object',
+			properties: {
+				serviceID: {
+					type: 'string',
+					pattern: '^[0-9]+$'
+				},
+				legacyTIPDetailID: {
+					type: 'string',
+					pattern: '^[0-9]+$'
+				}
+			}
+		}
+	},
+	required: ['query']
+};

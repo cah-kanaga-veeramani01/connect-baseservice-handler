@@ -59,8 +59,8 @@ app.use(contextStore);
 app.use(generateLogId);
 app.use(/^((?!external|swagger).)*$/i, auth); // authenticate every route except /swagger
 
-app.get('/', (req: Request, res: Response) => {
-	res.send('<h1>Service Configuration is UP!</h1>');
+app.get('/', (req: Request, res: Response, _next: NextFunction) => {
+	res.send('Service Configuration is UP!');
 });
 
 /**
@@ -78,7 +78,7 @@ app.use(csurf({ cookie: { secure: true, httpOnly: true } }));
 app.use('/service/internal', InternalRouterManager);
 
 // set csrf token in the cookie
-app.get('/csrf', (req, res) => {
+app.get('/csrf', (req, res, _next) => {
 	res.cookie('XSRF-TOKEN', req.csrfToken());
 	res.status(200).json({ success: true });
 });

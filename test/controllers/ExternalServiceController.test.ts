@@ -28,7 +28,7 @@ describe('Update module version', () => {
 			res = mocks.createResponse(),
 			next = jest.fn();
 
-		await serviceController.addModuleConfig(req, res);
+		await serviceController.addModuleConfig(req, res, next);
 		expect(res._getJSONData()).toMatchObject({
 			moduleVersion: 1,
 			message: "Module Configuration updated successfully"
@@ -50,7 +50,7 @@ describe('Update module version', () => {
 			next = jest.fn();
 
 		try {
-			await serviceController.addModuleConfig(req, res);
+			await serviceController.addModuleConfig(req, res, next);
 		} catch (error) {
 			expect(error.name).toBe('ServiceModuleUpdateError');
 		}
@@ -75,9 +75,77 @@ describe('getServiceAttributesDetails', () => {
 				next = jest.fn();
 	
 			try {
-				await serviceController.getServiceAttributesDetails(req, res);
+				await serviceController.getServiceAttributesDetails(req, res, next);
 			} catch (error) {
 				expect(error.name).toBe('ServiceAttributesFetchError');
 			}
 		});
 	});
+
+	describe('getServiceDetails for serviceID and TipID', () => {
+		test('retun the service deatils for serviceID or TipID', async () => {
+			jest.spyOn(serviceManager, 'getServiceDetails').mockImplementation((): any => {
+				return Promise.resolve({
+					"serviceDetails": [
+						{
+							"serviceType": "TIP",
+							"serviceID": 1,
+							"serviceDisplayName": "Adherence Monitoring (Antiretroviral - Protease Inhibitor)",
+							"globalServiceVersion": 2,
+							"validFrom": "2023-04-10T04:59:59.999Z",
+							"validTill": "2025-04-10T04:59:59.999Z"
+						}
+					]
+				});
+			});
+			const req = mocks.createRequest({
+					method: 'GET',
+					url: '/service/external/serviceDetails',
+					body: {
+						serviceID: 1,
+						legacyTIPDetailID: 1,
+					
+					}
+				}),
+				res = mocks.createResponse(),
+				next = jest.fn();
+	
+			await serviceController.getServiceDetails(req, res, next);
+			expect(res._getData()).toMatchObject({
+				"serviceDetails": [
+					{
+						"serviceType": "TIP",
+						"serviceID": 1,
+						"serviceDisplayName": "Adherence Monitoring (Antiretroviral - Protease Inhibitor)",
+						"globalServiceVersion": 2,
+						"validFrom": "2023-04-10T04:59:59.999Z",
+						"validTill": "2025-04-10T04:59:59.999Z"
+					}
+				]
+			});
+		});
+
+		test('should return error', async () => {
+			jest.spyOn(serviceManager, 'getServiceDetails').mockImplementation(() => {
+				return Promise.reject(new Error());
+			});
+			const req = mocks.createRequest({
+				method: 'GET',
+				url: '/service/external/serviceDetails',
+				query: {
+					serviceID: 1,
+					legacyTIPDetailID: 1,
+				
+				}
+			}),
+				res = mocks.createResponse(),
+				next = jest.fn();
+	
+			try {
+				await serviceController.getServiceDetails(req, res, next);
+			} catch (error) {
+				expect(error.name).toBe('ServiceDetailsFetchError');
+			}
+		});
+	});
+
