@@ -85,6 +85,7 @@ order by ${sortBy} ${sortOrder}
 };
 
 export const QServiceDetails = ` SELECT 
+s2."serviceName" AS "serviceName",
 s2."globalServiceVersion" AS "activeVersion", 
 s3."globalServiceVersion" AS "scheduledVersion", 
 s4."globalServiceVersion" AS "draftVersion", 
