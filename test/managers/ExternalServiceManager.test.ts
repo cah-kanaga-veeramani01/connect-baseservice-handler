@@ -152,7 +152,7 @@ describe('getServiceAttributesDetails', () => {
 		{ name: 'MEDREC', categoryName: 'Group' },
 		{ name: 'STAR', categoryName: 'Group' }
 	  ]) ;
-		expect(await serviceManager.getServiceAttributesDetails(1, NaN)).toStrictEqual([{
+		expect(await serviceManager.getServiceAttributesDetails(1, NaN)).toStrictEqual({"ServiceAttributes": [{
 			"serviceID": 1,
 			"legacyTIPDetailID": undefined,
 			"Attributes": 
@@ -161,7 +161,7 @@ describe('getServiceAttributesDetails', () => {
 			Group: [ 'MEDREC', 'STAR' ] 
 			}
 			
-		}]);
+		}]});
 
 	});
 	test('legacyID does not exist error', async () => {
@@ -196,7 +196,7 @@ describe('getServiceAttributesDetails', () => {
 			{ name: 'MEDREC', categoryName: 'Group' },
 			{ name: 'STAR', categoryName: 'Group' }
 		  ]) ;
-			expect(await serviceManager.getServiceAttributesDetails(NaN, 1)).toStrictEqual([{
+			expect(await serviceManager.getServiceAttributesDetails(NaN, 1)).toStrictEqual({"ServiceAttributes": [{
 				"serviceID": undefined,
 				"legacyTIPDetailID": 1,
 				"Attributes": 
@@ -205,7 +205,7 @@ describe('getServiceAttributesDetails', () => {
 				Group: [ 'MEDREC', 'STAR' ] 
 				}
 				
-			}]);
+			}]});
 	});
 
 	test('should retrun the empty ettributes object for legacy ID', async () => {
@@ -220,13 +220,13 @@ describe('getServiceAttributesDetails', () => {
 			{ name: 'MEDREC', categoryName: 'Group' },
 			{ name: 'STAR', categoryName: 'Group' }
 		  ]) ;
-			expect(await serviceManager.getServiceAttributesDetails(NaN, 1)).toStrictEqual([{
+			expect(await serviceManager.getServiceAttributesDetails(NaN, 1)).toStrictEqual({"ServiceAttributes": [{
 				"serviceID": undefined,
 				"legacyTIPDetailID": 1,
 				"Attributes": 
 				{ }
 				
-			}]);
+			}]});
 	});
 	test('should retrun the empty ettributes object for serviceID', async () => {
 		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);
@@ -240,13 +240,13 @@ describe('getServiceAttributesDetails', () => {
 			{ name: 'MEDREC', categoryName: 'Group' },
 			{ name: 'STAR', categoryName: 'Group' }
 		  ]) ;
-			expect(await serviceManager.getServiceAttributesDetails(1, NaN)).toStrictEqual([{
+			expect(await serviceManager.getServiceAttributesDetails(1, NaN)).toStrictEqual({"ServiceAttributes": [{
 				"serviceID": 1,
 				"legacyTIPDetailID": undefined,
 				"Attributes": 
 				{ }
 				
-			}]);
+			}]});
 	});
 	test('should retrun ServiceAttributesFetchError', async () => {
 		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);

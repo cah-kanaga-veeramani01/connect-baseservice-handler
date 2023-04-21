@@ -113,7 +113,8 @@ export default class ExternalServiceManager {
 					Attributes = {};
 				}
 			}
-			return [{ serviceID, legacyTIPDetailID, Attributes }];
+			const ServiceAttributes = [{ serviceID, legacyTIPDetailID, Attributes }];
+			return { ServiceAttributes: ServiceAttributes };
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
