@@ -76,7 +76,7 @@
                 }
             }
         },
-        "/service/external/serviceAttributes": {
+        "/service/external/attributes": {
             "get": {
                 "tags": [
                     "Base Service"
@@ -116,7 +116,7 @@
                 }
             }
         },
-        "/service/external/serviceDetails": {
+        "/service/external/details": {
             "get": {
                 "tags": [
                     "Base Service"
