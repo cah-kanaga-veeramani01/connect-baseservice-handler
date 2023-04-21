@@ -152,7 +152,7 @@ describe('getServiceAttributesDetails', () => {
 		{ name: 'MEDREC', categoryName: 'Group' },
 		{ name: 'STAR', categoryName: 'Group' }
 	  ]) ;
-		expect(await serviceManager.getServiceAttributesDetails(1, NaN)).toStrictEqual({"ServiceAttributes": [{
+		expect(await serviceManager.getServiceAttributesDetails(1, NaN)).toStrictEqual({"serviceAttributes": [{
 			"serviceID": 1,
 			"legacyTIPDetailID": undefined,
 			"Attributes": 
@@ -196,7 +196,7 @@ describe('getServiceAttributesDetails', () => {
 			{ name: 'MEDREC', categoryName: 'Group' },
 			{ name: 'STAR', categoryName: 'Group' }
 		  ]) ;
-			expect(await serviceManager.getServiceAttributesDetails(NaN, 1)).toStrictEqual({"ServiceAttributes": [{
+			expect(await serviceManager.getServiceAttributesDetails(NaN, 1)).toStrictEqual({"serviceAttributes": [{
 				"serviceID": undefined,
 				"legacyTIPDetailID": 1,
 				"Attributes": 
@@ -220,7 +220,7 @@ describe('getServiceAttributesDetails', () => {
 			{ name: 'MEDREC', categoryName: 'Group' },
 			{ name: 'STAR', categoryName: 'Group' }
 		  ]) ;
-			expect(await serviceManager.getServiceAttributesDetails(NaN, 1)).toStrictEqual({"ServiceAttributes": [{
+			expect(await serviceManager.getServiceAttributesDetails(NaN, 1)).toStrictEqual({"serviceAttributes": [{
 				"serviceID": undefined,
 				"legacyTIPDetailID": 1,
 				"Attributes": 
@@ -240,7 +240,7 @@ describe('getServiceAttributesDetails', () => {
 			{ name: 'MEDREC', categoryName: 'Group' },
 			{ name: 'STAR', categoryName: 'Group' }
 		  ]) ;
-			expect(await serviceManager.getServiceAttributesDetails(1, NaN)).toStrictEqual({"ServiceAttributes": [{
+			expect(await serviceManager.getServiceAttributesDetails(1, NaN)).toStrictEqual({"serviceAttributes": [{
 				"serviceID": 1,
 				"legacyTIPDetailID": undefined,
 				"Attributes": 
