@@ -90,7 +90,9 @@
                         "required": false,
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "example": 1
+
                     },
                     {
                         "name": "legacyTIPDetailID",
@@ -130,7 +132,8 @@
                         "required": false,
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "example": 1
                     },
                     {
                         "name": "legacyTIPDetailID",
@@ -194,37 +197,60 @@
                 }
             },
             "ListOfServiceAttributes": {
-                "type": "array",
+                "type": "object",
 				"properties": {
-						"items": {
-							"type": "object",
-                            "properties": {
-                                "serviceID": {
-                                    "type": "number",
-                                    "description": "represents specific ID of the base service"
-                                },
-                                "legacyTIPDetailID": {
-                                    "type": "number",
-                                    "description": "represents specific ID of the legacyTipID"
-                                },
-                                "Attributes":{
-                                    "type": "object",
-                                    "key": {
-                                        "type": "string",
-                                        "description": "Attribute category"
+                    "serviceAttributes":{
+                         "type": "array",
+                        "properties": {
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "serviceID": {
+                                        "type": "number",
+                                        "description": "represents specific ID of the base service"
                                     },
-                                    "value": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string",
-                                            "description": "Attribute list"
+                                    "legacyTIPDetailID": {
+                                        "type": "number",
+                                        "description": "represents specific ID of the legacyTipID"
+                                    },
+                                    "attributes":{
+                                        "type": "object",
+                                        "properties": {
+                                            "key": {
+                                                "type": "string",
+                                                "description": "Attribute category"
+                                            },
+                                            "value": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string",
+                                                    "description": "Attribute list"
+                                                }
+                                            }
                                         }
+                                    
                                     }
+                                
                                 }
-                               
                             }
-						}
-				}
+                        }
+                    }
+                   
+                },
+                "example": 
+                    {
+                        "serviceAttributes": [
+                          {
+                            "serviceID": 1,
+                            "legacyTIPDetailID": 1,
+                            "attributes": {
+                              "Role": [
+                                "TECHELIGIBLE"
+                              ]
+                            }
+                          }
+                        ]
+                      }
 			},
             "BaseServiceDetails": {
                 "type": "object",
@@ -236,27 +262,33 @@
                             "properties": {
                                 "serviceType": {
                                     "type": "integer",
-                                    "description": "Service Type for base service"
+                                    "description": "Service Type for base service",
+                                    "example": "Tip"
                                 },
                                 "serviceID": {
                                     "type": "integer",
-                                    "description": "Unique ID for base service"
+                                    "description": "Unique ID for base service",
+                                    "example": 1
                                 },
                                 "serviceDisplayName": {
                                     "type": "string",
-                                    "description": "Name of the service which is present in legacyTip"
+                                    "description": "Name of the service which is present in legacyTip",
+                                    "example": "abc"
                                 },
                                 "globalServiceVersion": {
                                     "type": "integer",
-                                    "description": "Unique version for base service"
+                                    "description": "Unique version for base service",
+                                    "example": 1
                                 },
                                 "validFrom": {
                                     "type": "string",
-                                    "description": "starting date of the servcie"
+                                    "description": "starting date of the servcie",
+                                    "example": "mm-dd-yyyy"
                                 },
                                 "validTill": {
                                     "type": "integer",
-                                    "description": "End date of the base service"
+                                    "description": "End date of the base service",
+                                    "example": "mm-dd-yyyy"
                                 }
                             }
                         }
