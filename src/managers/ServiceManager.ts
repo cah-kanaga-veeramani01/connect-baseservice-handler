@@ -358,7 +358,7 @@ export default class ServiceManager {
 	async getDetails(serviceID: number): Promise<object> {
 		try {
 			const service = await this.serviceRepository.findOne({
-				attributes: ['serviceID', 'serviceName', 'serviceDisplayName', 'serviceTypeID', 'legacyTIPDetailID'],
+				attributes: ['serviceID', 'serviceDisplayName', 'serviceTypeID', 'legacyTIPDetailID'],
 				where: {
 					serviceID
 				},

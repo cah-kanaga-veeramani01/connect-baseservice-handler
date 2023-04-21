@@ -85,6 +85,7 @@ order by ${sortBy} ${sortOrder}
 };
 
 export const QServiceDetails = ` SELECT 
+s2."serviceName" AS "serviceName",
 s2."globalServiceVersion" AS "activeVersion", 
 s3."globalServiceVersion" AS "scheduledVersion", 
 s4."globalServiceVersion" AS "draftVersion", 
@@ -159,4 +160,15 @@ export const QGetServiceAttributesName = `select "name", "categoryName" from ser
 where "attributesDefinitionID" in (:attributesDefinitionID) ORDER BY "attributesDefinitionID"`;
 
 export const QServiceActiveVersionForLegacyId =
-	'SELECT "serviceID","globalServiceVersion" FROM service."Service" WHERE "legacyTIPDetailID" = :legacyTIPDetailID AND "isPublished" = 1 and ((("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW()) OR ("validTill" IS NOT NULL and "validTill" < NOW()));';
+	'SELECT "serviceID","globalServiceVersion","legacyTIPDetailID" FROM service."Service" WHERE "legacyTIPDetailID" = :legacyTIPDetailID AND "isPublished" = 1 AND ("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW();';
+
+export const QGetServiceTipNameForserviceID = `SELECT st."serviceType", s."serviceID", s."serviceDisplayName", s."globalServiceVersion", s."validFrom", s."validTill"
+FROM service."ServiceType" st, service."Service" s where st."serviceTypeID" = s."serviceTypeID" 
+and s."serviceID" = :serviceID and s."globalServiceVersion" = :globalServiceVersion;`;
+
+export const QGetServiceTipNameForLegacyTipID = `SELECT st."serviceType", s."serviceID", s."serviceDisplayName", s."globalServiceVersion", s."validFrom", s."validTill"
+FROM service."ServiceType" st, service."Service" s where st."serviceTypeID" = s."serviceTypeID" 
+and s."legacyTIPDetailID" = :legacyTIPDetailID and s."globalServiceVersion" = :globalServiceVersion;`;
+
+export const QServiceDeailsActiveOrInActive =
+	'SELECT  "serviceID","globalServiceVersion","legacyTIPDetailID" FROM service."Service" WHERE "serviceID" = :serviceID AND "isPublished" = 1 AND ("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW();';
