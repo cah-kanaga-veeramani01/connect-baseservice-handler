@@ -155,7 +155,7 @@ describe('getServiceAttributesDetails', () => {
 		expect(await serviceManager.getServiceAttributesDetails(1, NaN)).toStrictEqual({"serviceAttributes": [{
 			"serviceID": 1,
 			"legacyTIPDetailID": undefined,
-			"Attributes": 
+			"attributes": 
 			{ Role: [ 'TECHELIGIBLE' ] ,
 			Class: [ 'COSTALT', 'HIGHRISK' ] ,
 			Group: [ 'MEDREC', 'STAR' ] 
@@ -199,7 +199,7 @@ describe('getServiceAttributesDetails', () => {
 			expect(await serviceManager.getServiceAttributesDetails(NaN, 1)).toStrictEqual({"serviceAttributes": [{
 				"serviceID": undefined,
 				"legacyTIPDetailID": 1,
-				"Attributes": 
+				"attributes": 
 				{ Role: [ 'TECHELIGIBLE' ] ,
 				Class: [ 'COSTALT', 'HIGHRISK' ] ,
 				Group: [ 'MEDREC', 'STAR' ] 
@@ -223,7 +223,7 @@ describe('getServiceAttributesDetails', () => {
 			expect(await serviceManager.getServiceAttributesDetails(NaN, 1)).toStrictEqual({"serviceAttributes": [{
 				"serviceID": undefined,
 				"legacyTIPDetailID": 1,
-				"Attributes": 
+				"attributes": 
 				{ }
 				
 			}]});
@@ -243,7 +243,7 @@ describe('getServiceAttributesDetails', () => {
 			expect(await serviceManager.getServiceAttributesDetails(1, NaN)).toStrictEqual({"serviceAttributes": [{
 				"serviceID": 1,
 				"legacyTIPDetailID": undefined,
-				"Attributes": 
+				"attributes": 
 				{ }
 				
 			}]});
