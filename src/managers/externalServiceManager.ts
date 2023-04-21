@@ -68,9 +68,9 @@ export default class ExternalServiceManager {
 	async getServiceAttributesDetails(serviceID, legacyTIPDetailID) {
 		try {
 			logger.nonPhi.debug('getServiceAttributesDetails API invoked with following parameters', { serviceID, legacyTIPDetailID });
-			let Attributes, serviceAttributes;
+			let attributes, attributesMetaData;
 			if (!legacyTIPDetailID) {
-				await this.ServiceDoesnotExists(serviceID);
+				await this.serviceDoesnotExists(serviceID);
 				const activeOrInActiveService = await db.query(QServiceDeailsActiveOrInActive, {
 					replacements: { serviceID: serviceID },
 					type: QueryTypes.SELECT,
@@ -78,18 +78,18 @@ export default class ExternalServiceManager {
 				});
 
 				legacyTIPDetailID = this.inactiveServiceVersion(activeOrInActiveService, legacyTIPDetailID);
-				serviceAttributes = await db.query(QGetServiceAttributesMetaData, {
+				attributesMetaData = await db.query(QGetServiceAttributesMetaData, {
 					replacements: { serviceID, globalServiceVersion: activeOrInActiveService[0].globalServiceVersion },
 					type: QueryTypes.SELECT,
 					raw: true
 				});
-				if (serviceAttributes[0]) {
-					Attributes = await this.GetAttributeNames(serviceAttributes);
+				if (attributesMetaData[0]) {
+					attributes = await this.getAttributeNames(attributesMetaData);
 				} else {
-					Attributes = {};
+					attributes = {};
 				}
 			} else {
-				await this.LegacyIDNotexists(legacyTIPDetailID);
+				await this.legacyIDNotExists(legacyTIPDetailID);
 				const activeOrInActiveService = await this.activeLegacyVersion(legacyTIPDetailID);
 
 				if (!activeOrInActiveService[0]) {
@@ -102,18 +102,19 @@ export default class ExternalServiceManager {
 				} else {
 					serviceID = activeOrInActiveService[0].serviceID;
 				}
-				serviceAttributes = await db.query(QGetServiceAttributesMetaData, {
+				attributesMetaData = await db.query(QGetServiceAttributesMetaData, {
 					replacements: { serviceID: activeOrInActiveService[0].serviceID, globalServiceVersion: activeOrInActiveService[0].globalServiceVersion },
 					type: QueryTypes.SELECT,
 					raw: true
 				});
-				if (serviceAttributes[0]) {
-					Attributes = await this.GetAttributeNames(serviceAttributes);
+				if (attributesMetaData[0]) {
+					attributes = await this.getAttributeNames(attributesMetaData);
 				} else {
-					Attributes = {};
+					attributes = {};
 				}
 			}
-			return [{ serviceID, legacyTIPDetailID, Attributes }];
+			const serviceAttributes = [{ serviceID, legacyTIPDetailID, attributes }];
+			return { serviceAttributes };
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
@@ -135,7 +136,7 @@ export default class ExternalServiceManager {
 		return legacyTIPDetailID;
 	}
 
-	private async GetAttributeNames(serviceAttributes: any) {
+	private async getAttributeNames(serviceAttributes: any) {
 		const attrStr = serviceAttributes[0].attributes;
 		const result = attrStr.slice(1, -1).split(',').map(Number);
 
@@ -169,10 +170,10 @@ export default class ExternalServiceManager {
 	 */
 	async getServiceDetails(serviceID, legacyTIPDetailID) {
 		try {
-			logger.nonPhi.debug('getServiceDetailsDetails API invoked with following parameters', { serviceID, legacyTIPDetailID });
+			logger.nonPhi.debug('getServiceDetails API invoked with following parameters', { serviceID, legacyTIPDetailID });
 			let serviceDetails, activeOrInActiveServices;
 			if (!legacyTIPDetailID) {
-				await this.ServiceDoesnotExists(serviceID);
+				await this.serviceDoesnotExists(serviceID);
 				activeOrInActiveServices = await db.query(QServiceDeailsActiveOrInActive, {
 					replacements: { serviceID: serviceID },
 					type: QueryTypes.SELECT,
@@ -185,7 +186,7 @@ export default class ExternalServiceManager {
 					type: QueryTypes.SELECT
 				});
 			} else {
-				await this.LegacyIDNotexists(legacyTIPDetailID);
+				await this.legacyIDNotExists(legacyTIPDetailID);
 				activeOrInActiveServices = await this.activeLegacyVersion(legacyTIPDetailID);
 				activeVersionNotExists(activeOrInActiveServices);
 
@@ -213,14 +214,14 @@ export default class ExternalServiceManager {
 		}
 	}
 
-	private async ServiceDoesnotExists(serviceID: any) {
+	private async serviceDoesnotExists(serviceID: any) {
 		const serviceDetail: any = await this.serviceRepository.findOne({ where: { serviceID } });
 		if (!serviceDetail) {
 			throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.badRequest });
 		}
 	}
 
-	private async LegacyIDNotexists(legacyTIPDetailID: any) {
+	private async legacyIDNotExists(legacyTIPDetailID: any) {
 		const serviceDetailsforLegacyID: any = await this.serviceRepository.findOne({ where: { legacyTIPDetailID } });
 		if (!serviceDetailsforLegacyID) {
 			throw new HandleError({
