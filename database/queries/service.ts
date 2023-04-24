@@ -75,7 +75,7 @@ from service."Service" s1
     JOIN service."ServiceType" on s1."serviceTypeID" = "ServiceType"."serviceTypeID" 
 where (s1."validTill" IS NULL 
 		  OR s1."validTill" > NOW()) and 
-		  (s1."serviceName" ILIKE :searchKey OR s1."serviceID"::text like :searchKey OR "ServiceType"."serviceType" ILIKE :searchKey)
+		  (s1."serviceName" ILIKE :searchKey OR s1."serviceID"::text like :searchKey OR "ServiceType"."serviceType" ILIKE :searchKey OR s1."legacyTIPDetailID"::text ILIKE :searchKey)
       group by "serviceID" 
         order by "serviceID" desc
 ) vs
