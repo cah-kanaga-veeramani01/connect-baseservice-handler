@@ -37,8 +37,9 @@ export const auth = async (req: Request, _res: Response, next: NextFunction) => 
 		}
 	} catch (error: any) {
 		logger.nonPhi.error(error.message, { _error: error });
-		if (error instanceof HandleError) next(error);
-		else
+		if (error instanceof HandleError) {
+			next(error);
+		} else {
 			next(
 				new HandleError({
 					name: 'AuthenticationError',
@@ -47,5 +48,6 @@ export const auth = async (req: Request, _res: Response, next: NextFunction) => 
 					stack: 'Error while authenticating'
 				})
 			);
+		}
 	}
 };
