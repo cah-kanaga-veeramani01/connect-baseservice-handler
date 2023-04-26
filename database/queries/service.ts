@@ -74,12 +74,13 @@ JSONB_AGG(
 from service."Service" s1
     JOIN service."ServiceType" on s1."serviceTypeID" = "ServiceType"."serviceTypeID" 
 where (s1."validTill" IS NULL 
-		  OR s1."validTill" > NOW()) and 
-		  (s1."serviceName" ILIKE :searchKey OR s1."serviceID"::text like :searchKey OR "ServiceType"."serviceType" ILIKE :searchKey)
+		  OR s1."validTill" > NOW()) 
+
       group by "serviceID" 
         order by "serviceID" desc
 ) vs
 ) vvs
+where (servicename ILIKE :searchKey OR serviceid::text like :searchKey OR servicetype ILIKE :searchKey OR legacytipdetailid::text ILIKE :searchKey OR attributes::text ILIKE :searchKey)
 order by ${sortBy} ${sortOrder}
     limit :limit offset :offset;`;
 };
