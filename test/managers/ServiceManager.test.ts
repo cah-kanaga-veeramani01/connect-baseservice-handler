@@ -29,7 +29,7 @@ const mockServiceRepository: Repository<Service> = {
 			isPublished: 1
 		});
 	})
-}
+};
 
 const mockServiceRepository_error: Repository<Service> = {
 	create: jest.fn().mockImplementation(() => {
@@ -306,7 +306,8 @@ describe('get list of services', () => {
 							isPublished: 1,
 							globalServiceVersion: 1
 						}
-					]
+					],
+					attributes: ['TECHELIGIBLE', 'AMP']
 				}
 			];
 		};
@@ -326,7 +327,8 @@ describe('get list of services', () => {
 							isPublished: 1,
 							globalServiceVersion: 1
 						}
-					]
+					],
+					attributes: ['TECHELIGIBLE', 'AMP']
 				}
 			]
 		});
@@ -346,11 +348,12 @@ describe('get list of services', () => {
 							isPublished: 1,
 							globalServiceVersion: 1
 						}
-					]
+					],
+					attributes: ['TECHELIGIBLE', 'AMP']
 				}
 			];
 		};
-		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'abc')).toMatchObject({
+		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'AMP')).toMatchObject({
 			totalServices: 1,
 			nonFilteredServicesCount: 1,
 			services: [
@@ -366,7 +369,8 @@ describe('get list of services', () => {
 							isPublished: 1,
 							globalServiceVersion: 1
 						}
-					]
+					],
+					attributes: ['TECHELIGIBLE', 'AMP']
 				}
 			]
 		});
@@ -431,9 +435,7 @@ describe('Create draft', () => {
 	});
 
 	test('return the service details - draft details', async () => {
-		const baseService: ServiceManager = new ServiceManager(
-			mockServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo
-		);
+		const baseService: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo);
 		try {
 			jest.spyOn(baseService, 'getDetails').mockImplementation(() => {
 				return Promise.resolve({ activeVersion: 1, scheduledVersion: 2, draftVersion: null, isExpired: false });
@@ -443,8 +445,7 @@ describe('Create draft', () => {
 	});
 
 	test('Select service details', async () => {
-		const baseService: ServiceManager = new ServiceManager(
-			mockGetNoServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		const baseService: ServiceManager = new ServiceManager(mockGetNoServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo);
 		try {
 			jest.spyOn(baseService, 'getDetails').mockImplementation(() => {
 				return Promise.resolve({ activeVersion: 1, scheduledVersion: null, draftVersion: null, isExpired: false });
@@ -456,9 +457,7 @@ describe('Create draft', () => {
 	});
 
 	test('create draft version', async () => {
-		const baseService: ServiceManager = new ServiceManager(
-			mockServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo
-		);
+		const baseService: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo);
 		try {
 			jest.spyOn(baseService, 'getDetails').mockImplementation(() => {
 				return Promise.resolve({ activeVersion: 1, scheduledVersion: null, draftVersion: null, isExpired: false });
@@ -466,7 +465,6 @@ describe('Create draft', () => {
 			await baseService.createDraft(1);
 		} catch (error: any) {}
 	});
-
 
 	test('throw error', async () => {
 		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTypeRepository, mockServiceModuleConfigRepo);
