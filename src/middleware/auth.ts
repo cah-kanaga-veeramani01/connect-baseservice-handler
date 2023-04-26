@@ -15,7 +15,7 @@ export const auth = async (req: Request, _res: Response, next: NextFunction) => 
 	try {
 		logger.nonPhi.debug('cookies', req.headers.cookie);
 		if (!req.headers.cookie) {
-			throw new HandleError({ name: 'AuthenticationError', errorStatus: HTTP_STATUS_CODES.unauthenticated, message: 'Error while authenticating, cookie', stack: 'Error while authenticating' });
+			throw new HandleError({ name: 'AuthenticationError', errorStatus: HTTP_STATUS_CODES.unauthenticated, message: 'Error while authenticating,', stack: 'Error while authenticating' });
 		}
 		const authRes = await invoke({
 			method: 'GET',
@@ -31,7 +31,7 @@ export const auth = async (req: Request, _res: Response, next: NextFunction) => 
 			throw new HandleError({
 				name: 'AuthenticationError',
 				errorStatus: HTTP_STATUS_CODES.unauthenticated,
-				message: 'Error while authenticating,api calling failed',
+				message: 'Error while authenticating.',
 				stack: 'Error while authenticating'
 			});
 		}
@@ -44,7 +44,7 @@ export const auth = async (req: Request, _res: Response, next: NextFunction) => 
 				new HandleError({
 					name: 'AuthenticationError',
 					errorStatus: HTTP_STATUS_CODES.unauthenticated,
-					message: 'Error while authenticating, in catch block',
+					message: 'Error while Authenticating.',
 					stack: 'Error while authenticating'
 				})
 			);
