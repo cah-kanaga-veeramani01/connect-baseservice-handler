@@ -295,19 +295,23 @@ describe('get list of services', () => {
 		db.query = () => {
 			return [
 				{
-					serviceID: 1,
-					serviceName: 'Automation Service 0001',
-					serviceType: 'TIP',
+					servicename: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+					servicetype: 'TIP',
+					legacytipdetailid: '311',
+					serviceid: 1457,
 					statuses: [
 						{
 							status: 'ACTIVE',
-							validFrom: '2021-09-17T12:52:37.898+00:00',
+							validFrom: '2014-01-02T20:38:08.053+00:00',
 							validTill: null,
 							isPublished: 1,
+							serviceName: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 311,
 							globalServiceVersion: 1
 						}
 					],
-					attributes: ['TECHELIGIBLE', 'AMP']
+					attributes: ['TECHELIGIBLE']
 				}
 			];
 		};
@@ -316,40 +320,48 @@ describe('get list of services', () => {
 			nonFilteredServicesCount: 1,
 			services: [
 				{
-					serviceID: 1,
-					serviceName: 'Automation Service 0001',
-					serviceType: 'TIP',
+					servicename: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+					servicetype: 'TIP',
+					legacytipdetailid: '311',
+					serviceid: 1457,
 					statuses: [
 						{
 							status: 'ACTIVE',
-							validFrom: '2021-09-17T12:52:37.898+00:00',
+							validFrom: '2014-01-02T20:38:08.053+00:00',
 							validTill: null,
 							isPublished: 1,
+							serviceName: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 311,
 							globalServiceVersion: 1
 						}
 					],
-					attributes: ['TECHELIGIBLE', 'AMP']
+					attributes: ['TECHELIGIBLE']
 				}
 			]
 		});
 	});
-	test('should return list of services matching the search key', async () => {
+	test('should return list of services matching the search key - search by attribute', async () => {
 		db.query = () => {
 			return [
 				{
-					serviceID: 1,
-					serviceName: 'Automation Service 0001',
-					serviceType: 'TIP',
+					servicename: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+					servicetype: 'TIP',
+					legacytipdetailid: '311',
+					serviceid: 1457,
 					statuses: [
 						{
 							status: 'ACTIVE',
-							validFrom: '2021-09-17T12:52:37.898+00:00',
+							validFrom: '2014-01-02T20:38:08.053+00:00',
 							validTill: null,
 							isPublished: 1,
+							serviceName: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 311,
 							globalServiceVersion: 1
 						}
 					],
-					attributes: ['TECHELIGIBLE', 'AMP']
+					attributes: ['AMP']
 				}
 			];
 		};
@@ -358,19 +370,23 @@ describe('get list of services', () => {
 			nonFilteredServicesCount: 1,
 			services: [
 				{
-					serviceID: 1,
-					serviceName: 'Automation Service 0001',
-					serviceType: 'TIP',
+					servicename: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+					servicetype: 'TIP',
+					legacytipdetailid: '311',
+					serviceid: 1457,
 					statuses: [
 						{
 							status: 'ACTIVE',
-							validFrom: '2021-09-17T12:52:37.898+00:00',
+							validFrom: '2014-01-02T20:38:08.053+00:00',
 							validTill: null,
 							isPublished: 1,
+							serviceName: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 311,
 							globalServiceVersion: 1
 						}
 					],
-					attributes: ['TECHELIGIBLE', 'AMP']
+					attributes: ['AMP']
 				}
 			]
 		});
