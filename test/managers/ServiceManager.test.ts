@@ -29,7 +29,7 @@ const mockServiceRepository: Repository<Service> = {
 			isPublished: 1
 		});
 	})
-}
+};
 
 const mockServiceRepository_error: Repository<Service> = {
 	create: jest.fn().mockImplementation(() => {
@@ -295,18 +295,23 @@ describe('get list of services', () => {
 		db.query = () => {
 			return [
 				{
-					serviceID: 1,
-					serviceName: 'Automation Service 0001',
-					serviceType: 'TIP',
+					servicename: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+					servicetype: 'TIP',
+					legacytipdetailid: '311',
+					serviceid: 1457,
 					statuses: [
 						{
 							status: 'ACTIVE',
-							validFrom: '2021-09-17T12:52:37.898+00:00',
+							validFrom: '2014-01-02T20:38:08.053+00:00',
 							validTill: null,
 							isPublished: 1,
+							serviceName: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 311,
 							globalServiceVersion: 1
 						}
-					]
+					],
+					attributes: ['TECHELIGIBLE']
 				}
 			];
 		};
@@ -315,58 +320,73 @@ describe('get list of services', () => {
 			nonFilteredServicesCount: 1,
 			services: [
 				{
-					serviceID: 1,
-					serviceName: 'Automation Service 0001',
-					serviceType: 'TIP',
+					servicename: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+					servicetype: 'TIP',
+					legacytipdetailid: '311',
+					serviceid: 1457,
 					statuses: [
 						{
 							status: 'ACTIVE',
-							validFrom: '2021-09-17T12:52:37.898+00:00',
+							validFrom: '2014-01-02T20:38:08.053+00:00',
 							validTill: null,
 							isPublished: 1,
+							serviceName: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 311,
 							globalServiceVersion: 1
 						}
-					]
+					],
+					attributes: ['TECHELIGIBLE']
 				}
 			]
 		});
 	});
-	test('should return list of services matching the search key', async () => {
+	test('should return list of services matching the search key - search by attribute', async () => {
 		db.query = () => {
 			return [
 				{
-					serviceID: 1,
-					serviceName: 'Automation Service 0001',
-					serviceType: 'TIP',
+					servicename: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+					servicetype: 'TIP',
+					legacytipdetailid: '311',
+					serviceid: 1457,
 					statuses: [
 						{
 							status: 'ACTIVE',
-							validFrom: '2021-09-17T12:52:37.898+00:00',
+							validFrom: '2014-01-02T20:38:08.053+00:00',
 							validTill: null,
 							isPublished: 1,
+							serviceName: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 311,
 							globalServiceVersion: 1
 						}
-					]
+					],
+					attributes: ['AMP']
 				}
 			];
 		};
-		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'abc')).toMatchObject({
+		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'AMP')).toMatchObject({
 			totalServices: 1,
 			nonFilteredServicesCount: 1,
 			services: [
 				{
-					serviceID: 1,
-					serviceName: 'Automation Service 0001',
-					serviceType: 'TIP',
+					servicename: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+					servicetype: 'TIP',
+					legacytipdetailid: '311',
+					serviceid: 1457,
 					statuses: [
 						{
 							status: 'ACTIVE',
-							validFrom: '2021-09-17T12:52:37.898+00:00',
+							validFrom: '2014-01-02T20:38:08.053+00:00',
 							validTill: null,
 							isPublished: 1,
+							serviceName: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 311,
 							globalServiceVersion: 1
 						}
-					]
+					],
+					attributes: ['AMP']
 				}
 			]
 		});
@@ -431,9 +451,7 @@ describe('Create draft', () => {
 	});
 
 	test('return the service details - draft details', async () => {
-		const baseService: ServiceManager = new ServiceManager(
-			mockServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo
-		);
+		const baseService: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo);
 		try {
 			jest.spyOn(baseService, 'getDetails').mockImplementation(() => {
 				return Promise.resolve({ activeVersion: 1, scheduledVersion: 2, draftVersion: null, isExpired: false });
@@ -443,8 +461,7 @@ describe('Create draft', () => {
 	});
 
 	test('Select service details', async () => {
-		const baseService: ServiceManager = new ServiceManager(
-			mockGetNoServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		const baseService: ServiceManager = new ServiceManager(mockGetNoServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo);
 		try {
 			jest.spyOn(baseService, 'getDetails').mockImplementation(() => {
 				return Promise.resolve({ activeVersion: 1, scheduledVersion: null, draftVersion: null, isExpired: false });
@@ -456,9 +473,7 @@ describe('Create draft', () => {
 	});
 
 	test('create draft version', async () => {
-		const baseService: ServiceManager = new ServiceManager(
-			mockServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo
-		);
+		const baseService: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo);
 		try {
 			jest.spyOn(baseService, 'getDetails').mockImplementation(() => {
 				return Promise.resolve({ activeVersion: 1, scheduledVersion: null, draftVersion: null, isExpired: false });
@@ -466,7 +481,6 @@ describe('Create draft', () => {
 			await baseService.createDraft(1);
 		} catch (error: any) {}
 	});
-
 
 	test('throw error', async () => {
 		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTypeRepository, mockServiceModuleConfigRepo);
