@@ -145,6 +145,17 @@ export default class ServiceManager {
 						}
 					}
 				);
+				await this.serviceRepository.update(
+					{
+						validTill: null
+					},
+					{
+						where: {
+							serviceID: serviceDetails.serviceID,
+							globalServiceVersion: serviceDetails.activeVersion
+						}
+					}
+				);
 				const draftService: any = await this.serviceRepository.findOne({
 					where: {
 						serviceID: serviceDetails.serviceID,
