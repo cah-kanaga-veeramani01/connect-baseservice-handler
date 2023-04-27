@@ -169,7 +169,8 @@ export default class ServiceManager {
 					scheduledVersion: null,
 					draftVersion: draftService.globalServiceVersion,
 					activeStartDate: serviceDetails.activeStartDate,
-					scheduledStartDate: serviceDetails.scheduledStartDate
+					scheduledStartDate: serviceDetails.scheduledStartDate,
+					serviceType: serviceDetails.serviceType
 				};
 			}
 			const activeService: any = await this.serviceRepository.findOne({
@@ -195,7 +196,8 @@ export default class ServiceManager {
 				scheduledVersion: null,
 				draftVersion: newDraftVersion.globalServiceVersion,
 				activeStartDate: serviceDetails.activeStartDate,
-				scheduledStartDate: serviceDetails.scheduledStartDate
+				scheduledStartDate: serviceDetails.scheduledStartDate,
+				serviceType: serviceDetails.serviceType
 			};
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
