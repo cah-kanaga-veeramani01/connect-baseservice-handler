@@ -25,3 +25,5 @@
         REALM: ((realm))
         PUBLIC_KEY: ((public_key))
         SERVICE_READ_ROLE: ((service_read_role))
+        PUBLISH_URL: ((publish_url))
+        SNS_TOPIC: ((sns_topic))

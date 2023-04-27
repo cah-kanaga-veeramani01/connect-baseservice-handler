@@ -76,7 +76,7 @@
                 }
             }
         },
-        "/service/external/serviceAttributes": {
+        "/service/external/attributes": {
             "get": {
                 "tags": [
                     "Base Service"
@@ -90,7 +90,9 @@
                         "required": false,
                         "schema": {
                             "type": "string"
-                        }
+                        },
+                        "example": 1
+
                     },
                     {
                         "name": "legacyTIPDetailID",
@@ -109,6 +111,47 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ListOfServiceAttributes"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/service/external/details": {
+            "get": {
+                "tags": [
+                    "Base Service"
+                ],
+                "summary": "Get service details in the system based on the serviceID or leagacyTipID",
+                "parameters": [
+                    {
+                        "name": "serviceID",
+                        "in": "query",
+                        "description": "serviceID",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": 1
+                    },
+                    {
+                        "name": "legacyTIPDetailID",
+                        "in": "query",
+                        "description": "legacyTIPDetailID",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Service details for serviceID or legacyTipID",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseServiceDetails"
                                 }
                             }
                         }
@@ -154,25 +197,103 @@
                 }
             },
             "ListOfServiceAttributes": {
-                "type": "array",
+                "type": "object",
 				"properties": {
-						"items": {
-							"type": "object",
-                            "properties": {
-                                "key": {
-                                    "type": "string",
-                                    "description": "Attribute category"
-                                },
-                                "value": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string",
-                                        "description": "Attribute list"
+                    "serviceAttributes":{
+                         "type": "array",
+                        "properties": {
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "serviceID": {
+                                        "type": "number",
+                                        "description": "represents specific ID of the base service"
+                                    },
+                                    "legacyTIPDetailID": {
+                                        "type": "number",
+                                        "description": "represents specific ID of the legacyTipID"
+                                    },
+                                    "attributes":{
+                                        "type": "object",
+                                        "properties": {
+                                            "key": {
+                                                "type": "string",
+                                                "description": "Attribute category"
+                                            },
+                                            "value": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string",
+                                                    "description": "Attribute list"
+                                                }
+                                            }
+                                        }
+                                    
                                     }
+                                
                                 }
                             }
-						}
-					
+                        }
+                    }
+                   
+                },
+                "example": 
+                    {
+                        "serviceAttributes": [
+                          {
+                            "serviceID": 1,
+                            "legacyTIPDetailID": 1,
+                            "attributes": {
+                              "Role": [
+                                "TECHELIGIBLE"
+                              ]
+                            }
+                          }
+                        ]
+                      }
+			},
+            "BaseServiceDetails": {
+                "type": "object",
+				"properties": {
+                    "serviceDetails":{
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "serviceType": {
+                                    "type": "integer",
+                                    "description": "Service Type for base service",
+                                    "example": "Tip"
+                                },
+                                "serviceID": {
+                                    "type": "integer",
+                                    "description": "Unique ID for base service",
+                                    "example": 1
+                                },
+                                "serviceDisplayName": {
+                                    "type": "string",
+                                    "description": "Name of the service which is present in legacyTip",
+                                    "example": "abc"
+                                },
+                                "globalServiceVersion": {
+                                    "type": "integer",
+                                    "description": "Unique version for base service",
+                                    "example": 1
+                                },
+                                "validFrom": {
+                                    "type": "string",
+                                    "description": "starting date of the servcie",
+                                    "example": "mm-dd-yyyy"
+                                },
+                                "validTill": {
+                                    "type": "integer",
+                                    "description": "End date of the base service",
+                                    "example": "mm-dd-yyyy"
+                                }
+                            }
+                        }
+
+                    }
 				}
 			}
         }

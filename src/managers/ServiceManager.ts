@@ -145,6 +145,17 @@ export default class ServiceManager {
 						}
 					}
 				);
+				await this.serviceRepository.update(
+					{
+						validTill: null
+					},
+					{
+						where: {
+							serviceID: serviceDetails.serviceID,
+							globalServiceVersion: serviceDetails.activeVersion
+						}
+					}
+				);
 				const draftService: any = await this.serviceRepository.findOne({
 					where: {
 						serviceID: serviceDetails.serviceID,
@@ -358,7 +369,7 @@ export default class ServiceManager {
 	async getDetails(serviceID: number): Promise<object> {
 		try {
 			const service = await this.serviceRepository.findOne({
-				attributes: ['serviceID', 'serviceName', 'serviceDisplayName', 'serviceTypeID', 'legacyTIPDetailID'],
+				attributes: ['serviceID', 'serviceDisplayName', 'serviceTypeID', 'legacyTIPDetailID'],
 				where: {
 					serviceID
 				},
