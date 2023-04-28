@@ -202,7 +202,8 @@ export default class ServiceManager {
 				draftVersion: newDraftVersion.globalServiceVersion,
 				draftServiceName,
 				activeStartDate: serviceDetails.activeStartDate,
-				scheduledStartDate: serviceDetails.scheduledStartDate
+				scheduledStartDate: serviceDetails.scheduledStartDate,
+				serviceType: serviceDetails.serviceType
 			};
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
