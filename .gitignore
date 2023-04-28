@@ -3,3 +3,5 @@ build
 coverage
 *.log
 docs
+.scannerwork
+.vscode
