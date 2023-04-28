@@ -192,18 +192,17 @@ export default class ServiceManager {
 			activeService.validTill = null;
 			activeService.globalServiceVersion += 1;
 
-			let newDraftVersion: any = await this.serviceRepository.create(activeService);
-			newDraftVersion = { ...newDraftVersion, draftServiceName: newDraftVersion.serviceName };
-			delete newDraftVersion.serviceName;
+			const newDraftVersion: any = await this.serviceRepository.create(activeService);
+			const draftServiceName = newDraftVersion.serviceName;
 			return {
 				...newDraftVersion.dataValues,
 				activeVersion: serviceDetails.activeVersion,
 				activeServiceName: serviceDetails.activeServiceName,
 				scheduledVersion: null,
 				draftVersion: newDraftVersion.globalServiceVersion,
+				draftServiceName,
 				activeStartDate: serviceDetails.activeStartDate,
-				scheduledStartDate: serviceDetails.scheduledStartDate,
-				serviceType: serviceDetails.serviceType
+				scheduledStartDate: serviceDetails.scheduledStartDate
 			};
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
