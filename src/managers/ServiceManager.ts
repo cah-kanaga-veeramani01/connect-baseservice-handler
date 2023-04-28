@@ -156,16 +156,19 @@ export default class ServiceManager {
 						}
 					}
 				);
-				const draftService: any = await this.serviceRepository.findOne({
+				let draftService: any = await this.serviceRepository.findOne({
 					where: {
 						serviceID: serviceDetails.serviceID,
 						globalServiceVersion: serviceDetails.scheduledVersion
 					},
 					raw: true
 				});
+				draftService = { ...draftService, draftServiceName: draftService.serviceName };
+				delete draftService.serviceName;
 				return {
 					...draftService,
 					activeVersion: serviceDetails.activeVersion,
+					activeServiceName: serviceDetails.activeServiceName,
 					scheduledVersion: null,
 					draftVersion: draftService.globalServiceVersion,
 					activeStartDate: serviceDetails.activeStartDate,
@@ -189,10 +192,13 @@ export default class ServiceManager {
 			activeService.validTill = null;
 			activeService.globalServiceVersion += 1;
 
-			const newDraftVersion: any = await this.serviceRepository.create(activeService);
+			let newDraftVersion: any = await this.serviceRepository.create(activeService);
+			newDraftVersion = { ...newDraftVersion, draftServiceName: newDraftVersion.serviceName };
+			delete newDraftVersion.serviceName;
 			return {
 				...newDraftVersion.dataValues,
 				activeVersion: serviceDetails.activeVersion,
+				activeServiceName: serviceDetails.activeServiceName,
 				scheduledVersion: null,
 				draftVersion: newDraftVersion.globalServiceVersion,
 				activeStartDate: serviceDetails.activeStartDate,
