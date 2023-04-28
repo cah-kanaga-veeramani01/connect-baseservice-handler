@@ -156,20 +156,24 @@ export default class ServiceManager {
 						}
 					}
 				);
-				const draftService: any = await this.serviceRepository.findOne({
+				let draftService: any = await this.serviceRepository.findOne({
 					where: {
 						serviceID: serviceDetails.serviceID,
 						globalServiceVersion: serviceDetails.scheduledVersion
 					},
 					raw: true
 				});
+				draftService = { ...draftService, draftServiceName: draftService.serviceName };
+				delete draftService.serviceName;
 				return {
 					...draftService,
 					activeVersion: serviceDetails.activeVersion,
+					activeServiceName: serviceDetails.activeServiceName,
 					scheduledVersion: null,
 					draftVersion: draftService.globalServiceVersion,
 					activeStartDate: serviceDetails.activeStartDate,
-					scheduledStartDate: serviceDetails.scheduledStartDate
+					scheduledStartDate: serviceDetails.scheduledStartDate,
+					serviceType: serviceDetails.serviceType
 				};
 			}
 			const activeService: any = await this.serviceRepository.findOne({
@@ -189,11 +193,14 @@ export default class ServiceManager {
 			activeService.globalServiceVersion += 1;
 
 			const newDraftVersion: any = await this.serviceRepository.create(activeService);
+			const draftServiceName = newDraftVersion.serviceName;
 			return {
 				...newDraftVersion.dataValues,
 				activeVersion: serviceDetails.activeVersion,
+				activeServiceName: serviceDetails.activeServiceName,
 				scheduledVersion: null,
 				draftVersion: newDraftVersion.globalServiceVersion,
+				draftServiceName,
 				activeStartDate: serviceDetails.activeStartDate,
 				scheduledStartDate: serviceDetails.scheduledStartDate
 			};
