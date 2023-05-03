@@ -21,7 +21,7 @@ export const auth = async (req: Request, _res: Response, next: NextFunction) => 
 			method: 'GET',
 			url: authUrl,
 			headers: { cookie: req.headers.cookie }
-		}).catch((error) => {
+		}).catch((_error) => {
 			return { status: HTTP_STATUS_CODES.unauthenticated, data: {} };
 		});
 
