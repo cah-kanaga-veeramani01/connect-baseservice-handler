@@ -1,4 +1,3 @@
--- Note: Replacing existing trigger SERVICE_ATTRIBUTES_TRIGGER with below to remove default adding of attribute to service, since previous attribute i.e. cost, star and quality is removed, and with new attribute it aways uses 'COSTALT' as default attribute
 CREATE OR REPLACE FUNCTION SERVICE_ATTRIBUTES_TRIGGER() RETURNS TRIGGER AS $$
 DECLARE tipName VARCHAR;
 DECLARE userID INTEGER;
