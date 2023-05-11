@@ -85,6 +85,10 @@ export const getServiceListSchema = {
 				},
 				keyword: {
 					type: 'string'
+				},
+				showInactive: {
+					type: 'string',
+					pattern: '[0-1]'
 				}
 			},
 			required: []
