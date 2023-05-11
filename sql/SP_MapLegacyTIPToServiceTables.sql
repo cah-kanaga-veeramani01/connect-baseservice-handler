@@ -9,6 +9,7 @@ DECLARE createdBy INTEGER;
 DECLARE updatedBy INTEGER;
 DECLARE newServiceID INTEGER;
 DECLARE legacyTIPType VARCHAR;
+DECLARE endDate TIMESTAMP := NULL;
 
 BEGIN
 
@@ -28,10 +29,12 @@ WHERE "TIPDetailRuleID" = (minDetail->>'f1')::INTEGER);
 
 updatedBy = (SELECT "createUserID" FROM attunityservice."TIPDetailRuleOverview" 
 WHERE "TIPDetailRuleID" = (maxDetail->>'f1')::INTEGER);
+endDate = (maxDetail->>'f2')::timestamp;
+IF (legacyTIPDetail."status" = 0) THEN endDate = NOW() - INTERVAL '1 DAY'; END IF;
 
 INSERT INTO service."Service" ("serviceName","serviceDisplayName", "globalServiceVersion", "serviceTypeID","validFrom", "validTill",
  "isPublished", "createdAt","createdBy","updatedAt", "updatedBy","legacyTIPDetailID")
-VALUES(legacyTIPDetail."tiptitle", legacyTIPDetail."tiptitle", 1, serviceTypeID, (minDetail->>'f2')::timestamp, (maxDetail->>'f2')::timestamp, legacyTIPDetail."status",
+VALUES(legacyTIPDetail."tiptitle", legacyTIPDetail."tiptitle", 1, serviceTypeID, (minDetail->>'f2')::timestamp, endDate, legacyTIPDetail."status",
 	   legacyTIPDetail."createdate", createdBy, (maxDetail->>'f4')::timestamp,updatedBy, legacyTIPDetail."tipdetailid") ON CONFLICT DO NOTHING RETURNING "serviceID" INTO newServiceID;
 
 END IF;
