@@ -1,7 +1,7 @@
 import httpMocks from 'node-mocks-http';
 import httpContext from 'express-http-context';
-import {auth} from '../../src/middleware/auth';
-import {describe, expect, jest, test } from '@jest/globals'
+import { auth } from '../../src/middleware/auth';
+import { describe, expect, jest, test } from '@jest/globals';
 
 jest.mock('../../utils');
 import { invoke } from '../../utils';
@@ -14,6 +14,48 @@ describe('Authentication middleware', () => {
 		const mockRes = httpMocks.createResponse();
 		const mockNext = jest.fn();
 		(invoke as jest.Mock).mockReturnValue(Promise.resolve({ status: 500 }));
+		const contextSetSpy = jest.spyOn(httpContext, 'set');
+
+		await auth(mockReq, mockRes, mockNext);
+
+		expect(invoke).toHaveBeenCalledWith({
+			method: 'GET',
+			url: expect.any(String),
+			headers: { cookie: 'CFID=26354;CFTOKEN=buncha-jibberish;AWSALBCORS=jibrish;AWSALB=jibrish' }
+		});
+		expect(contextSetSpy).not.toHaveBeenCalled();
+		expect(mockNext).not.toHaveBeenCalledWith();
+	});
+
+	test('should not authenticate when promise is rejected', async () => {
+		const mockReq = httpMocks.createRequest({
+			headers: { cookie: 'CFID=26354;CFTOKEN=buncha-jibberish;AWSALBCORS=jibrish;AWSALB=jibrish' }
+		});
+		const mockRes = httpMocks.createResponse();
+		const mockNext = jest.fn();
+		(invoke as jest.Mock).mockImplementation(() => Promise.reject({ status: 500 }));
+		const contextSetSpy = jest.spyOn(httpContext, 'set');
+
+		await auth(mockReq, mockRes, mockNext);
+
+		expect(invoke).toHaveBeenCalledWith({
+			method: 'GET',
+			url: expect.any(String),
+			headers: { cookie: 'CFID=26354;CFTOKEN=buncha-jibberish;AWSALBCORS=jibrish;AWSALB=jibrish' }
+		});
+		expect(contextSetSpy).not.toHaveBeenCalled();
+		expect(mockNext).not.toHaveBeenCalledWith();
+	});
+
+	test('should throw error when no cookie', async () => {
+		const mockReq = httpMocks.createRequest({
+			headers: {}
+		});
+		const mockRes = httpMocks.createResponse();
+		const mockNext = jest.fn();
+		(invoke as jest.Mock).mockImplementation(() => {
+			throw new Error();
+		});
 		const contextSetSpy = jest.spyOn(httpContext, 'set');
 
 		await auth(mockReq, mockRes, mockNext);
@@ -51,7 +93,7 @@ describe('Authentication middleware', () => {
 
 	test('should authenticate and set context on 200 from api', async () => {
 		const mockReq = httpMocks.createRequest({
-      headers : {cookie: 'CFID=26354;CFTOKEN=buncha-jibberish;AWSALBCORS=jibrish;AWSALB=jibrish' }
+			headers: { cookie: 'CFID=26354;CFTOKEN=buncha-jibberish;AWSALBCORS=jibrish;AWSALB=jibrish' }
 		});
 		const mockRes = httpMocks.createResponse();
 		const mockNext = jest.fn();
