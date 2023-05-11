@@ -151,6 +151,12 @@ describe('get list of services', () => {
 					serviceName: 'Automation Service 0002',
 					serviceType: 'TIP',
 					status: 'Inactive'
+				},
+				{
+					serviceID: 3,
+					serviceName: 'Automation Service 0003',
+					serviceType: 'CMR',
+					status: 'Inactive'
 				}
 			]
 		});
