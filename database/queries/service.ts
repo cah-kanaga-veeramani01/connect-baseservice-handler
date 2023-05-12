@@ -172,7 +172,7 @@ export const QServiceActiveVersionForLegacyId = `SELECT "serviceID","legacyTIPDe
 	  ) AND "isPublished" = 1 THEN 'ACTIVE'
 	  WHEN ("validFrom" > now() AND "isPublished" = 1) THEN 'SCHEDULED'
 	  WHEN ( "validFrom" IS NULL AND "validTill" IS NULL AND  "isPublished" = 0) THEN 'DRAFT'
-	  WHEN ( "validTill" < NOW() AND "isPublished" = 1) THEN 'INACTIVE'
+	  WHEN "validTill" < NOW() THEN 'INACTIVE'
 	  END AS "status"
 	FROM service."Service"
 	WHERE "legacyTIPDetailID" = :legacyTIPDetailID 
@@ -196,7 +196,7 @@ export const QServiceDetailsActiveOrInActive = `SELECT "serviceID", "legacyTIPDe
 	  ) AND "isPublished" = 1 THEN 'ACTIVE'
 	  WHEN ("validFrom" > now() AND "isPublished" = 1) THEN 'SCHEDULED'
 	  WHEN ( "validFrom" IS NULL AND "validTill" IS NULL AND  "isPublished" = 0) THEN 'DRAFT'
-	  WHEN ( "validTill" < NOW() AND "isPublished" = 1) THEN 'INACTIVE'
+	  WHEN "validTill" < NOW() THEN 'INACTIVE'
 	  END AS "status"
   FROM service."Service"
   WHERE "serviceID" = :serviceID AND "isPublished" = 1 AND
@@ -217,7 +217,7 @@ CASE WHEN (
   ) AND s."isPublished" = 1 THEN 'ACTIVE'
   WHEN (s."validFrom" > now() AND s."isPublished" = 1) THEN 'SCHEDULED'
   WHEN ( s."validFrom" IS NULL AND s."validTill" IS NULL AND  s."isPublished" = 0) THEN 'DRAFT'
-  WHEN ( s."validTill" < NOW() AND s."isPublished" = 1) THEN 'INACTIVE'
+  WHEN s."validTill" < NOW() THEN 'INACTIVE'
   END AS "status"
 FROM service."Service" s 
 LEFT JOIN (
@@ -235,7 +235,7 @@ export const QServiceDetailsForVersions = `SELECT "serviceID", "legacyTIPDetailI
 	  ) AND s1."isPublished" = 1 THEN 'ACTIVE'
 	  WHEN (s1."validFrom" > now() AND s1."isPublished" = 1) THEN 'SCHEDULED'
 	  WHEN ( s1."validFrom" IS NULL AND s1."validTill" IS NULL AND  s1."isPublished" = 0) THEN 'DRAFT'
-	  WHEN ( s1."validTill" < NOW() AND s1."isPublished" = 1) THEN 'INACTIVE'
+	  WHEN s1."validTill" < NOW() THEN 'INACTIVE'
 	  END AS "status"
   FROM service."Service" s1
   WHERE "serviceID" = :serviceID AND "globalServiceVersion" = :globalServiceVersion;`;
