@@ -37,7 +37,7 @@ export default class ExternalServiceController {
 				sortOrder = req.query.sortOrder ? String(req.query.sortOrder) : defaultSortOrder,
 				offset = req.query.from ? Number(req.query.from) : defaultFrom,
 				limit = req.query.limit ? Number(req.query.limit) : defaultLimit;
-			logger.nonPhi.debug('get serive attributes deatils api invoked with following parameter', { serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit });
+			logger.nonPhi.debug('get service attributes deatils api invoked with following parameter', { serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit });
 			res.send(await this.ExternalServiceManager.getServiceAttributesDetails(serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit));
 		} catch (error) {
 			logger.nonPhi.error(error.message, { _err: error });

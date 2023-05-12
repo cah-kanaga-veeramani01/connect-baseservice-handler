@@ -167,19 +167,13 @@ where "attributesDefinitionID" in (:attributesDefinitionID) ORDER BY "attributes
 
 export const QServiceActiveVersionForLegacyId = `SELECT "serviceID","legacyTIPDetailID","globalServiceVersion", "validFrom","validTill",
 	CASE WHEN (
-			  (
-				"validFrom" < now()
-				AND "validTill" >= now()
-			  ) 
-			  OR (
-				"validFrom" < now() 
-				AND "validTill" IS NULL
-			  ) 
-			  AND "isPublished" = 1
-			) THEN 'ACTIVE' WHEN (
-			  "validFrom" > now() 
-			  AND "isPublished" = 1
-			) THEN 'SCHEDULED' WHEN ("isPublished" = 0) THEN 'DRAFT' ELSE 'INACTIVE' END AS "status"
+		( "validFrom" < now() AND "validTill" >= now() ) OR 
+		( "validFrom" < now() AND "validTill" IS NULL )
+	  ) AND "isPublished" = 1 THEN 'ACTIVE'
+	  WHEN ("validFrom" > now() AND "isPublished" = 1) THEN 'SCHEDULED'
+	  WHEN ( "validFrom" IS NULL AND "validTill" IS NULL AND  "isPublished" = 0) THEN 'DRAFT'
+	  WHEN ( "validTill" < NOW() AND "isPublished" = 1) THEN 'INACTIVE'
+	  END AS "status"
 	FROM service."Service"
 	WHERE "legacyTIPDetailID" = :legacyTIPDetailID 
 	AND "isPublished" = 1 
@@ -194,22 +188,16 @@ export const QGetServiceTipNameForLegacyTipID = `SELECT st."serviceType", s."ser
 FROM service."ServiceType" st, service."Service" s where st."serviceTypeID" = s."serviceTypeID" 
 and s."legacyTIPDetailID" = :legacyTIPDetailID and s."globalServiceVersion" = :globalServiceVersion;`;
 
-export const QServiceDeailsActiveOrInActive = `SELECT "serviceID", "legacyTIPDetailID", "globalServiceVersion", "validFrom", "validTill",
+export const QServiceDetailsActiveOrInActive = `SELECT "serviceID", "legacyTIPDetailID", "globalServiceVersion", "validFrom", "validTill",
 	CASE 
 	  WHEN (
-		(
-		  "validFrom" < NOW() AND 
-		  ("validTill" >= NOW() OR "validTill" IS NULL)
-		)
-		AND "isPublished" = 1
-	  ) THEN 'ACTIVE'
-	  WHEN (
-		"validFrom" > NOW() AND 
-		"isPublished" = 1
-	  ) THEN 'SCHEDULED'
-	  WHEN "isPublished" = 0 THEN 'DRAFT'
-	  ELSE 'INACTIVE'
-	END AS "status"
+		( "validFrom" < now() AND "validTill" >= now() ) OR 
+		( "validFrom" < now() AND "validTill" IS NULL )
+	  ) AND "isPublished" = 1 THEN 'ACTIVE'
+	  WHEN ("validFrom" > now() AND "isPublished" = 1) THEN 'SCHEDULED'
+	  WHEN ( "validFrom" IS NULL AND "validTill" IS NULL AND  "isPublished" = 0) THEN 'DRAFT'
+	  WHEN ( "validTill" < NOW() AND "isPublished" = 1) THEN 'INACTIVE'
+	  END AS "status"
   FROM service."Service"
   WHERE "serviceID" = :serviceID AND "isPublished" = 1 AND
 	("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW();`;
@@ -224,16 +212,13 @@ ad.name,
 ad."categoryName", 
 sa."globalServiceVersion" AS sa_globalServiceVersion,
 CASE WHEN (
-	 (s."validFrom" < now() AND s."validTill" >= now()) OR 
-	 (s."validFrom" < now() AND s."validTill" IS NULL)
-   ) AND s."isPublished" = 1 
-   THEN 'ACTIVE' 
-   WHEN s."validFrom" > now() AND s."isPublished" = 1 
-   THEN 'SCHEDULED' 
-   WHEN s."isPublished" = 0 
-   THEN 'DRAFT' 
-   ELSE 'INACTIVE'
-END AS "status"
+	( s."validFrom" < now() AND s."validTill" >= now() ) OR 
+	( s."validFrom" < now() AND s."validTill" IS NULL )
+  ) AND s."isPublished" = 1 THEN 'ACTIVE'
+  WHEN (s."validFrom" > now() AND s."isPublished" = 1) THEN 'SCHEDULED'
+  WHEN ( s."validFrom" IS NULL AND s."validTill" IS NULL AND  s."isPublished" = 0) THEN 'DRAFT'
+  WHEN ( s."validTill" < NOW() AND s."isPublished" = 1) THEN 'INACTIVE'
+  END AS "status"
 FROM service."Service" s 
 LEFT JOIN (
 SELECT "serviceID", metadata ->> 'attributes' AS attributes, "globalServiceVersion"
@@ -243,15 +228,15 @@ LEFT JOIN service."AttributesDefinition" ad ON sa.attributes::jsonb @> to_jsonb(
 WHERE s."isPublished" = 1 AND (s."validTill" IS NULL OR s."validTill" >= NOW()) AND s."validFrom" <= NOW()
 ORDER BY "serviceID";`;
 
-export const QServiceDeailsForVersions = `SELECT "serviceID", "legacyTIPDetailID", "globalServiceVersion", "validFrom", "validTill", 
+export const QServiceDetailsForVersions = `SELECT "serviceID", "legacyTIPDetailID", "globalServiceVersion", "validFrom", "validTill", 
 	CASE WHEN (
-	  ( s1."validFrom" < now() AND s1."validTill" >= now() ) OR 
-	  ( s1."validFrom" < now() AND s1."validTill" IS NULL )
-	) AND s1."isPublished" = 1 THEN 'ACTIVE'
-	WHEN s1."validFrom" > now() AND s1."isPublished" = 1 THEN 'SCHEDULED'
-	WHEN s1."isPublished" = 0 THEN 'DRAFT'
-	ELSE 'INACTIVE' 
-	END AS "status"
+		( s1."validFrom" < now() AND s1."validTill" >= now() ) OR 
+		( s1."validFrom" < now() AND s1."validTill" IS NULL )
+	  ) AND s1."isPublished" = 1 THEN 'ACTIVE'
+	  WHEN (s1."validFrom" > now() AND s1."isPublished" = 1) THEN 'SCHEDULED'
+	  WHEN ( s1."validFrom" IS NULL AND s1."validTill" IS NULL AND  s1."isPublished" = 0) THEN 'DRAFT'
+	  WHEN ( s1."validTill" < NOW() AND s1."isPublished" = 1) THEN 'INACTIVE'
+	  END AS "status"
   FROM service."Service" s1
   WHERE "serviceID" = :serviceID AND "globalServiceVersion" = :globalServiceVersion;`;
 
