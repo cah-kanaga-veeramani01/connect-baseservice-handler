@@ -23,3 +23,13 @@ export interface ServiceListResponse {
 	nonFilteredServicesCount: number;
 	services: ServiceResponse[];
 }
+
+export const sortServiceListBy = {
+	serviceID: 'serviceID',
+	legacyTIPDetailID: 'legacyTIPDetailID'
+};
+
+export const sortOrder = {
+	asc: 'asc',
+	desc: 'desc'
+};

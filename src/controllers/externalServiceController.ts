@@ -3,6 +3,15 @@ import { logger } from '../../utils';
 import { HTTP_STATUS_CODES } from '../../utils/constants';
 import config from 'config';
 
+/**
+ * config based Constants
+ * @constant
+ */
+const defaultSortBy: string = config.get('service.serviceList.sortBy'),
+	defaultSortOrder: string = config.get('service.serviceList.sortOrder'),
+	defaultFrom: number = config.get('service.serviceList.from'),
+	defaultLimit: number = config.get('service.serviceList.limit');
+
 export default class ExternalServiceController {
 	constructor(public ExternalServiceManager) {}
 
@@ -21,10 +30,15 @@ export default class ExternalServiceController {
 
 	public async getServiceAttributesDetails(req: Request, res: Response, next: NextFunction) {
 		try {
-			const serviceID = Number(req.query?.serviceID),
-				legacyTIPDetailID = Number(req.query?.legacyTIPDetailID);
-			logger.nonPhi.debug('get serive attributes deatils api invoked with following parameter', { serviceID, legacyTIPDetailID });
-			res.send(await this.ExternalServiceManager.getServiceAttributesDetails(serviceID, legacyTIPDetailID));
+			const serviceID = req.query?.serviceID ? Number(req.query?.serviceID) : null,
+				legacyTIPDetailID = req.query?.legacyTIPDetailID ? Number(req.query?.legacyTIPDetailID) : null,
+				globalServiceVersion = req.query?.globalServiceVersion ? Number(req.query?.globalServiceVersion) : null,
+				sortBy = req.query.sortBy ? String(req.query.sortBy) : defaultSortBy,
+				sortOrder = req.query.sortOrder ? String(req.query.sortOrder) : defaultSortOrder,
+				offset = req.query.from ? Number(req.query.from) : defaultFrom,
+				limit = req.query.limit ? Number(req.query.limit) : defaultLimit;
+			logger.nonPhi.debug('get service attributes deatils api invoked with following parameter', { serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit });
+			res.send(await this.ExternalServiceManager.getServiceAttributesDetails(serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit));
 		} catch (error) {
 			logger.nonPhi.error(error.message, { _err: error });
 			next(error);
