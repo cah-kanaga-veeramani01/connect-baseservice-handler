@@ -381,14 +381,29 @@ export const QServiceActiveOrInActive =
 export const QServiceActiveVersion =
 	'SELECT "globalServiceVersion" FROM service."Service" WHERE "serviceID" = :serviceID AND "isPublished" = 1 AND ("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW();';
 
-export const QGetServiceAttributesMetaData =
-	'SELECT metadata ->> \'attributes\' AS attributes FROM service."ServiceAttributes" where "serviceID" = :serviceID AND "globalServiceVersion" = :globalServiceVersion;';
+export const QGetServiceAttributesMetaData = `SELECT metadata ->> 'attributes' AS attributes, "serviceID", "globalServiceVersion" FROM service."ServiceAttributes" where "serviceID" 
+	in (SELECT "serviceID" FROM service."Service" where "isPublished" = 1 AND ("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW()
+		and "serviceID" = :serviceID)  and "globalServiceVersion" 
+	in (SELECT "globalServiceVersion" FROM service."Service" where "isPublished" = 1 AND ("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW() and "globalServiceVersion" = :globalServiceVersion) 
+        ORDER BY  "serviceID";`;
 
 export const QGetServiceAttributesName = `select "name", "categoryName" from service."AttributesDefinition" 
 where "attributesDefinitionID" in (:attributesDefinitionID) ORDER BY "attributesDefinitionID"`;
 
-export const QServiceActiveVersionForLegacyId =
-	'SELECT "serviceID","globalServiceVersion","legacyTIPDetailID" FROM service."Service" WHERE "legacyTIPDetailID" = :legacyTIPDetailID AND "isPublished" = 1 AND ("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW();';
+export const QServiceActiveVersionForLegacyId = `SELECT "serviceID","legacyTIPDetailID","globalServiceVersion", "validFrom","validTill",
+	CASE WHEN (
+		( "validFrom" < now() AND "validTill" >= now() ) OR 
+		( "validFrom" < now() AND "validTill" IS NULL )
+	  ) AND "isPublished" = 1 THEN 'ACTIVE'
+	  WHEN ("validFrom" > now() AND "isPublished" = 1) THEN 'SCHEDULED'
+	  WHEN ( "validFrom" IS NULL AND "validTill" IS NULL AND  "isPublished" = 0) THEN 'DRAFT'
+	  WHEN "validTill" < NOW() THEN 'INACTIVE'
+	  END AS "status"
+	FROM service."Service"
+	WHERE "legacyTIPDetailID" = :legacyTIPDetailID 
+	AND "isPublished" = 1 
+	AND ("validTill" IS NULL OR "validTill" >= NOW()) 
+	AND "validFrom" <= NOW();`;
 
 export const QGetServiceTipNameForserviceID = `SELECT st."serviceType", s."serviceID", s."serviceDisplayName", s."globalServiceVersion", s."validFrom", s."validTill"
 FROM service."ServiceType" st, service."Service" s where st."serviceTypeID" = s."serviceTypeID" 
@@ -398,5 +413,58 @@ export const QGetServiceTipNameForLegacyTipID = `SELECT st."serviceType", s."ser
 FROM service."ServiceType" st, service."Service" s where st."serviceTypeID" = s."serviceTypeID" 
 and s."legacyTIPDetailID" = :legacyTIPDetailID and s."globalServiceVersion" = :globalServiceVersion;`;
 
-export const QServiceDeailsActiveOrInActive =
-	'SELECT  "serviceID","globalServiceVersion","legacyTIPDetailID" FROM service."Service" WHERE "serviceID" = :serviceID AND "isPublished" = 1 AND ("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW();';
+export const QServiceDetailsActiveOrInActive = `SELECT "serviceID", "legacyTIPDetailID", "globalServiceVersion", "validFrom", "validTill",
+	CASE 
+	  WHEN (
+		( "validFrom" < now() AND "validTill" >= now() ) OR 
+		( "validFrom" < now() AND "validTill" IS NULL )
+	  ) AND "isPublished" = 1 THEN 'ACTIVE'
+	  WHEN ("validFrom" > now() AND "isPublished" = 1) THEN 'SCHEDULED'
+	  WHEN ( "validFrom" IS NULL AND "validTill" IS NULL AND  "isPublished" = 0) THEN 'DRAFT'
+	  WHEN "validTill" < NOW() THEN 'INACTIVE'
+	  END AS "status"
+  FROM service."Service"
+  WHERE "serviceID" = :serviceID AND "isPublished" = 1 AND
+	("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW();`;
+
+export const QActiveServiceListCount = `SELECT s."serviceID", 
+s."globalServiceVersion", 
+s."validFrom", 
+s."validTill", 
+s."isPublished", 
+s."legacyTIPDetailID", 
+ad.name, 
+ad."categoryName", 
+sa."globalServiceVersion" AS sa_globalServiceVersion,
+CASE WHEN (
+	( s."validFrom" < now() AND s."validTill" >= now() ) OR 
+	( s."validFrom" < now() AND s."validTill" IS NULL )
+  ) AND s."isPublished" = 1 THEN 'ACTIVE'
+  WHEN (s."validFrom" > now() AND s."isPublished" = 1) THEN 'SCHEDULED'
+  WHEN ( s."validFrom" IS NULL AND s."validTill" IS NULL AND  s."isPublished" = 0) THEN 'DRAFT'
+  WHEN s."validTill" < NOW() THEN 'INACTIVE'
+  END AS "status"
+FROM service."Service" s 
+LEFT JOIN (
+SELECT "serviceID", metadata ->> 'attributes' AS attributes, "globalServiceVersion"
+FROM service."ServiceAttributes"
+) sa ON sa."serviceID" = s."serviceID" AND sa."globalServiceVersion" = s."globalServiceVersion"
+LEFT JOIN service."AttributesDefinition" ad ON sa.attributes::jsonb @> to_jsonb(array[ad."attributesDefinitionID"]::integer[]) 
+WHERE s."isPublished" = 1 AND (s."validTill" IS NULL OR s."validTill" >= NOW()) AND s."validFrom" <= NOW()
+ORDER BY "serviceID";`;
+
+export const QServiceDetailsForVersions = `SELECT "serviceID", "legacyTIPDetailID", "globalServiceVersion", "validFrom", "validTill", 
+	CASE WHEN (
+		( s1."validFrom" < now() AND s1."validTill" >= now() ) OR 
+		( s1."validFrom" < now() AND s1."validTill" IS NULL )
+	  ) AND s1."isPublished" = 1 THEN 'ACTIVE'
+	  WHEN (s1."validFrom" > now() AND s1."isPublished" = 1) THEN 'SCHEDULED'
+	  WHEN ( s1."validFrom" IS NULL AND s1."validTill" IS NULL AND  s1."isPublished" = 0) THEN 'DRAFT'
+	  WHEN s1."validTill" < NOW() THEN 'INACTIVE'
+	  END AS "status"
+  FROM service."Service" s1
+  WHERE "serviceID" = :serviceID AND "globalServiceVersion" = :globalServiceVersion;`;
+
+export const QGetAttributesMetaDataForVersion = `SELECT metadata ->> 'attributes' AS attributes, "serviceID", "globalServiceVersion" FROM service."ServiceAttributes" where "serviceID" 
+in (SELECT "serviceID" FROM service."Service" where "serviceID" = :serviceID)  and "globalServiceVersion" 
+in (SELECT "globalServiceVersion" FROM service."Service" where "globalServiceVersion" = :globalServiceVersion) ;`;
