@@ -74,7 +74,7 @@ export default class ExternalServiceManager {
 
 			let attributes, attributesMetaData, activeOrInActiveService;
 			if (serviceID === null && legacyTIPDetailID === null && globalServiceVersion === null) {
-				return await this.getServiceAttributesDetailsForVersion(offset, sortOrder, limit);
+				return await this.getActiveServiceAttributesDetailsList(offset, sortOrder, limit);
 			}
 
 			if (serviceID && globalServiceVersion && legacyTIPDetailID === null) {
@@ -145,7 +145,8 @@ export default class ExternalServiceManager {
 				attributes
 			}));
 			return {
-				serviceAttributes
+				serviceAttributes,
+				totalServices: serviceAttributes.length
 			};
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
@@ -154,7 +155,7 @@ export default class ExternalServiceManager {
 		}
 	}
 
-	private async getServiceAttributesDetailsForVersion(offset: number, sortOrder: string, limit: number) {
+	private async getActiveServiceAttributesDetailsList(offset: number, sortOrder: string, limit: number) {
 		const activeServices = await db.query(QActiveServiceListCount, {
 				type: QueryTypes.SELECT,
 				raw: true

@@ -191,7 +191,8 @@ describe('getServiceAttributesDetails', () => {
 					]
 				}
 			}
-		]});
+		],
+		"totalServices": 1});
 
 	});
 	test('legacyID does not exist error', async () => {
@@ -254,7 +255,8 @@ describe('getServiceAttributesDetails', () => {
 						]
 					}
 				}
-			]});
+			], "totalServices": 1
+		});
 	});
 
 	test('should retrun the empty attributes object for legacy ID', async () => {
@@ -287,7 +289,7 @@ describe('getServiceAttributesDetails', () => {
 				  status: 'ACTIVE',
 				  attributes: {}
 				}
-			  ]});
+			  ], "totalServices": 1});
 	});
 	test('should retrun the empty attributes object for serviceID', async () => {
 		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);
@@ -313,7 +315,7 @@ describe('getServiceAttributesDetails', () => {
 				  status: 'ACTIVE',
 				  attributes: {}
 				}
-			  ]});
+			  ], "totalServices": 1});
 	});
 
 	test('should retrun the service deatails and  attributes for serviceID and version', async () => {
@@ -356,7 +358,7 @@ describe('getServiceAttributesDetails', () => {
 						]
 					}
 				}
-			]});
+			], "totalServices": 1});
 	});
 	test('should retrun the service deatails and empty attributes for serviceID and version', async () => {
 		const serviceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository,mockServiceModuleConfigRepo);
@@ -382,7 +384,7 @@ describe('getServiceAttributesDetails', () => {
 					"status": "ACTIVE",
 					"attributes": {}
 				}
-			]});
+			], "totalServices": 1});
 	});
 
 
