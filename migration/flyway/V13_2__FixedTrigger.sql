@@ -45,11 +45,7 @@ attributesDt = (
    SELECT json_build_object('attributes', '[]'::JSON)
 );
 IF (
-   (
-      select "active"
-      from attunityservice."TIPDetail"
-      where "tipdetailid" = tipID
-   ) = true
+(select "active" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID") = true
 ) THEN tipStatus = 1;
 END IF;
 
@@ -107,17 +103,8 @@ endDate = (
    from attunityservice."TIPDetailRule"
    where "TIPDetailRuleID" = NEW."TIPDetailRuleID"
 );
-tipName = (
-   select "tiptitle"
-   from attunityservice."TIPDetail"
-   where "tipdetailid" = tipID
-);
 IF (
-   (
-      select "active"
-      from attunityservice."TIPDetail"
-      where "tipdetailid" = tipID
-   ) = true
+(select "active" from attunityservice."TIPDetailRule" where "TIPDetailRuleID" = NEW."TIPDetailRuleID") = true
 ) THEN tipStatus = 1;
 END IF;
 
@@ -126,6 +113,11 @@ IF (tipStatus = 0) THEN endDate = NOW() - INTERVAL '1 DAY'; END IF;
 userID = NEW."createUserID";
 attributesDt = (
    SELECT json_build_object('attributes', '[]'::JSON)
+);
+tipName = (
+   select "tiptitle"
+   from attunityservice."TIPDetail"
+   where "tipdetailid" = tipID
 );
 UPDATE service."Service"
 SET "serviceName" = tipName,
