@@ -247,7 +247,7 @@ export const QExpiredServiceList = (sortBy, sortOrder) => {
 				(s1."isPublished" = 0)
 			  ) 
 			  OR (
-				s1."globalServiceVersion" >= (
+				s1."globalServiceVersion" = (
 				  SELECT 
 					MAX(s3."globalServiceVersion") 
 				  FROM 
@@ -255,7 +255,25 @@ export const QExpiredServiceList = (sortBy, sortOrder) => {
 				  where 
 					s3."serviceID" = s1."serviceID" 
 					AND s3."validTill" < NOW() 
-					AND s3."isPublished" = 1
+					AND s3."isPublished" = 1 
+					AND s3."serviceID" NOT IN (
+					  select 
+						s4."serviceID" 
+					  from 
+						service."Service" s4 
+					  where 
+						(
+						  (
+							s4."validFrom" < now() 
+							AND s4."validTill" >= now()
+						  ) 
+						  OR (
+							s4."validFrom" < now() 
+							AND s4."validTill" IS NULL
+						  ) 
+						  AND s4."isPublished" = 1
+						)
+					)
 				)
 			  )
 			) 
