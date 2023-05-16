@@ -116,7 +116,7 @@ IF (
    (
       select "active"
       from attunityservice."TIPDetail"
-      where "TIPDetailRuleID" = tipID
+      where "tipdetailid" = tipID
    ) = true
 ) THEN tipStatus = 1;
 END IF;
