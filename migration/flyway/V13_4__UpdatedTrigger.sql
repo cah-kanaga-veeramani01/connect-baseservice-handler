@@ -47,7 +47,6 @@ END IF;
 IF (tipStatus = 0) THEN endDate = NOW() - INTERVAL '1 DAY'; END IF;
 
 userID = NEW."createUserID";
-PERFORM pg_sleep(0.5);
 tipName = (
    select "tiptitle"
    from attunityservice."TIPDetail"
