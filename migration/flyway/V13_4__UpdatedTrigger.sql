@@ -115,7 +115,6 @@ attributesDt = (
    SELECT json_build_object('attributes', '[]'::JSON)
 );
 
-PERFORM pg_sleep(0.5);
 tipName = (
    select "tiptitle"
    from attunityservice."TIPDetail"
