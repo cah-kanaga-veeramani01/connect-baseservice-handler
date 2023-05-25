@@ -10,11 +10,13 @@ tipID = (
 );
 
 UPDATE service."Service"
-SET "updatedBy" = userID
+SET "updatedBy" = userID,
+"updatedAt" = NOW()
 WHERE ("legacyTIPDetailID" = tipID)
 RETURNING "serviceID" INTO serviceID;
 UPDATE service."ServiceAttributes"
-SET "updatedBy" = userID
+SET "updatedBy" = userID,
+"updatedAt" = NOW()
 WHERE ("serviceID" = serviceID);
 
 RETURN NEW;
