@@ -213,6 +213,7 @@ describe('get list of policies', () => {
 });
 
 describe('create draft', () => {
+	const snsServiceObj = new SNSServiceManager();
 	test('return the draft version', async () => {
 		jest.spyOn(serviceManager, 'createDraft').mockImplementation(() => {
 			return Promise.resolve({
@@ -223,6 +224,30 @@ describe('create draft', () => {
 				serviceName: 'Test 4'
 			});
 		});
+		jest.spyOn(serviceManager, 'getDetails').mockImplementation(() => {
+			return Promise.resolve({
+				serviceID: 4,
+				serviceName: 'Test',
+				activeVersion: 1,
+				scheduledVersion: 2,
+				legacyTipDetailID: 123
+			});
+		});
+
+		jest.spyOn(serviceManager, 'getActiveService').mockImplementation(() => {
+			return Promise.resolve({
+				serviceID: 4,
+				serviceName: 'Test',
+				activeVersion: 1,
+				scheduledVersion: null,
+				legacyTipDetailID: 123
+			});
+		});
+
+		jest.spyOn(snsServiceObj, 'parentPublishScheduleMessageToSNSTopic').mockImplementation(() => {
+			return Promise.resolve({});
+		});
+
 		const req = mocks.createRequest({
 				method: 'POST',
 				url: '/draft',
@@ -371,7 +396,7 @@ describe('Schedule Service', () => {
 		jest.spyOn(serviceObj, 'schedule').mockImplementation(() => {
 			return Promise.resolve({
 				serviceID: 1,
-				globalServiceVersion: 2,
+				globalServiceVersion: 1,
 				serviceName: 'Test',
 				isPublished: 1,
 				validFrom: '2022-12-31T05:00:00.000Z',
@@ -382,6 +407,20 @@ describe('Schedule Service', () => {
 				updatedBy: null
 			});
 		});
+
+		jest.spyOn(serviceObj, 'getActiveService').mockImplementation(() => {
+			return Promise.resolve({
+				serviceID: 1,
+				serviceName: 'Test',
+				activeVersion: 1,
+				scheduledVersion: null,
+				legacyTipDetailID: 123,
+				validTill: '2029-10-10',
+				validFrom: '2020-10-10',
+				globalServiceVersion: 1
+			});
+		});
+
 		jest.spyOn(serviceSNSObj, 'parentPublishScheduleMessageToSNSTopic').mockImplementation(() => {
 			return Promise.resolve({
 				data: { ResponseMetadata: { RequestId: '84d7af89-1164-55d0-ad82-f3bb1699d425' }, MessageId: '7ea5e55e-aaf3-5552-a726-b96cad0e84a7', SequenceNumber: '10000000000000027000' },
@@ -398,7 +437,7 @@ describe('Schedule Service', () => {
 				url: '/service/internal/schedule',
 				body: {
 					serviceID: 1,
-					globalServiceVersion: 2,
+					globalServiceVersion: 1,
 					startDate: '2025-01-01'
 				}
 			}),
@@ -408,7 +447,7 @@ describe('Schedule Service', () => {
 		await serviceControllerObj.schedule(req, res, next);
 		expect(res._getData()).toMatchObject({
 			serviceID: 1,
-			globalServiceVersion: 2,
+			globalServiceVersion: 1,
 			serviceName: 'Test',
 			isPublished: 1,
 			validFrom: '2022-12-31T05:00:00.000Z',
@@ -429,7 +468,7 @@ describe('Schedule Service', () => {
 				url: '/service/internal/schedule',
 				body: {
 					serviceID: 1,
-					globalServiceVersion: 2,
+					globalServiceVersion: 1,
 					startDate: '2025-01-01'
 				}
 			}),
