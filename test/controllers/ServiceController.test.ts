@@ -214,8 +214,16 @@ describe('get list of services', () => {
 });
 
 describe('create draft', () => {
-	const snsServiceObj = new SNSServiceManager();
 	test('return the draft version', async () => {
+		jest.spyOn(snsServiceObj, 'parentPublishScheduleMessageToSNSTopic').mockImplementation(() => {
+			return Promise.resolve({
+				data: { ResponseMetadata: { RequestId: '84d7af89-1164-55d0-ad82-f3bb1699d425' }, MessageId: '7ea5e55e-aaf3-5552-a726-b96cad0e84a7', SequenceNumber: '10000000000000027000' },
+				status: 200,
+				statusText: 'Ok',
+				headers: {},
+				config: {}
+			});
+		});
 		jest.spyOn(serviceManager, 'createDraft').mockImplementation(() => {
 			return Promise.resolve({
 				activeVersion: 1,
@@ -245,10 +253,6 @@ describe('create draft', () => {
 			});
 		});
 
-		jest.spyOn(snsServiceObj, 'parentPublishScheduleMessageToSNSTopic').mockImplementation(() => {
-			return Promise.resolve({});
-		});
-
 		const req = mocks.createRequest({
 				method: 'POST',
 				url: '/draft',
@@ -269,7 +273,7 @@ describe('create draft', () => {
 	});
 
 	test('should return error', async () => {
-		jest.spyOn(serviceManager, 'createDraft').mockImplementation(() => {
+		jest.spyOn(serviceManager, 'createDraft').mockRejectedValue(() => {
 			return Promise.reject(new Error());
 		});
 		const req = mocks.createRequest({
@@ -460,26 +464,27 @@ describe('Schedule Service', () => {
 		});
 	});
 
-	// test('throws error', async () => {
-	// 	const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepositoryNoService, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository),
-	// 		serviceSNSObj: SNSServiceManager = new SNSServiceManager();
-	// 	const serviceControllerObj = new ServiceController(serviceObj, serviceSNSObj);
-	// 	const req = mocks.createRequest({
-	// 			method: 'PUT',
-	// 			url: '/service/internal/schedule',
-	// 			body: {
-	// 				serviceID: 1,
-	// 				globalServiceVersion: 1,
-	// 				startDate: '2025-01-01'
-	// 			}
-	// 		}),
-	// 		res = mocks.createResponse(),
-	// 		next = jest.fn();
-	// 	await serviceControllerObj.schedule(req, res, next);
-	// 	expect(next).toHaveBeenCalledTimes(1);
-	// });
-});
+	test('throws error', async () => {
+		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepositoryNoService, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository),
+			serviceSNSObj: SNSServiceManager = new SNSServiceManager();
+		const serviceControllerObj = new ServiceController(serviceObj, serviceSNSObj);
+		jest.spyOn(serviceObj, 'schedule').mockRejectedValue(new Error('error'));
 
+		const req = mocks.createRequest({
+				method: 'PUT',
+				url: '/service/internal/schedule',
+				body: {
+					serviceID: 1,
+					globalServiceVersion: 1,
+					startDate: '2025-01-01'
+				}
+			}),
+			res = mocks.createResponse(),
+			next = jest.fn();
+		await serviceControllerObj.schedule(req, res, next);
+		expect(next).toHaveBeenCalledTimes(1);
+	});
+});
 describe('Get service details', () => {
 	test('return the get service details', async () => {
 		jest.spyOn(serviceManager, 'getDetails').mockImplementation(() => {
