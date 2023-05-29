@@ -1,4 +1,4 @@
-import { HTTP_STATUS_CODES } from '../../utils';
+import { HTTP_STATUS_CODES, SERVICE_SCHEDULE_EVENT } from '../../utils';
 import { HandleError } from '../../utils/HandleError';
 import { logger } from '../../utils/logger';
 
@@ -6,7 +6,7 @@ const axios = require('axios');
 
 export default class SNSServiceManager {
 	async parentPublishScheduleMessageToSNSTopic(serviceID: number, legacyTipID: number, globalServiceVersion: number, startDate: any, endDate: any, isPublished: number, headers: any, event: string) {
-		const eventType = event === 'schedule' ? 'SERVICE-SCHEDULE-EVENT' : 'SERVICE-CHANGE-EVENT';
+		const eventType = event === SERVICE_SCHEDULE_EVENT ? 'SERVICE-SCHEDULE-EVENT' : 'SERVICE-CHANGE-EVENT';
 		const data = JSON.stringify({
 				message: {
 					type: eventType,

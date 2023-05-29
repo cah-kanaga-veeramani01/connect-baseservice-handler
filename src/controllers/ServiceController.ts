@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { HandleError, logger } from '../../utils';
 import { IService } from '../interfaces/IServices';
 import ServiceManager from '../managers/ServiceManager';
-import { serviceList, EMPTY_STRING, HTTP_STATUS_CODES } from '../../utils/constants';
+import { serviceList, EMPTY_STRING, HTTP_STATUS_CODES, SERVICE_SCHEDULE_EVENT, SERVICE_CHANGE_EVENT } from '../../utils/constants';
 import config from 'config';
 import SNSServiceManager from '../managers/SNSServiceManager';
 import moment from 'moment';
@@ -123,7 +123,7 @@ export default class ServiceController {
 				validTill,
 				scheduledService.isPublished,
 				req.headers,
-				'schedule'
+				SERVICE_SCHEDULE_EVENT
 			);
 			const activeService = JSON.parse(JSON.stringify(await this.serviceManager.getActiveService(serviceID)));
 			if (activeService !== null) {
@@ -136,7 +136,7 @@ export default class ServiceController {
 					endDate,
 					activeService.isPublished,
 					req.headers,
-					'change'
+					SERVICE_CHANGE_EVENT
 				);
 			}
 		} catch (error: any) {

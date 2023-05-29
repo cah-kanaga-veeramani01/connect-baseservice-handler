@@ -17,7 +17,7 @@ describe('publish topic publish service to SNS topic', () => {
 			config: {}
 		});
 		const snsServiceManagerObj = new SNSServiceManager();
-		const res = await snsServiceManagerObj.parentPublishScheduleMessageToSNSTopic(1, 2, '2025-01-01', '', {});
+		const res = await snsServiceManagerObj.parentPublishScheduleMessageToSNSTopic(1, 2, 1, '2025-01-01', '', 1, {}, 'schedule');
 		expect(res).toMatchObject({
 			ResponseMetadata: { RequestId: '84d7af89-1164-55d0-ad82-f3bb1699d425' },
 			MessageId: '7ea5e55e-aaf3-5552-a726-b96cad0e84a7',
@@ -28,7 +28,7 @@ describe('publish topic publish service to SNS topic', () => {
 		mAxios.post.mockRejectedValue({});
 		try {
 			const snsServiceManagerObj = new SNSServiceManager();
-			const res = await snsServiceManagerObj.parentPublishScheduleMessageToSNSTopic(1, 2, '2025-01-01', '', {});
+			const res = await snsServiceManagerObj.parentPublishScheduleMessageToSNSTopic(1, 2, 1, '2025-01-01', '', 1, {}, 'schedule');
 		} catch (error) {
 			expect(error.name).toBe('ParentPublishToSNSTopicError');
 		}
