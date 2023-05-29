@@ -69,7 +69,6 @@ export default class ServiceManager {
 			let totalServices = [];
 			let services = [];
 			let nonFilteredServices = [];
-
 			const searchKey = keyword !== EMPTY_STRING ? serviceList.matchAll + keyword.trim() + serviceList.matchAll : serviceList.matchAll;
 			// query to get total count of services filtered by status & search key
 			totalServices = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
@@ -405,5 +404,23 @@ export default class ServiceManager {
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceDetailFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
+	}
+
+	async getActiveService(serviceID: number): Promise<object> {
+		let activeService: any;
+		const serviceActiveVersion = await db.query(QServiceActiveVersion, {
+			replacements: { serviceID: serviceID },
+			type: QueryTypes.SELECT
+		});
+		if (serviceActiveVersion !== null) {
+			activeService = await this.serviceRepository.findOne({
+				where: {
+					serviceID,
+					globalServiceVersion: serviceActiveVersion[0].globalServiceVersion
+				},
+				raw: true
+			});
+		}
+		return activeService;
 	}
 }
