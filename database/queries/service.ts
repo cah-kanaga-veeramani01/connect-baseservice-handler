@@ -307,7 +307,8 @@ s4."globalServiceVersion" AS "draftVersion",
 s4."serviceName" AS "draftServiceName",
 s2."validFrom" AS "activeStartDate", 
 s3."validFrom" AS "scheduledStartDate",
-s5."globalServiceVersion" AS "inactiveVersion"
+s5."globalServiceVersion" AS "inactiveVersion",
+s5."serviceName" AS "inactiveServiceName"
 FROM 
 service."Service" s1 
 LEFT JOIN service."Service" AS s2 ON s1."serviceID" = s2."serviceID" 
