@@ -11,6 +11,12 @@ const configs = {
 				message: 'Module Configuration updated successfully'
 			},
 		},
+		serviceList: {
+			sortBy: enums.sortServiceListBy.serviceID,
+			sortOrder: enums.sortOrder.asc,
+			from: 1,
+			limit: 10
+		},
 	},
 	userEditRoles: ['Client Services', 'Clinical Services/QA'],
 	userReadRoles: ['Finance', 'Director/Manager', 'Marketing', 'Network Performance', 'Patient Engagement Team', 'Program Performance', 'Provider Resources']

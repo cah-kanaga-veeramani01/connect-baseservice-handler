@@ -92,8 +92,8 @@ describe('Create a new service', () => {
 	});
 });
 
-describe('get list of policies', () => {
-	test('should return list of policies', async () => {
+describe('get list of services', () => {
+	test('should return list of services', async () => {
 		jest.spyOn(serviceManager, 'getServiceList').mockImplementation(() => {
 			return Promise.resolve({
 				totalServices: 3,
@@ -129,7 +129,8 @@ describe('get list of policies', () => {
 					from: 0,
 					limit: 1,
 					statusFilter: 'All',
-					keyword: ''
+					keyword: '',
+					showInactive: 1
 				}
 			}),
 			res = mocks.createResponse(),

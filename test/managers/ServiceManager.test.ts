@@ -315,7 +315,7 @@ describe('get list of services', () => {
 				}
 			];
 		};
-		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, '')).toMatchObject({
+		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, '',0)).toMatchObject({
 			totalServices: 1,
 			nonFilteredServicesCount: 1,
 			services: [
@@ -365,7 +365,7 @@ describe('get list of services', () => {
 				}
 			];
 		};
-		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'AMP')).toMatchObject({
+		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'AMP', 0)).toMatchObject({
 			totalServices: 1,
 			nonFilteredServicesCount: 1,
 			services: [
@@ -395,7 +395,7 @@ describe('get list of services', () => {
 		db.query = () => {
 			return [];
 		};
-		expect(await serviceManager.getServiceList('serviceName', 'desc', 12, 1, 'All')).toMatchObject({
+		expect(await serviceManager.getServiceList('serviceName', 'desc', 12, 1, 'All', 0)).toMatchObject({
 			totalServices: 0,
 			nonFilteredServicesCount: 0,
 			services: []
@@ -407,7 +407,7 @@ describe('get list of services', () => {
 			throw new Error();
 		};
 		try {
-			await serviceManager.getServiceList('serviceName', 'asc', 12, 1, 'All');
+			await serviceManager.getServiceList('serviceName', 'asc', 12, 1, 'All', 0);
 		} catch (error) {
 			expect(error.code).toBe('SCE011');
 			expect(error.name).toBe('ServiceListFetchError');
