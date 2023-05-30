@@ -27,7 +27,7 @@
 		}
 	],
 	"paths": {
-        "/service/external/{serviceID}/module/:moduleID": {
+        "/service/external/{serviceID}/module/{moduleID}": {
             "post": {
                 "tags": ["Base Service"],
                 "summary": "Module configuration for base service",
@@ -81,7 +81,7 @@
                 "tags": [
                     "Base Service"
                 ],
-                "summary": "Get service attributes details in the system based on the serviceID",
+                "summary": "Get service attributes details in the system based on the serviceID or legacyTIPDetailID",
                 "parameters": [
                     {
                         "name": "serviceID",
@@ -90,9 +90,7 @@
                         "required": false,
                         "schema": {
                             "type": "string"
-                        },
-                        "example": 1
-
+                        }
                     },
                     {
                         "name": "legacyTIPDetailID",
@@ -102,7 +100,52 @@
                         "schema": {
                             "type": "string"
                         }
-                    }
+                    },
+                    {
+						"name": "globalServiceVersion",
+						"in": "query",
+						"description": "used to identify the global service version of base service",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+                    {
+						"name": "sortBy",
+						"in": "query",
+						"description": "Sort the response by which of these fields : servicename, serviceType, serviceID",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "sortOrder",
+						"in": "query",
+						"description": "Sort the response in which order : asc or desc",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "from",
+						"in": "query",
+						"description": "Offset of the first row to return",
+						"required": false,
+						"schema": {
+							"type": "number"
+						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"description": "Used to constrain the number of rows to return",
+						"required": false,
+						"schema": {
+							"type": "number"
+						}
+					}
                 ],
                 "responses": {
                     "200": {
@@ -213,6 +256,18 @@
                                         "type": "number",
                                         "description": "represents specific ID of the legacyTipID"
                                     },
+                                    "globalServiceVersion": {
+                                        "type": "integer",
+                                        "description": "Unique version for base service"
+                                    },
+                                    "validFrom": {
+                                        "type": "string",
+                                        "description": "starting date of the servcie"
+                                    },
+                                    "validTill": {
+                                        "type": "integer",
+                                        "description": "End date of the base service"
+                                    },
                                     "attributes":{
                                         "type": "object",
                                         "properties": {
@@ -233,6 +288,10 @@
                                 
                                 }
                             }
+                        },
+                        "totalServices": {
+                            "type": "integer",
+                            "description": "Total number of active service"
                         }
                     }
                    

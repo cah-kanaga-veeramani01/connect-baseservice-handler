@@ -1,3 +1,5 @@
+import { sortServiceListBy, sortOrder } from '../interfaces/IServices';
+
 /**
  * Validation schemas for request validation
  */
@@ -41,7 +43,7 @@ export const updateModuleConfig = {
 
 export const getServiceAttributesSchema = {
 	$schema: definedSchema,
-	$id: 'https://cardinal-domain.com/schema/program-config/getModuleVersionDetails.json',
+	$id: 'https://cardinal-domain.com/schema/service-config/getModuleVersionDetails.json',
 	title: 'Request Parameters to get latest version for a module API',
 	description: 'This is a schema to get latest version for a module api.',
 	type: 'object',
@@ -56,16 +58,36 @@ export const getServiceAttributesSchema = {
 				legacyTIPDetailID: {
 					type: 'string',
 					pattern: '^[0-9]+$'
+				},
+				globalServiceVersion: {
+					type: 'string',
+					pattern: '^[0-9]+$'
+				},
+				sortBy: {
+					type: 'string',
+					enum: Object.values(sortServiceListBy)
+				},
+				sortOrder: {
+					type: 'string',
+					enum: Object.values(sortOrder)
+				},
+				from: {
+					type: 'string',
+					pattern: '^[0-9]+$'
+				},
+				limit: {
+					type: 'string',
+					pattern: '^[0-9]+$'
 				}
-			}
+			},
+			additionalProperties: false
 		}
-	},
-	required: ['query']
+	}
 };
 
 export const getServiceDetailsSchema = {
 	$schema: definedSchema,
-	$id: 'https://cardinal-domain.com/schema/program-config/getBaseServiceDetails.json',
+	$id: 'https://cardinal-domain.com/schema/service-config/getBaseServiceDetails.json',
 	title: 'Request Parameters to get the service detaials API',
 	description: 'This is a schema to get service details api.',
 	type: 'object',
