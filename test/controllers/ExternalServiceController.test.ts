@@ -68,7 +68,11 @@ describe('getServiceAttributesDetails', () => {
 				query: {
 					serviceID: 1,
 					legacyTIPDetailID: 1,
-				
+					globalServiceVersion: 1,
+					sortBy: 'serviceID',
+					sortOrder: 'asc',
+					offset: 0,
+					limit: 10
 				}
 			}),
 				res = mocks.createResponse(),
@@ -79,6 +83,95 @@ describe('getServiceAttributesDetails', () => {
 			} catch (error) {
 				expect(error.name).toBe('ServiceAttributesFetchError');
 			}
+		});
+
+		test('should retrun all the service attributes details with sorBy and sortorder filters', async () => {
+			jest.spyOn(serviceManager, 'getServiceAttributesDetails').mockImplementation(() => {
+				return Promise.resolve({
+					"serviceAttributes": [
+						{
+							"serviceID": 1,
+							"legacyTIPDetailID": 31,
+							"globalServiceVersion": 2,
+							"validFrom": "2023-05-10T04:00:00.000Z",
+							"validTill": null,
+							"status": "ACTIVE",
+							"attributes": {
+								"Class": [
+									"COSTALT",
+									"AMP"
+								],
+								"Group": [
+									"LEGACY"
+								],
+								"Role": [
+									"TECHELIGIBLE"
+								]
+							}
+						},
+						{
+							"serviceID": 2,
+							"legacyTIPDetailID": 32,
+							"globalServiceVersion": 1,
+							"validFrom": "2014-12-08T16:23:47.850Z",
+							"validTill": "2023-05-20T03:59:59.999Z",
+							"status": "ACTIVE",
+							"attributes": {}
+						}
+					],
+					"totalServices": 15
+				});
+			});
+			const req = mocks.createRequest({
+				method: 'GET',
+				url: '/list',
+				query: {
+							serviceID: 1,
+							legacyTIPDetailID: 1,
+							globalServiceVersion: 1,
+							sortBy: 'serviceID',
+							sortOrder: 'asc',
+							offset: 0,
+							limit: 2
+						}
+			}),
+			res = mocks.createResponse(),
+			next = jest.fn();
+		await serviceController.getServiceAttributesDetails(req, res, next);
+		expect(res._getData()).toMatchObject({
+			"serviceAttributes": [
+				{
+					"serviceID": 1,
+					"legacyTIPDetailID": 31,
+					"globalServiceVersion": 2,
+					"validFrom": "2023-05-10T04:00:00.000Z",
+					"validTill": null,
+					"status": "ACTIVE",
+					"attributes": {
+						"Class": [
+							"COSTALT",
+							"AMP"
+						],
+						"Group": [
+							"LEGACY"
+						],
+						"Role": [
+							"TECHELIGIBLE"
+						]
+					}
+				},
+				{
+					"serviceID": 2,
+					"legacyTIPDetailID": 32,
+					"globalServiceVersion": 1,
+					"validFrom": "2014-12-08T16:23:47.850Z",
+					"validTill": "2023-05-20T03:59:59.999Z",
+					"status": "ACTIVE",
+					"attributes": {}
+				}
+			],
+			"totalServices": 15
+		});
 		});
 	});
 

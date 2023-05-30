@@ -9,7 +9,8 @@ import {
 	QUpdateModuleConfig,
 	QMissingModules,
 	QServiceActiveOrInActive,
-	QServiceActiveVersion
+	QServiceActiveVersion,
+	QExpiredServiceList
 } from '../../database/queries/service';
 import { QueryTypes } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
@@ -64,31 +65,47 @@ export default class ServiceManager {
 		}
 	}
 
-	public async getServiceList(sortBy: string, sortOrder: string, offset: number, limit: number, keyword: string): Promise<ServiceListResponse> {
+	public async getServiceList(sortBy: string, sortOrder: string, offset: number, limit: number, keyword: string, showInactive: number): Promise<ServiceListResponse> {
 		try {
 			let totalServices = [];
 			let services = [];
 			let nonFilteredServices = [];
-
 			const searchKey = keyword !== EMPTY_STRING ? serviceList.matchAll + keyword.trim() + serviceList.matchAll : serviceList.matchAll;
-			// query to get total count of services filtered by status & search key
-			totalServices = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
-				type: QueryTypes.SELECT,
-				replacements: { searchKey, limit: null, offset: null }
-			});
-			//query to fetch all services matching all criteria
-			services = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
-				type: QueryTypes.SELECT,
-				replacements: { searchKey, limit, offset }
-			});
-			// // query to get total count of services with no filter
-			// // status = serviceList.matchAll;
-			// // searchKey = serviceList.matchAll;
-			nonFilteredServices = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
-				type: QueryTypes.SELECT,
-				replacements: { searchKey: serviceList.matchAll, limit: null, offset: null }
-			});
-			await Promise.all([totalServices, services, nonFilteredServices]);
+			if (showInactive === 1) {
+				// query to get total count of services filtered by status & search key
+				totalServices = await db.query(QExpiredServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
+					type: QueryTypes.SELECT,
+					replacements: { searchKey, limit: null, offset: null }
+				});
+				//query to fetch all services matching all criteria
+				services = await db.query(QExpiredServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
+					type: QueryTypes.SELECT,
+					replacements: { searchKey, limit, offset }
+				});
+				//query to get total count of services with no filter
+				nonFilteredServices = await db.query(QExpiredServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
+					type: QueryTypes.SELECT,
+					replacements: { searchKey: serviceList.matchAll, limit: null, offset: null }
+				});
+				await Promise.all([totalServices, services, nonFilteredServices]);
+			} else {
+				// query to get total count of services filtered by status & search key
+				totalServices = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
+					type: QueryTypes.SELECT,
+					replacements: { searchKey, limit: null, offset: null }
+				});
+				//query to fetch all services matching all criteria
+				services = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
+					type: QueryTypes.SELECT,
+					replacements: { searchKey, limit, offset }
+				});
+				//query to get total count of services with no filter
+				nonFilteredServices = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
+					type: QueryTypes.SELECT,
+					replacements: { searchKey: serviceList.matchAll, limit: null, offset: null }
+				});
+				await Promise.all([totalServices, services, nonFilteredServices]);
+			}
 
 			const response: ServiceListResponse = {
 				totalServices: totalServices.length,
@@ -405,5 +422,23 @@ export default class ServiceManager {
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceDetailFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
+	}
+
+	async getActiveService(serviceID: number): Promise<object> {
+		let activeService: any;
+		const serviceActiveVersion = await db.query(QServiceActiveVersion, {
+			replacements: { serviceID: serviceID },
+			type: QueryTypes.SELECT
+		});
+		if (serviceActiveVersion !== null) {
+			activeService = await this.serviceRepository.findOne({
+				where: {
+					serviceID,
+					globalServiceVersion: serviceActiveVersion[0].globalServiceVersion
+				},
+				raw: true
+			});
+		}
+		return activeService;
 	}
 }

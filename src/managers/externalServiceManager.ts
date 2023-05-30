@@ -7,9 +7,12 @@ import {
 	QGetServiceAttributesName,
 	QGetServiceTipNameForLegacyTipID,
 	QGetServiceTipNameForserviceID,
-	QServiceDeailsActiveOrInActive,
+	QServiceDetailsActiveOrInActive,
 	QServiceActiveVersionForLegacyId,
-	QUpdateModuleConfig
+	QUpdateModuleConfig,
+	QActiveServiceListCount,
+	QServiceDetailsForVersions,
+	QGetAttributesMetaDataForVersion
 } from '../../database/queries/service';
 import { QueryTypes } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
@@ -65,32 +68,58 @@ export default class ExternalServiceManager {
 	 * @param {number} serviceID -  serviceID of for fetching active service attributes
 	 * @param {number} legacyTIPDetailID -  legacyTIPDetailID of for fetching active service attributes
 	 */
-	async getServiceAttributesDetails(serviceID, legacyTIPDetailID) {
+	async getServiceAttributesDetails(serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit) {
 		try {
-			logger.nonPhi.debug('getServiceAttributesDetails API invoked with following parameters', { serviceID, legacyTIPDetailID });
-			let attributes, attributesMetaData;
-			if (!legacyTIPDetailID) {
-				await this.serviceDoesnotExists(serviceID);
-				const activeOrInActiveService = await db.query(QServiceDeailsActiveOrInActive, {
-					replacements: { serviceID: serviceID },
+			logger.nonPhi.debug('getServiceAttributesDetails API invoked with following parameters', { serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit });
+
+			let attributes, attributesMetaData, activeOrInActiveService;
+			if (serviceID === null && legacyTIPDetailID === null && globalServiceVersion === null) {
+				return await this.getActiveServiceAttributesDetailsList(offset, sortOrder, limit);
+			}
+
+			if (serviceID && globalServiceVersion && legacyTIPDetailID === null) {
+				const serviceDetails: any = await this.serviceRepository.findOne({ where: { serviceID, globalServiceVersion } });
+				if (!serviceDetails) {
+					throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.badRequest });
+				}
+				activeOrInActiveService = await db.query(QServiceDetailsForVersions, {
+					replacements: { serviceID, globalServiceVersion },
 					type: QueryTypes.SELECT,
 					raw: true
 				});
-
-				legacyTIPDetailID = this.inactiveServiceVersion(activeOrInActiveService, legacyTIPDetailID);
-				attributesMetaData = await db.query(QGetServiceAttributesMetaData, {
+				attributesMetaData = await db.query(QGetAttributesMetaDataForVersion, {
 					replacements: { serviceID, globalServiceVersion: activeOrInActiveService[0].globalServiceVersion },
 					type: QueryTypes.SELECT,
 					raw: true
 				});
+
 				if (attributesMetaData[0]) {
 					attributes = await this.getAttributeNames(attributesMetaData);
 				} else {
 					attributes = {};
 				}
-			} else {
+			} else if (legacyTIPDetailID === null && globalServiceVersion === null) {
+				await this.serviceDoesnotExists(serviceID);
+				activeOrInActiveService = await db.query(QServiceDetailsActiveOrInActive, {
+					replacements: { serviceID: serviceID },
+					type: QueryTypes.SELECT,
+					raw: true
+				});
+				this.getInactiveServiceDetails(activeOrInActiveService);
+				attributesMetaData = await db.query(QGetServiceAttributesMetaData, {
+					replacements: { serviceID, globalServiceVersion: activeOrInActiveService[0].globalServiceVersion },
+					type: QueryTypes.SELECT,
+					raw: true
+				});
+
+				if (attributesMetaData[0]) {
+					attributes = await this.getAttributeNames(attributesMetaData);
+				} else {
+					attributes = {};
+				}
+			} else if (serviceID === null && globalServiceVersion === null) {
 				await this.legacyIDNotExists(legacyTIPDetailID);
-				const activeOrInActiveService = await this.activeLegacyVersion(legacyTIPDetailID);
+				activeOrInActiveService = await this.getActiveServiceForLegacyTipId(legacyTIPDetailID);
 
 				if (!activeOrInActiveService[0]) {
 					throw new HandleError({
@@ -99,8 +128,6 @@ export default class ExternalServiceManager {
 						stack: 'Active Service version does not exist',
 						errorStatus: HTTP_STATUS_CODES.notFound
 					});
-				} else {
-					serviceID = activeOrInActiveService[0].serviceID;
 				}
 				attributesMetaData = await db.query(QGetServiceAttributesMetaData, {
 					replacements: { serviceID: activeOrInActiveService[0].serviceID, globalServiceVersion: activeOrInActiveService[0].globalServiceVersion },
@@ -113,8 +140,14 @@ export default class ExternalServiceManager {
 					attributes = {};
 				}
 			}
-			const serviceAttributes = [{ serviceID, legacyTIPDetailID, attributes }];
-			return { serviceAttributes };
+			const serviceAttributes = activeOrInActiveService.map((service) => ({
+				...service,
+				attributes
+			}));
+			return {
+				serviceAttributes,
+				totalServices: serviceAttributes.length
+			};
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
@@ -122,7 +155,61 @@ export default class ExternalServiceManager {
 		}
 	}
 
-	private inactiveServiceVersion(activeOrInActiveService: any, legacyTIPDetailID: any) {
+	private async getActiveServiceAttributesDetailsList(offset: number, sortOrder: string, limit: number) {
+		const activeServices = await db.query(QActiveServiceListCount, {
+				type: QueryTypes.SELECT,
+				raw: true
+			}),
+			totalServices = await db.query(QActiveServiceListCount, {
+				type: QueryTypes.SELECT,
+				raw: true
+			});
+		const services = totalServices;
+
+		const serviceIds = [...new Set(services.map((item) => item.serviceID))];
+
+		const data = activeServices;
+
+		// Map the categoryName and name into one object
+		const mappedObject = data.reduce((result, item) => {
+			const { serviceID, categoryName, name } = item;
+
+			if (!result[serviceID]) {
+				result[serviceID] = {
+					serviceID,
+					legacyTIPDetailID: item.legacyTIPDetailID,
+					globalServiceVersion: item.globalServiceVersion,
+					validFrom: item.validFrom,
+					validTill: item.validTill,
+					status: item.status,
+					attributes: {}
+				};
+			}
+
+			if (categoryName !== null && name !== null) {
+				if (!result[serviceID].attributes[categoryName]) {
+					result[serviceID].attributes[categoryName] = [];
+				}
+
+				result[serviceID].attributes[categoryName].push(name);
+			}
+
+			return result;
+		}, {});
+
+		// Convert the mappedObject to an array
+		const adjustedOffset = offset === 0 ? 1 : offset,
+			sortBy = 'legacyTIPDetailID',
+			sortedData = Object.values(mappedObject).sort((a: any, b: any) => (sortOrder === 'asc' ? a[sortBy] - b[sortBy] : b[sortBy] - a[sortBy]));
+
+		const result = sortedData.slice(adjustedOffset - 1, adjustedOffset - 1 + limit);
+		return {
+			serviceAttributes: result,
+			totalServices: serviceIds.length
+		};
+	}
+
+	private getInactiveServiceDetails(activeOrInActiveService: any) {
 		if (!activeOrInActiveService[0]) {
 			throw new HandleError({
 				name: 'ActiveServiceVersionDoesntExist',
@@ -130,10 +217,7 @@ export default class ExternalServiceManager {
 				stack: 'Active Service version does not exist',
 				errorStatus: HTTP_STATUS_CODES.notFound
 			});
-		} else {
-			legacyTIPDetailID = activeOrInActiveService[0].legacyTIPDetailID;
 		}
-		return legacyTIPDetailID;
 	}
 
 	private async getAttributeNames(serviceAttributes: any) {
@@ -174,12 +258,11 @@ export default class ExternalServiceManager {
 			let serviceDetails, activeOrInActiveServices;
 			if (!legacyTIPDetailID) {
 				await this.serviceDoesnotExists(serviceID);
-				activeOrInActiveServices = await db.query(QServiceDeailsActiveOrInActive, {
+				activeOrInActiveServices = await db.query(QServiceDetailsActiveOrInActive, {
 					replacements: { serviceID: serviceID },
 					type: QueryTypes.SELECT,
 					raw: true
 				});
-
 				activeVersionNotExists(activeOrInActiveServices);
 				serviceDetails = await db.query(QGetServiceTipNameForserviceID, {
 					replacements: { serviceID: serviceID, globalServiceVersion: activeOrInActiveServices[0].globalServiceVersion },
@@ -187,7 +270,7 @@ export default class ExternalServiceManager {
 				});
 			} else {
 				await this.legacyIDNotExists(legacyTIPDetailID);
-				activeOrInActiveServices = await this.activeLegacyVersion(legacyTIPDetailID);
+				activeOrInActiveServices = await this.getActiveServiceForLegacyTipId(legacyTIPDetailID);
 				activeVersionNotExists(activeOrInActiveServices);
 
 				serviceDetails = await db.query(QGetServiceTipNameForLegacyTipID, {
@@ -233,7 +316,7 @@ export default class ExternalServiceManager {
 		}
 	}
 
-	private async activeLegacyVersion(legacyTIPDetailID: any) {
+	private async getActiveServiceForLegacyTipId(legacyTIPDetailID: any) {
 		return db.query(QServiceActiveVersionForLegacyId, {
 			replacements: { legacyTIPDetailID: legacyTIPDetailID },
 			type: QueryTypes.SELECT,

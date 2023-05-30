@@ -50,3 +50,7 @@ export const serviceList = {
 export const EMPTY_STRING = '';
 
 export const CLIENT_TZ = 'America/New_York';
+
+export const SERVICE_SCHEDULE_EVENT = 'SCHEDULE';
+
+export const SERVICE_CHANGE_EVENT = 'CHANGE';
