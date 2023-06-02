@@ -2,9 +2,11 @@ import { NextFunction, Request, Response } from 'express';
 import { HandleError, logger } from '../../utils';
 import { IService } from '../interfaces/IServices';
 import ServiceManager from '../managers/ServiceManager';
-import { serviceList, EMPTY_STRING, HTTP_STATUS_CODES } from '../../utils/constants';
+import { serviceList, EMPTY_STRING, HTTP_STATUS_CODES, SERVICE_SCHEDULE_EVENT, SERVICE_CHANGE_EVENT } from '../../utils/constants';
 import config from 'config';
 import SNSServiceManager from '../managers/SNSServiceManager';
+import moment from 'moment';
+import { endDateWithClientTZ, startDateWithClientTZ } from '../../utils/tzFormatter';
 
 export default class ServiceController {
 	constructor(public serviceManager: ServiceManager, public snsServiceManager: SNSServiceManager) {}
@@ -38,7 +40,35 @@ export default class ServiceController {
 		try {
 			const serviceID = req.body?.serviceID;
 			logger.nonPhi.debug('Create draft invoked with following parameter', { serviceID });
-			res.json(await this.serviceManager.createDraft(serviceID));
+			const service = JSON.parse(JSON.stringify(await this.serviceManager.getDetails(serviceID)));
+			const serviceDraftVersion = await this.serviceManager.createDraft(serviceID);
+			res.json(serviceDraftVersion);
+			if (service !== null && service.scheduledVersion) {
+				this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
+					serviceID,
+					service.legacyTIPDetailID,
+					serviceDraftVersion.globalServiceVersion,
+					serviceDraftVersion.validFrom,
+					serviceDraftVersion.validTill,
+					serviceDraftVersion.isPublished,
+					req.headers,
+					'change'
+				);
+
+				if (service !== null && service.activeVersion) {
+					const activeService = JSON.parse(JSON.stringify(await this.serviceManager.getActiveService(serviceID)));
+					this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
+						serviceID,
+						service.legacyTIPDetailID,
+						activeService.globalServiceVersion,
+						activeService.validFrom,
+						activeService.validTill,
+						activeService.isPublished,
+						req.headers,
+						'change'
+					);
+				}
+			}
 		} catch (error: any) {
 			res.json(error);
 		}
@@ -82,8 +112,33 @@ export default class ServiceController {
 		try {
 			const { serviceID, globalServiceVersion, startDate, endDate } = req.body;
 			logger.nonPhi.debug('Schedule service invoked with following parameter', { serviceID, globalServiceVersion, startDate, endDate });
-			res.send(await this.serviceManager.schedule(serviceID, globalServiceVersion, startDate, endDate));
-			this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(serviceID, globalServiceVersion, startDate, endDate, req.headers);
+			const scheduledService = JSON.parse(JSON.stringify(await this.serviceManager.schedule(serviceID, globalServiceVersion, startDate, endDate)));
+			res.send(scheduledService);
+			const validTill = endDate ? endDateWithClientTZ(endDate) : null;
+			this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
+				serviceID,
+				scheduledService.legacyTIPDetailID,
+				globalServiceVersion,
+				startDateWithClientTZ(startDate),
+				validTill,
+				scheduledService.isPublished,
+				req.headers,
+				SERVICE_SCHEDULE_EVENT
+			);
+			const activeService = JSON.parse(JSON.stringify(await this.serviceManager.getActiveService(serviceID)));
+			if (activeService !== null) {
+				const endDate = activeService.validTill ? activeService.validTill : endDateWithClientTZ(moment(startDate).subtract(1, 'days').format('YYYY-MM-DD'));
+				this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
+					serviceID,
+					scheduledService.legacyTIPDetailID,
+					activeService.globalServiceVersion,
+					activeService.validFrom,
+					endDate,
+					activeService.isPublished,
+					req.headers,
+					SERVICE_CHANGE_EVENT
+				);
+			}
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			next(error);
