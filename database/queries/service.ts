@@ -65,7 +65,7 @@ JSONB_AGG(
 					) THEN 'ACTIVE' WHEN (
 					  s1."validFrom" > now() 
 					  AND s1."isPublished" = 1
-					) THEN 'SCHEDULED' WHEN (s1."isPublished" = 0) THEN 'DRAFT' ELSE 'INACTIVE' END AS "status"
+					) THEN 'SCHEDULED' WHEN (s1."isPublished" = 0 AND s1."validTill" IS NULL AND s1."validFrom" IS NULL) THEN 'DRAFT' WHEN (s1."validTill" <now() AND s1."validTill" IS NOT NULL AND s1."validFrom" IS NOT NULL) THEN 'INACTIVE' END AS "status"
 				) AS X
                 
 			) 
@@ -206,7 +206,7 @@ export const QExpiredServiceList = (sortBy, sortOrder) => {
 					  ) THEN 'ACTIVE' WHEN (
 						s1."validFrom" > now() 
 						AND s1."isPublished" = 1
-					  ) THEN 'SCHEDULED' WHEN (s1."isPublished" = 0) THEN 'DRAFT' WHEN (
+					  ) THEN 'SCHEDULED' WHEN (s1."isPublished" = 0 AND s1."validFrom" IS NULL AND s1."validTill" IS NULL ) THEN 'DRAFT' WHEN (
 						s1."globalServiceVersion" = (
 						  SELECT 
 							MAX(s2."globalServiceVersion") 
@@ -215,7 +215,7 @@ export const QExpiredServiceList = (sortBy, sortOrder) => {
 						  where 
 							s2."serviceID" = s1."serviceID" 
 							AND s2."validTill" < NOW() 
-							AND s2."isPublished" = 1
+							AND s1."validFrom" IS NOT NULL AND s1."validTill" IS NOT NULL
 						)
 					  ) THEN 'INACTIVE' ELSE 'EXPIRED' END AS "status"
 				  ) AS X 
@@ -244,7 +244,7 @@ export const QExpiredServiceList = (sortBy, sortOrder) => {
 				AND s1."isPublished" = 1
 			  ) 
 			  OR (
-				(s1."isPublished" = 0)
+				(s1."isPublished" = 0 AND s1."validFrom" IS NULL AND s1."validTill" IS NULL )
 			  ) 
 			  OR (
 				s1."globalServiceVersion" = (
@@ -255,7 +255,6 @@ export const QExpiredServiceList = (sortBy, sortOrder) => {
 				  where 
 					s3."serviceID" = s1."serviceID" 
 					AND s3."validTill" < NOW() 
-					AND s3."isPublished" = 1 
 					AND s3."serviceID" NOT IN (
 					  select 
 						s4."serviceID" 
@@ -263,15 +262,7 @@ export const QExpiredServiceList = (sortBy, sortOrder) => {
 						service."Service" s4 
 					  where 
 						(
-						  (
-							s4."validFrom" < now() 
-							AND s4."validTill" >= now()
-						  ) 
-						  OR (
-							s4."validFrom" < now() 
-							AND s4."validTill" IS NULL
-						  ) 
-						  AND s4."isPublished" = 1
+						  ( s4."validFrom" < now()  AND s4."validTill" >= now() )  OR ( s4."validFrom" < now() AND s4."validTill" IS NULL )  AND s4."isPublished" = 1
 						)
 					)
 				)
@@ -345,7 +336,7 @@ AND s4."globalServiceVersion" IN (
 	service."Service" 
   WHERE 
 	"serviceID" = :serviceID 
-	AND "isPublished" = 0
+	AND "isPublished" = 0 AND "validTill" IS NULL AND "validFrom" IS NULL
 )
 LEFT JOIN service."Service" AS s5 ON s1."serviceID" = s5."serviceID" 
 AND s5."globalServiceVersion" IN (
@@ -355,8 +346,16 @@ AND s5."globalServiceVersion" IN (
 	service."Service" 
   WHERE 
 	"serviceID" = :serviceID 
-	AND "isPublished" = 1
-	AND "validTill" < NOW()
+	AND "validTill" < NOW() AND "validTill" IS NOT NULL AND "validFrom" IS NOT NULL AND "serviceID" NOT IN (
+		select 
+		ss5."serviceID" 
+		from 
+		  service."Service" ss5
+		where 
+		  (
+			( ss5."validFrom" < now()  AND ss5."validTill" >= now() )  OR ( ss5."validFrom" < now() AND ss5."validTill" IS NULL )  AND ss5."isPublished" = 1
+		  )
+	  )
 ) 
 WHERE 
 s1."serviceID" = :serviceID FETCH first row only`;
