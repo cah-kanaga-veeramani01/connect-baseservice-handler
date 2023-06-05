@@ -56,7 +56,7 @@ JSONB_AGG(
 					WHEN ((s1."validFrom" < now() AND s1."validTill" >= now()) OR (s1."validFrom" < now() AND s1."validTill" IS NULL)  AND s1."isPublished" = 1) THEN 'ACTIVE' 
 					WHEN (s1."validFrom" IS NOT NULL AND s1."validFrom" > now() AND ((s1."validTill" IS NOT NULL AND s1."validFrom" < s1."validTill") OR (s1."validTill" IS NULL)) AND s1."isPublished" = 1 ) THEN 'SCHEDULED' 
 					WHEN (s1."isPublished" = 0 AND s1."validTill" IS NULL AND s1."validFrom" IS NULL) THEN 'DRAFT' 
-					WHEN (s1."validFrom" IS NOT NULL AND s1."validTill" IS NOT NULL AND s1."validTill" < now()) THEN 'INACTIVE' 
+					WHEN (s1."validFrom" IS NOT NULL AND s1."validTill" IS NOT NULL AND s1."validFrom" < s1."validTill" AND s1."validTill" < now()) THEN 'INACTIVE' 
 					END AS "status"
 				) AS X
                 
