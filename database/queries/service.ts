@@ -52,20 +52,12 @@ JSONB_AGG(
 					s1."isPublished",
 					s1."legacyTIPDetailID",
                     "ServiceType"."serviceType",
-					CASE WHEN (
-					  (
-						s1."validFrom" < now() 
-						AND s1."validTill" >= now()
-					  ) 
-					  OR (
-						s1."validFrom" < now() 
-						AND s1."validTill" IS NULL
-					  ) 
-					  AND s1."isPublished" = 1
-					) THEN 'ACTIVE' WHEN (
-					  s1."validFrom" > now() 
-					  AND s1."isPublished" = 1
-					) THEN 'SCHEDULED' WHEN (s1."isPublished" = 0 AND s1."validTill" IS NULL AND s1."validFrom" IS NULL) THEN 'DRAFT' WHEN (s1."validTill" <now() AND s1."validTill" IS NOT NULL AND s1."validFrom" IS NOT NULL) THEN 'INACTIVE' END AS "status"
+					CASE 
+					WHEN ((s1."validFrom" < now() AND s1."validTill" >= now()) OR (s1."validFrom" < now() AND s1."validTill" IS NULL)  AND s1."isPublished" = 1) THEN 'ACTIVE' 
+					WHEN (s1."validFrom" IS NOT NULL AND s1."validFrom" > now() AND ((s1."validTill" IS NOT NULL AND s1."validFrom" < s1."validTill") OR (s1."validTill" IS NULL)) AND s1."isPublished" = 1 ) THEN 'SCHEDULED' 
+					WHEN (s1."isPublished" = 0 AND s1."validTill" IS NULL AND s1."validFrom" IS NULL) THEN 'DRAFT' 
+					WHEN (s1."validFrom" IS NOT NULL AND s1."validTill" IS NOT NULL AND s1."validTill" < now()) THEN 'INACTIVE' 
+					END AS "status"
 				) AS X
                 
 			) 
@@ -193,20 +185,11 @@ export const QExpiredServiceList = (sortBy, sortOrder) => {
 					  s1."isPublished", 
 					  s1."legacyTIPDetailID", 
 					  "ServiceType"."serviceType", 
-					  CASE WHEN (
-						(
-						  s1."validFrom" < now() 
-						  AND s1."validTill" >= now()
-						) 
-						OR (
-						  s1."validFrom" < now() 
-						  AND s1."validTill" IS NULL
-						) 
-						AND s1."isPublished" = 1
-					  ) THEN 'ACTIVE' WHEN (
-						s1."validFrom" > now() 
-						AND s1."isPublished" = 1
-					  ) THEN 'SCHEDULED' WHEN (s1."isPublished" = 0 AND s1."validFrom" IS NULL AND s1."validTill" IS NULL ) THEN 'DRAFT' WHEN (
+					  CASE 
+					  WHEN ((s1."validFrom" < now() AND s1."validTill" >= now()) OR (s1."validFrom" < now() AND s1."validTill" IS NULL) AND s1."isPublished" = 1) THEN 'ACTIVE' 
+					  WHEN (s1."validFrom" IS NOT NULL AND s1."validFrom" > now() AND ((s1."validTill" IS NOT NULL AND s1."validFrom" < s1."validTill") OR (s1."validTill" IS NULL)) AND s1."isPublished" = 1) THEN 'SCHEDULED' 
+					  WHEN (s1."isPublished" = 0 AND s1."validFrom" IS NULL AND s1."validTill" IS NULL ) THEN 'DRAFT' 
+					  WHEN (
 						s1."globalServiceVersion" = (
 						  SELECT 
 							MAX(s2."globalServiceVersion") 
@@ -228,25 +211,13 @@ export const QExpiredServiceList = (sortBy, sortOrder) => {
 			JOIN service."ServiceType" on s1."serviceTypeID" = "ServiceType"."serviceTypeID" 
 		  WHERE 
 			(
+			  ((s1."validFrom" < now() AND s1."validTill" >= now()) OR (s1."validFrom" < now() AND s1."validTill" IS NULL) AND s1."isPublished" = 1) 
+			  OR 
+			  (s1."validFrom" IS NOT NULL AND s1."validFrom" > now() AND ((s1."validTill" IS NOT NULL AND s1."validFrom" < s1."validTill") OR (s1."validTill" IS NULL)) AND s1."isPublished" = 1) 
+			  OR 
+			  ((s1."isPublished" = 0 AND s1."validFrom" IS NULL AND s1."validTill" IS NULL )) 
+			  OR 
 			  (
-				(
-				  s1."validFrom" < now() 
-				  AND s1."validTill" >= now()
-				) 
-				OR (
-				  s1."validFrom" < now() 
-				  AND s1."validTill" IS NULL
-				) 
-				AND s1."isPublished" = 1
-			  ) 
-			  OR (
-				s1."validFrom" > now() 
-				AND s1."isPublished" = 1
-			  ) 
-			  OR (
-				(s1."isPublished" = 0 AND s1."validFrom" IS NULL AND s1."validTill" IS NULL )
-			  ) 
-			  OR (
 				s1."globalServiceVersion" = (
 				  SELECT 
 					MAX(s3."globalServiceVersion") 
@@ -326,7 +297,7 @@ AND s3."globalServiceVersion" IN (
   WHERE 
 	"serviceID" = :serviceID
 	AND "isPublished" = 1 
-	AND "validFrom" > NOW()
+	AND "validFrom" IS NOT NULL AND "validFrom" > NOW() AND (("validTill" IS NOT NULL AND "validFrom" < "validTill") OR ("validTill" IS NULL))
 ) 
 LEFT JOIN service."Service" AS s4 ON s1."serviceID" = s4."serviceID" 
 AND s4."globalServiceVersion" IN (
