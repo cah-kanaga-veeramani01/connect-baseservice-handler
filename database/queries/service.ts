@@ -362,14 +362,12 @@ export const QGetServiceAttributesName = `select "name", "categoryName" from ser
 where "attributesDefinitionID" in (:attributesDefinitionID) ORDER BY "attributesDefinitionID"`;
 
 export const QServiceActiveVersionForLegacyId = `SELECT "serviceID","legacyTIPDetailID","globalServiceVersion", "validFrom","validTill",
-	CASE WHEN (
-		( "validFrom" < now() AND "validTill" >= now() ) OR 
-		( "validFrom" < now() AND "validTill" IS NULL )
-	  ) AND "isPublished" = 1 THEN 'ACTIVE'
-	  WHEN ("validFrom" > now() AND "isPublished" = 1) THEN 'SCHEDULED'
-	  WHEN ( "validFrom" IS NULL AND "validTill" IS NULL AND  "isPublished" = 0) THEN 'DRAFT'
-	  WHEN "validTill" < NOW() THEN 'INACTIVE'
-	  END AS "status"
+	CASE 
+		WHEN (("validFrom" < now() AND "validTill" >= now()) OR ("validFrom" < now() AND "validTill" IS NULL) AND "isPublished" = 1) THEN 'ACTIVE' 
+		WHEN ("validFrom" IS NOT NULL AND "validFrom" > now() AND (("validTill" IS NOT NULL AND "validFrom" < "validTill") OR ("validTill" IS NULL)) AND "isPublished" = 1 ) THEN 'SCHEDULED' 
+		WHEN ("isPublished" = 0 AND "validTill" IS NULL AND "validFrom" IS NULL) THEN 'DRAFT' 
+		WHEN ("validFrom" IS NOT NULL AND "validTill" IS NOT NULL AND "validFrom" < "validTill" AND "validTill" < now()) THEN 'INACTIVE' 
+		END AS "status"
 	FROM service."Service"
 	WHERE "legacyTIPDetailID" = :legacyTIPDetailID 
 	AND "isPublished" = 1 
@@ -386,14 +384,11 @@ and s."legacyTIPDetailID" = :legacyTIPDetailID and s."globalServiceVersion" = :g
 
 export const QServiceDetailsActiveOrInActive = `SELECT "serviceID", "legacyTIPDetailID", "globalServiceVersion", "validFrom", "validTill",
 	CASE 
-	  WHEN (
-		( "validFrom" < now() AND "validTill" >= now() ) OR 
-		( "validFrom" < now() AND "validTill" IS NULL )
-	  ) AND "isPublished" = 1 THEN 'ACTIVE'
-	  WHEN ("validFrom" > now() AND "isPublished" = 1) THEN 'SCHEDULED'
-	  WHEN ( "validFrom" IS NULL AND "validTill" IS NULL AND  "isPublished" = 0) THEN 'DRAFT'
-	  WHEN "validTill" < NOW() THEN 'INACTIVE'
-	  END AS "status"
+		WHEN (("validFrom" < now() AND "validTill" >= now()) OR ("validFrom" < now() AND "validTill" IS NULL) AND "isPublished" = 1) THEN 'ACTIVE' 
+		WHEN ("validFrom" IS NOT NULL AND "validFrom" > now() AND (("validTill" IS NOT NULL AND "validFrom" < "validTill") OR ("validTill" IS NULL)) AND "isPublished" = 1 ) THEN 'SCHEDULED' 
+		WHEN ("isPublished" = 0 AND "validTill" IS NULL AND "validFrom" IS NULL) THEN 'DRAFT' 
+		WHEN ("validFrom" IS NOT NULL AND "validTill" IS NOT NULL AND "validFrom" < "validTill" AND "validTill" < now()) THEN 'INACTIVE' 
+		END AS "status"
   FROM service."Service"
   WHERE "serviceID" = :serviceID AND "isPublished" = 1 AND
 	("validTill" IS NULL OR "validTill" >= NOW()) AND "validFrom" <= NOW();`;
@@ -407,14 +402,12 @@ s."legacyTIPDetailID",
 ad.name, 
 ad."categoryName", 
 sa."globalServiceVersion" AS sa_globalServiceVersion,
-CASE WHEN (
-	( s."validFrom" < now() AND s."validTill" >= now() ) OR 
-	( s."validFrom" < now() AND s."validTill" IS NULL )
-  ) AND s."isPublished" = 1 THEN 'ACTIVE'
-  WHEN (s."validFrom" > now() AND s."isPublished" = 1) THEN 'SCHEDULED'
-  WHEN ( s."validFrom" IS NULL AND s."validTill" IS NULL AND  s."isPublished" = 0) THEN 'DRAFT'
-  WHEN s."validTill" < NOW() THEN 'INACTIVE'
-  END AS "status"
+CASE 
+	WHEN ((s."validFrom" < now() AND s."validTill" >= now()) OR (s."validFrom" < now() AND s."validTill" IS NULL) AND s."isPublished" = 1) THEN 'ACTIVE' 
+	WHEN (s."validFrom" IS NOT NULL AND s."validFrom" > now() AND ((s."validTill" IS NOT NULL AND s."validFrom" < s."validTill") OR (s."validTill" IS NULL)) AND s."isPublished" = 1 ) THEN 'SCHEDULED' 
+	WHEN (s."isPublished" = 0 AND s."validTill" IS NULL AND s."validFrom" IS NULL) THEN 'DRAFT' 
+	WHEN (s."validFrom" IS NOT NULL AND s."validTill" IS NOT NULL AND s."validFrom" < s."validTill" AND s."validTill" < now()) THEN 'INACTIVE' 
+	END AS "status"
 FROM service."Service" s 
 LEFT JOIN (
 SELECT "serviceID", metadata ->> 'attributes' AS attributes, "globalServiceVersion"
@@ -425,15 +418,13 @@ WHERE s."isPublished" = 1 AND (s."validTill" IS NULL OR s."validTill" >= NOW()) 
 ORDER BY "serviceID";`;
 
 export const QServiceDetailsForVersions = `SELECT "serviceID", "legacyTIPDetailID", "globalServiceVersion", "validFrom", "validTill", 
-	CASE WHEN (
-		( s1."validFrom" < now() AND s1."validTill" >= now() ) OR 
-		( s1."validFrom" < now() AND s1."validTill" IS NULL )
-	  ) AND s1."isPublished" = 1 THEN 'ACTIVE'
-	  WHEN (s1."validFrom" > now() AND s1."isPublished" = 1) THEN 'SCHEDULED'
-	  WHEN ( s1."validFrom" IS NULL AND s1."validTill" IS NULL AND  s1."isPublished" = 0) THEN 'DRAFT'
-	  WHEN s1."validTill" < NOW() THEN 'INACTIVE'
-	  END AS "status"
-  FROM service."Service" s1
+CASE 
+	WHEN ((s."validFrom" < now() AND s."validTill" >= now()) OR (s."validFrom" < now() AND s."validTill" IS NULL) AND s."isPublished" = 1) THEN 'ACTIVE' 
+	WHEN (s."validFrom" IS NOT NULL AND s."validFrom" > now() AND ((s."validTill" IS NOT NULL AND s."validFrom" < s."validTill") OR (s."validTill" IS NULL)) AND s."isPublished" = 1 ) THEN 'SCHEDULED' 
+	WHEN (s."isPublished" = 0 AND s."validTill" IS NULL AND s."validFrom" IS NULL) THEN 'DRAFT' 
+	WHEN (s."validFrom" IS NOT NULL AND s."validTill" IS NOT NULL AND s."validFrom" < s."validTill" AND s."validTill" < now()) THEN 'INACTIVE' 
+END AS "status"
+  FROM service."Service" s
   WHERE "serviceID" = :serviceID AND "globalServiceVersion" = :globalServiceVersion;`;
 
 export const QGetAttributesMetaDataForVersion = `SELECT metadata ->> 'attributes' AS attributes, "serviceID", "globalServiceVersion" FROM service."ServiceAttributes" where "serviceID" 
