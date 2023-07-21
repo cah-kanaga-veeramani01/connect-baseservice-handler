@@ -533,3 +533,69 @@ describe('Get service details', () => {
 		expect(next).toHaveBeenCalledTimes(1);
 	});
 });
+
+describe('active service list', () => {
+	test('return the get active service list', async () => {
+		jest.spyOn(serviceManager, 'getActiveServices').mockImplementation(() => {
+			return Promise.resolve([
+				{
+					serviceID: 10,
+					legacyTIPDetailID: 62,
+					globalServiceVersion: 1,
+					validFrom: '2021-12-16T12:25:43.407Z',
+					validTill: null,
+					status: 'ACTIVE',
+					serviceType: 'TIP',
+					attributes: { Role: ['h'], Class: ['g'] }
+				},
+				{
+					serviceID: 19,
+					legacyTIPDetailID: 80,
+					globalServiceVersion: 1,
+					validFrom: '2022-12-05T10:23:39.757Z',
+					validTill: null,
+					status: 'ACTIVE',
+					serviceType: 'TIP',
+					attributes: {}
+				}
+			]);
+		});
+		const req = mocks.createRequest({
+				method: 'GET',
+				url: '/service/internal/active-service',
+				query: {}
+			}),
+			res = mocks.createResponse(),
+			next = jest.fn();
+		await serviceController.getActiveServices(req, res, next);
+		expect(res._getData()).toMatchObject([
+			{
+				attributes: { Class: ['g'], Role: ['h'] },
+				globalServiceVersion: 1,
+				legacyTIPDetailID: 62,
+				serviceID: 10,
+				serviceType: 'TIP',
+				status: 'ACTIVE',
+				validFrom: '2021-12-16T12:25:43.407Z',
+				validTill: null
+			},
+			{ attributes: {}, globalServiceVersion: 1, legacyTIPDetailID: 80, serviceID: 19, serviceType: 'TIP', status: 'ACTIVE', validFrom: '2022-12-05T10:23:39.757Z', validTill: null }
+		]);
+	});
+
+	test('throws error', async () => {
+		jest.spyOn(serviceManager, 'getActiveServices').mockRejectedValue(new Error('error'));
+		const req = mocks.createRequest({
+				method: 'GET',
+				url: '/service/internal/details',
+				query: {
+					serviceID: '1'
+				}
+			}),
+			res = mocks.createResponse(),
+			next = jest.fn();
+
+		await serviceController.getDetails(req, res, next);
+		expect(next).toHaveBeenCalledTimes(1);
+	});
+});

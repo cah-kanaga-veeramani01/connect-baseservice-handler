@@ -28,3 +28,4 @@ ServicesInternalRouter.route('/unmappedModules').get(
 );
 ServicesInternalRouter.route('/schedule').put(isAuthorized(UserAction.update, Subject.service), validateRequest(scheduleService), serviceController.schedule.bind(serviceController));
 ServicesInternalRouter.route('/details').get(isAuthorized(UserAction.read, Subject.service), validateRequest(getServiceDetails), serviceController.getDetails.bind(serviceController));
+ServicesInternalRouter.route('/active-service').get(isAuthorized(UserAction.read, Subject.service), serviceController.getActiveServices.bind(serviceController));
