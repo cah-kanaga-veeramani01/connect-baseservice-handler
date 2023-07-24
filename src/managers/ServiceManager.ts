@@ -476,7 +476,6 @@ export default class ServiceManager {
 			return Object.values(mappedObject);
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
-			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceDetailFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
