@@ -562,7 +562,7 @@ describe('active service list', () => {
 		});
 		const req = mocks.createRequest({
 				method: 'GET',
-				url: '/service/internal/active-service',
+				url: '/service/internal/activeServices',
 				query: {}
 			}),
 			res = mocks.createResponse(),

@@ -437,7 +437,7 @@ s."validFrom",
 s."validTill", 
 s."isPublished", 
 s."legacyTIPDetailID", 
-ad.name, 
+ad."name", 
 ad."categoryName", 
 sa."globalServiceVersion" AS sa_globalServiceVersion,
 CASE 
