@@ -315,7 +315,7 @@ describe('get list of services', () => {
 				}
 			];
 		};
-		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, '',0)).toMatchObject({
+		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, '', 0)).toMatchObject({
 			totalServices: 1,
 			nonFilteredServicesCount: 1,
 			services: [
@@ -702,6 +702,67 @@ describe('Get service details', () => {
 			await serviceManager.getDetails(1);
 		} catch (error: any) {
 			expect(error.name).toBe('ServiceDoesntExist');
+		}
+	});
+});
+
+describe('Active service block', () => {
+	test('should able to get list of service', async () => {
+		db.query = () => {
+			return [
+				{
+					serviceID: 10,
+					globalServiceVersion: 1,
+					validFrom: '2021-12-16T12:25:43.407Z',
+					validTill: null,
+					isPublished: 1,
+					legacyTIPDetailID: 62,
+					name: 'TECHELIGIBLE',
+					categoryName: 'Role',
+					sa_globalserviceversion: 1,
+					status: 'ACTIVE',
+					serviceType: 'TIP'
+				},
+				{
+					serviceID: 10,
+					globalServiceVersion: 1,
+					validFrom: '2021-12-16T12:25:43.407Z',
+					validTill: null,
+					isPublished: 1,
+					legacyTIPDetailID: 62,
+					name: 'AMP',
+					categoryName: 'Class',
+					sa_globalserviceversion: 1,
+					status: 'ACTIVE',
+					serviceType: 'TIP'
+				},
+				{
+					serviceID: 19,
+					globalServiceVersion: 1,
+					validFrom: '2022-12-05T10:23:39.757Z',
+					validTill: null,
+					isPublished: 1,
+					legacyTIPDetailID: 80,
+					name: null,
+					categoryName: null,
+					sa_globalserviceversion: 1,
+					status: 'ACTIVE',
+					serviceType: 'TIP'
+				}
+			];
+		};
+
+		let res = await serviceManager.getActiveServices();
+		expect(res.length).toBe(2);
+	});
+	test('should able to throw error', async () => {
+		db.query = () => {
+			throw 'err';
+		};
+		try {
+			let res = await serviceManager.getActiveServices();
+		} catch (error) {
+			expect(error.name).toBe('ServiceDetailFetchError');
 		}
 	});
 });
