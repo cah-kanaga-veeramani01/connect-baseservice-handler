@@ -163,4 +163,13 @@ export default class ServiceController {
 			next(error);
 		}
 	}
+	public async getActiveServices(req: Request, res: Response, next: NextFunction) {
+		try {
+			logger.nonPhi.info('Geting service list');
+			const serviceDetails = await this.serviceManager.getActiveServices();
+			res.send(serviceDetails);
+		} catch (error: any) {
+			next(error);
+		}
+	}
 }

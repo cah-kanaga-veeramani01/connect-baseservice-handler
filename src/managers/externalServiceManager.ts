@@ -77,7 +77,7 @@ export default class ExternalServiceManager {
 				return await this.getActiveServiceAttributesDetailsList(offset, sortOrder, limit);
 			}
 
-			if (serviceID && globalServiceVersion && legacyTIPDetailID === null) {
+			if (serviceID && globalServiceVersion) {
 				const serviceDetails: any = await this.serviceRepository.findOne({ where: { serviceID, globalServiceVersion } });
 				if (!serviceDetails) {
 					throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.badRequest });
@@ -98,7 +98,7 @@ export default class ExternalServiceManager {
 				} else {
 					attributes = {};
 				}
-			} else if (legacyTIPDetailID === null && globalServiceVersion === null) {
+			} else if ((legacyTIPDetailID === null && globalServiceVersion === null) || (serviceID && legacyTIPDetailID)) {
 				await this.serviceDoesnotExists(serviceID);
 				activeOrInActiveService = await db.query(QServiceDetailsActiveOrInActive, {
 					replacements: { serviceID: serviceID },
