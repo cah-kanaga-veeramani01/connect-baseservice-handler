@@ -10,7 +10,8 @@ import {
 	QMissingModules,
 	QServiceActiveOrInActive,
 	QServiceActiveVersion,
-	QExpiredServiceList
+	QExpiredServiceList,
+	QgetActiveServices
 } from '../../database/queries/service';
 import { QueryTypes } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
@@ -440,5 +441,42 @@ export default class ServiceManager {
 			});
 		}
 		return activeService;
+	}
+	async getActiveServices() {
+		try {
+			const data = await db.query(QgetActiveServices, {
+				type: QueryTypes.SELECT,
+				raw: true
+			});
+			const mappedObject = data.reduce((result, item) => {
+				const { serviceID, categoryName, name } = item;
+
+				if (!result[serviceID]) {
+					result[serviceID] = {
+						serviceID,
+						legacyTIPDetailID: item.legacyTIPDetailID,
+						globalServiceVersion: item.globalServiceVersion,
+						validFrom: item.validFrom,
+						validTill: item.validTill,
+						status: item.status,
+						serviceType: item.serviceType,
+						attributes: {}
+					};
+				}
+
+				if (categoryName !== null && name !== null) {
+					if (!result[serviceID].attributes[categoryName]) {
+						result[serviceID].attributes[categoryName] = [];
+					}
+
+					result[serviceID].attributes[categoryName].push(name);
+				}
+				return result;
+			}, {});
+			return Object.values(mappedObject);
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			throw new HandleError({ name: 'ServiceDetailFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
 	}
 }

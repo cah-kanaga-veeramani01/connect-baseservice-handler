@@ -430,3 +430,29 @@ END AS "status"
 export const QGetAttributesMetaDataForVersion = `SELECT metadata ->> 'attributes' AS attributes, "serviceID", "globalServiceVersion" FROM service."ServiceAttributes" where "serviceID" 
 in (SELECT "serviceID" FROM service."Service" where "serviceID" = :serviceID)  and "globalServiceVersion" 
 in (SELECT "globalServiceVersion" FROM service."Service" where "globalServiceVersion" = :globalServiceVersion) ;`;
+
+export const QgetActiveServices = `SELECT s."serviceID", 
+s."globalServiceVersion", 
+s."validFrom", 
+s."validTill", 
+s."isPublished", 
+s."legacyTIPDetailID", 
+ad."name", 
+ad."categoryName", 
+sa."globalServiceVersion" AS sa_globalServiceVersion,
+CASE 
+	WHEN ((s."validFrom" < now() AND s."validTill" >= now()) OR (s."validFrom" < now() AND s."validTill" IS NULL) AND s."isPublished" = 1) THEN 'ACTIVE' 
+	WHEN (s."validFrom" IS NOT NULL AND s."validFrom" > now() AND ((s."validTill" IS NOT NULL AND s."validFrom" < s."validTill") OR (s."validTill" IS NULL)) AND s."isPublished" = 1 ) THEN 'SCHEDULED' 
+	WHEN (s."isPublished" = 0 AND s."validTill" IS NULL AND s."validFrom" IS NULL) THEN 'DRAFT' 
+	WHEN (s."validFrom" IS NOT NULL AND s."validTill" IS NOT NULL AND s."validFrom" < s."validTill" AND s."validTill" < now()) THEN 'INACTIVE' 
+	END AS "status",
+    stypes."serviceType"
+FROM service."Service" s 
+LEFT JOIN (
+SELECT "serviceID", metadata ->> 'attributes' AS attributes, "globalServiceVersion"
+FROM service."ServiceAttributes"
+) sa ON sa."serviceID" = s."serviceID" AND sa."globalServiceVersion" = s."globalServiceVersion"
+LEFT JOIN service."AttributesDefinition" ad ON sa.attributes::jsonb @> to_jsonb(array[ad."attributesDefinitionID"]::integer[]) 
+LEFT JOIN service."ServiceType" as stypes on stypes."serviceTypeID"=s."serviceTypeID"
+WHERE s."isPublished" = 1 AND (s."validTill" IS NULL OR s."validTill" >= NOW()) AND s."validFrom" <= NOW()
+ORDER BY "serviceID";`;
