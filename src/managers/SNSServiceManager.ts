@@ -9,17 +9,22 @@ export default class SNSServiceManager {
 		const eventType = event === SERVICE_SCHEDULE_EVENT ? 'SERVICE-SCHEDULE-EVENT' : 'SERVICE-CHANGE-EVENT';
 		const data = JSON.stringify({
 				message: {
-					type: eventType,
-					result: {
-						globalServiceVersion,
-						legacyTipID,
-						serviceID,
-						isPublished,
-						startDate,
-						endDate
-					}
+					result: [
+						{
+							globalServiceVersion,
+							legacyTipID,
+							serviceID,
+							isPublished,
+							startDate,
+							endDate
+						}
+					]
 				},
-				topic: process.env.SNS_TOPIC
+				topic: process.env.SNS_TOPIC,
+				metadata: {
+					eventType,
+					ackSystem: 'N/A'
+				}
 			}),
 			config = {
 				method: 'post',
