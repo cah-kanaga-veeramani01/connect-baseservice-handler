@@ -23,7 +23,7 @@ export default class SNSServiceManager {
 				topic: process.env.SNS_TOPIC,
 				metadata: {
 					eventType,
-					ackSystem: 'N/A'
+					ackSystem: 'ALL'
 				}
 			}),
 			config = {
