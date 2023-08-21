@@ -1,21 +1,2 @@
-DROP TRIGGER IF EXISTS EXPIRE_TIP
-ON "attunityservice"."TIPDetailRule";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ALTER TABLE
+    "attunityservice"."TIPDetailRule" DISABLE TRIGGER EXPIRE_TIP;
