@@ -5,7 +5,8 @@
   "main": "server.ts",
   "scripts": {
     "build": "rimraf build && tsc",
-    "build:server": "tsc",
+    "build:server": "tsc && npm run copy-files",
+    "copy-files": "copyfiles --all resources/* ./build",
     "preserve": "npm run build",
     "serve": "cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon -q build/server.js\"",
     "cache": "jest --clear-cache",
@@ -17,11 +18,15 @@
     "doc": "typedoc",
     "migrate": "NODE_TLS_REJECT_UNAUTHORIZED='0' flyway -c migration/flyway/flyway.js migrate",
     "info": "flyway -c migration/flyway/flyway.js info",
-    "coverage": "node --max-old-space-size=1024 ./node_modules/.bin/jest --coverage --logHeapUsage --runInBand"
+    "coverage": "node --max-old-space-size=1024 ./node_modules/.bin/jest --coverage --logHeapUsage --runInBand",
+    "pact:verify:mock": "node -r dotenv/config build/pacts/verifier.pact.js",
+    "test:pact:dev": "node -r dotenv/config build/pacts/verifier.pact.js dotenv_config_path=./env/dev.env"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@pact-foundation/pact": "^9.17.0",
+    "pino-pretty": "^9.1.1",
     "@casl/ability": "^5.4.3",
     "@types/config": "^3.3.0",
     "@types/csurf": "^1.11.2",
@@ -80,6 +85,7 @@
     "sequelize-mock": "^0.10.2",
     "ts-jest": "^29.0.3",
     "tsc-hooks": "1.1.0",
-    "typescript": "^4.5.5"
+    "typescript": "^4.5.5",
+    "copyfiles": "^2.4.1"
   }
 }
