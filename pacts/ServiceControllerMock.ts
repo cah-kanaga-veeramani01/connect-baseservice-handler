@@ -12,7 +12,7 @@ export default class ServiceControllerMock {
 				offset = req.query.from ? Number(req.query.from) : 0,
 				limit = req.query.limit ? Number(req.query.limit) : 10;
 			logger.nonPhi.debug('Get Service attributes details api invoked with following parameter', { serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit });
-			if (serviceID !== 681869802) {
+			if (serviceID !== 1) {
 				logger.nonPhi.error('ServiceID not found');
 				return res.status(HTTP_STATUS_CODES.notFound).json({ name: 'ServiceDoesNotExist', code: 'SC0001', message: 'Service not found.' });
 			}
