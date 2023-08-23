@@ -59,11 +59,11 @@ jobs:
       project: git-deploy-service-config-handler-stage
     on_failure:
       params:
-        text: PACT - Policy config handler => Fetching artifact failed in stage!
+        text: PACT - Service Config Handler => Fetching artifact failed in stage!
       put: slack-alert
     on_success:
       params:
-        text: PACT - Policy config handler => Fetched artifact in stage Successfully!
+        text: PACT - Service Config Handler => Fetched artifact in stage Successfully!
       put: slack-alert
     params:
       NODE_ENV: stage
@@ -103,11 +103,11 @@ jobs:
         path: /bin/sh
     on_failure:
       params:
-        text: PACT - Policy config handler => Installing dependencies failed in stage!
+        text: PACT - Service Config Handler => Installing dependencies failed in stage!
       put: slack-alert
     on_success:
       params:
-        text: PACT - Policy config handler => Installed dependencies in stage Successfully!
+        text: PACT - Service Config Handler => Installed dependencies in stage Successfully!
       put: slack-alert
     task: install-dependencies
   - config:
@@ -136,11 +136,11 @@ jobs:
         path: /bin/sh
     on_failure:
       params:
-        text: PACT - Policy config handler => Pact verification failed in stage!
+        text: PACT - Service Config Handler => Pact verification failed in stage!
       put: slack-alert
     on_success:
       params:
-        text: PACT - Policy config handler => Pact verification stage Successfully!
+        text: PACT - Service Config Handler => Pact verification stage Successfully!
       put: slack-alert
     params:
       PACT_BROKER_URL: ((pact.broker_url))
@@ -204,11 +204,11 @@ jobs:
       project: git-deploy-service-config-handler-stage
     on_failure:
       params:
-        text: PACT - Policy config handler => Fetching artifact failed in dev!
+        text: PACT - Service Config Handler => Fetching artifact failed in dev!
       put: slack-alert
     on_success:
       params:
-        text: PACT - Policy config handler => Fetched artifact in dev successfully!
+        text: PACT - Service Config Handler => Fetched artifact in dev successfully!
       put: slack-alert
     params:
       NODE_ENV: stage
@@ -248,11 +248,11 @@ jobs:
         path: /bin/sh
     on_failure:
       params:
-        text: PACT - Policy config handler => Installing dependencies failed in dev!
+        text: PACT - Service Config Handler => Installing dependencies failed in dev!
       put: slack-alert
     on_success:
       params:
-        text: PACT - Policy config handler => Installed dependencies passed in dev!
+        text: PACT - Service Config Handler => Installed dependencies passed in dev!
       put: slack-alert
     task: install-dependencies
   - config:
@@ -281,11 +281,11 @@ jobs:
         path: /bin/sh
     on_failure:
       params:
-        text: PACT - Policy config handler => Pact verification failed in dev!
+        text: PACT - Service Config Handler => Pact verification failed in dev!
       put: slack-alert
     on_success:
       params:
-        text: PACT - Policy config handler => Pact verification passed in dev!
+        text: PACT - Service Config Handler => Pact verification passed in dev!
       put: slack-alert
     params:
       PACT_BROKER_URL: ((pact.broker_url))
@@ -312,9 +312,9 @@ resource_types:
     username: ((artifacts.username))
   type: registry-image
 resources:
-- name: git-deploy-service-handler-stage
+- name: git-deploy-service-config-handler-stage
   source:
-    branch: deploy/staging
+    branch: HL-1514
     password: ((github.personal_access_token))
     paths:
     - package.json
@@ -325,7 +325,7 @@ resources:
 - icon: slack
   name: slack-alert
   source:
-    url: ((base-service-config.slack-webhook-url))
+    url: ((base-service-config.slack-web-hook))
   type: slack-notification
 - icon: handcuffs
   name: stage-service-config-handler-pacts
