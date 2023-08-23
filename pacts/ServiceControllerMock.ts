@@ -14,7 +14,7 @@ export default class ServiceControllerMock {
 			logger.nonPhi.debug('Get Service attributes details api invoked with following parameter', { serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit });
 			if (serviceID !== 1) {
 				logger.nonPhi.error('ServiceID not found');
-				return res.status(HTTP_STATUS_CODES.notFound).json({ name: 'ServiceDoesNotExist', code: 'SC0001', message: 'Service not found.' });
+				return res.status(HTTP_STATUS_CODES.badRequest).json({ name: 'ServiceDoesNotExists', code: 'SC0001', message: 'Service does not exists.' });
 			}
 			res.json({
 				serviceAttributes: [
