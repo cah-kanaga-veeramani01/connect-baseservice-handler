@@ -1,0 +1,63 @@
+#@data/values
+---
+projects:
+  - name: baseservice-handler
+    enabled: true
+    workspace_dir: package
+    deploy_script: "download-artifact.sh"
+    environment_variables:
+      PACT_BROKER_URL: broker_url
+      PACT_PASSWORD: broker_password
+      PACT_PROVIDER: pact_provider
+      PACT_USERNAME: broker_username
+      PACT_CONSUMER_VERSION_TAGS: pact_consumer_version_tags
+      PACT_PROVIDER_TAG: pact_provider_tag
+      
+      
+environments:
+  - name: stage
+    enabled: false
+
+  - name: stage-phi
+    enabled: true
+
+  - name: prod
+    enabled: true
+
+git_params:
+  uri: https://github.com/cahcommercial/connect-baseservice-handler.git
+  username: ((github.username))
+  password: ((github.personal_access_token))
+
+slack:
+  enabled: true
+  channel: "#hidden-leaf-deployments"
+
+artifacts_credentials:
+  username: ((artifacts.username))
+  password: ((artifacts.password))
+
+task_config:
+  platform: linux
+  image_resource:
+    type: docker-image
+    source:
+      repository: artifacts.cahcommtech.com/node
+      tag: 14.17.5
+      username: ((artifacts.username))
+      password: ((artifacts.password))
+
+npm_rc_config:
+  NPM_PUBLISH_REGISTRY_URL: https://artifacts.cahcommtech.com/repository/commtech-npmjs-internal/
+  NPM_PUBLISH_EMAIL: ((base-service-config.email))
+  NPM_PUBLISH_USERNAME: ((artifacts.username))
+  NPM_PUBLISH_PASSWORD: ((artifacts.password))
+
+
+
+#! set to false to disable automatically triggering builds.  This is useful
+#! for testing pipelines
+enable_triggers: true
+
+#! add items to this if you need to pull public docker images into CAH artifacts repo
+docker_images: []

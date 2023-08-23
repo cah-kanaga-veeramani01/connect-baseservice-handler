@@ -1,0 +1,351 @@
+groups:
+- name: deploy-stage
+  jobs:
+  - service-config-handler-stage-verification
+- name: deploy-dev
+  jobs:
+  - service-config-handler-dev-verification 
+jobs:
+- name: service-config-handler-stage-verification
+  plan:
+  - get: git-deploy-service-config-handler-stage
+  - get: stage-service-config-handler-pacts
+    trigger: true
+  - config:
+      image_resource:
+        source:
+          password: ((artifacts.password))
+          repository: artifacts.cahcommtech.com/node
+          tag: 14.17.5
+          username: ((artifacts.username))
+        type: docker-image
+      inputs:
+      - name: project
+      outputs:
+      - name: workspace
+        path: package
+      platform: linux
+      run:
+        args:
+        - -c
+        - |+
+          set -ue
+
+          echo "Node Version: $(node --version)"
+          echo "NPM Version:  $(npm --version)"
+          echo "Project:      ${PROJECT_NAME}"
+
+          APP_VERSION=$(echo -n "console.log(require('./project/package').version)" | node | tr -d '\n')
+          APP_NAME=$(echo -n "console.log(require('./project/package').name)" | node | tr -d '\n')
+
+          echo "Deploying ${APP_NAME} version ${APP_VERSION} to ${NODE_ENV}"
+
+          {
+            echo "@service-config:registry=$NPM_PUBLISH_REGISTRY_URL"
+            echo "registry=https://registry.npmjs.org/"
+            echo "email=$NPM_PUBLISH_EMAIL"
+            echo "always-auth=true"
+            echo "_auth=$(echo -n "$NPM_PUBLISH_USERNAME:$NPM_PUBLISH_PASSWORD" | base64 -w 0)"
+          } >> .npmrc
+
+          # Download the artifact
+          npm pack "${APP_NAME}@${APP_VERSION}"
+
+          #Extract the contents
+          tar -xzf ./*.tgz -C .
+
+        path: /bin/sh
+    input_mapping:
+      project: git-deploy-service-config-handler-stage
+    on_failure:
+      params:
+        text: PACT - Service Config Handler => Fetching artifact failed in stage!
+      put: slack-alert
+    on_success:
+      params:
+        text: PACT - Service Config Handler => Fetched artifact in stage Successfully!
+      put: slack-alert
+    params:
+      NODE_ENV: stage
+      NPM_PUBLISH_EMAIL: ((base-service-config.email))
+      NPM_PUBLISH_PASSWORD: ((artifacts.password))
+      NPM_PUBLISH_REGISTRY_URL: https://artifacts.cahcommtech.com/repository/commtech-npmjs-internal/
+      NPM_PUBLISH_USERNAME: ((artifacts.username))
+      PROJECT_NAME: baseservice-handler
+    task: fetch-artifact
+  - config:
+      image_resource:
+        source:
+          password: ((artifacts.password))
+          repository: artifacts.cahcommtech.com/node
+          tag: 14.17.5
+          username: ((artifacts.username))
+        type: docker-image
+      inputs:
+      - name: workspace
+      outputs:
+      - name: workspace
+        path: workspace
+      params:
+        NODE_ENV: stage
+        NPM_PUBLISH_EMAIL: ((base-service-config.email))
+        NPM_PUBLISH_PASSWORD: ((artifacts.password))
+        NPM_PUBLISH_REGISTRY_URL: https://artifacts.cahcommtech.com/repository/commtech-npmjs-internal/
+        NPM_PUBLISH_USERNAME: ((artifacts.username))
+        PROJECT_NAME: baseservice-handler
+      platform: linux
+      run:
+        args:
+        - -c
+        - |
+          cd workspace
+          node --max-old-space-size=750 `which npm` install
+        path: /bin/sh
+    on_failure:
+      params:
+        text: PACT - Service Config Handler => Installing dependencies failed in stage!
+      put: slack-alert
+    on_success:
+      params:
+        text: PACT - Service Config Handler => Installed dependencies in stage Successfully!
+      put: slack-alert
+    task: install-dependencies
+  - config:
+      container_limits:
+        cpu: 0
+        memory: 0
+      image_resource:
+        source:
+          password: ((artifacts.password))
+          repository: artifacts.cahcommtech.com/node
+          tag: 14.17.5
+          username: ((artifacts.username))
+        type: docker-image
+      inputs:
+      - name: workspace
+      outputs:
+      - name: workspace
+        path: workspace
+      platform: linux
+      run:
+        args:
+        - -c
+        - |
+          cd workspace
+          npm run pact:verify:mock
+        path: /bin/sh
+    on_failure:
+      params:
+        text: PACT - Service Config Handler => Pact verification failed in stage!
+      put: slack-alert
+    on_success:
+      params:
+        text: PACT - Service Config Handler => Pact verification stage Successfully!
+      put: slack-alert
+    params:
+      PACT_BROKER_URL: ((pact.broker_url))
+      PACT_CONSUMER_VERSION_TAGS: ((pact.pact_consumer_version_tags))
+      PACT_PASSWORD: ((pact.broker_password))
+      PACT_PROVIDER: ((pact.pact_provider))
+      PACT_USERNAME: ((pact.broker_username))
+      PACT_PROVIDER_TAG: ((pact.pact_provider_version_tag_stage))
+    task: pact-verification
+  serial: true
+- name: service-config-handler-dev-verification
+  plan:
+  - get: git-deploy-service-config-handler-stage
+  - get: dev-service-config-handler-pacts
+    trigger: true
+  - config:
+      image_resource:
+        source:
+          password: ((artifacts.password))
+          repository: artifacts.cahcommtech.com/node
+          tag: 14.17.5
+          username: ((artifacts.username))
+        type: docker-image
+      inputs:
+      - name: project
+      outputs:
+      - name: workspace
+        path: package
+      platform: linux
+      run:
+        args:
+        - -c
+        - |+
+          set -ue
+
+          echo "Node Version: $(node --version)"
+          echo "NPM Version:  $(npm --version)"
+          echo "Project:      ${PROJECT_NAME}"
+
+          APP_VERSION=$(echo -n "console.log(require('./project/package').version)" | node | tr -d '\n')
+          APP_NAME=$(echo -n "console.log(require('./project/package').name)" | node | tr -d '\n')
+
+          echo "Deploying ${APP_NAME} version ${APP_VERSION} to ${NODE_ENV}"
+
+          {
+            echo "@service-config:registry=$NPM_PUBLISH_REGISTRY_URL"
+            echo "registry=https://registry.npmjs.org/"
+            echo "email=$NPM_PUBLISH_EMAIL"
+            echo "always-auth=true"
+            echo "_auth=$(echo -n "$NPM_PUBLISH_USERNAME:$NPM_PUBLISH_PASSWORD" | base64 -w 0)"
+          } >> .npmrc
+
+          # Download the artifact
+          npm pack "${APP_NAME}@${APP_VERSION}"
+
+          #Extract the contents
+          tar -xzf ./*.tgz -C .
+
+        path: /bin/sh
+    input_mapping:
+      project: git-deploy-service-config-handler-stage
+    on_failure:
+      params:
+        text: PACT - Service Config Handler => Fetching artifact failed in dev!
+      put: slack-alert
+    on_success:
+      params:
+        text: PACT - Service Config Handler => Fetched artifact in dev successfully!
+      put: slack-alert
+    params:
+      NODE_ENV: stage
+      NPM_PUBLISH_EMAIL: ((base-service-config.email))
+      NPM_PUBLISH_PASSWORD: ((artifacts.password))
+      NPM_PUBLISH_REGISTRY_URL: https://artifacts.cahcommtech.com/repository/commtech-npmjs-internal/
+      NPM_PUBLISH_USERNAME: ((artifacts.username))
+      PROJECT_NAME: baseservice-handler
+    task: fetch-artifact
+  - config:
+      image_resource:
+        source:
+          password: ((artifacts.password))
+          repository: artifacts.cahcommtech.com/node
+          tag: 14.17.5
+          username: ((artifacts.username))
+        type: docker-image
+      inputs:
+      - name: workspace
+      outputs:
+      - name: workspace
+        path: workspace
+      params:
+        NODE_ENV: stage
+        NPM_PUBLISH_EMAIL: ((base-service-config.email))
+        NPM_PUBLISH_PASSWORD: ((artifacts.password))
+        NPM_PUBLISH_REGISTRY_URL: https://artifacts.cahcommtech.com/repository/commtech-npmjs-internal/
+        NPM_PUBLISH_USERNAME: ((artifacts.username))
+        PROJECT_NAME: baseservice-handler
+      platform: linux
+      run:
+        args:
+        - -c
+        - |
+          cd workspace
+          node --max-old-space-size=750 `which npm` install
+        path: /bin/sh
+    on_failure:
+      params:
+        text: PACT - Service Config Handler => Installing dependencies failed in dev!
+      put: slack-alert
+    on_success:
+      params:
+        text: PACT - Service Config Handler => Installed dependencies passed in dev!
+      put: slack-alert
+    task: install-dependencies
+  - config:
+      container_limits:
+        cpu: 0
+        memory: 0
+      image_resource:
+        source:
+          password: ((artifacts.password))
+          repository: artifacts.cahcommtech.com/node
+          tag: 14.17.5
+          username: ((artifacts.username))
+        type: docker-image
+      inputs:
+      - name: workspace
+      outputs:
+      - name: workspace
+        path: workspace
+      platform: linux
+      run:
+        args:
+        - -c
+        - |
+          cd workspace
+          npm run pact:verify:mock
+        path: /bin/sh
+    on_failure:
+      params:
+        text: PACT - Service Config Handler => Pact verification failed in dev!
+      put: slack-alert
+    on_success:
+      params:
+        text: PACT - Service Config Handler => Pact verification passed in dev!
+      put: slack-alert
+    params:
+      PACT_BROKER_URL: ((pact.broker_url))
+      PACT_CONSUMER_VERSION_TAGS: ((pact.pact_consumer_version_tag_dev))
+      PACT_PASSWORD: ((pact.broker_password))
+      PACT_PROVIDER: ((pact.pact_provider))
+      PACT_USERNAME: ((pact.broker_username))
+      PACT_PROVIDER_TAG: ((pact.pact_provider_version_tag_dev))
+    task: pact-verification
+  serial: true
+resource_types:
+- name: pact-resource
+  source:
+    password: ((artifacts.password))
+    repository: artifacts.cahcommtech.com/concourse/pact-resource
+    tag: latest
+    username: ((artifacts.username))
+  type: registry-image
+- name: slack-notification
+  source:
+    password: ((artifacts.password))
+    repository: artifacts.cahcommtech.com/cfcommunity/slack-notification-resource
+    tag: latest
+    username: ((artifacts.username))
+  type: registry-image
+resources:
+- name: git-deploy-service-config-handler-stage
+  source:
+    branch: HL-1514
+    password: ((github.personal_access_token))
+    paths:
+    - package.json
+    - manifest-stage.yml
+    uri: https://github.com/cahcommercial/connect-baseservice-handler.git
+    username: ((github.username))
+  type: git
+- icon: slack
+  name: slack-alert
+  source:
+    url: ((base-service-config.slack-web-hook))
+  type: slack-notification
+- icon: handcuffs
+  name: stage-service-config-handler-pacts
+  source:
+    broker_url: ((pact.broker_url))
+    consumers:
+    - ((pact.pact_consumer_ss))
+    password: ((pact.broker_password))
+    provider: ((pact.pact_provider))
+    tag: ((pact.pact_consumer_version_tags))
+    username: ((pact.broker_username))
+  type: pact-resource
+- icon: handcuffs
+  name: dev-service-config-handler-pacts
+  source:
+    broker_url: ((pact.broker_url))
+    consumers:
+    - ((pact.pact_consumer_ss))
+    password: ((pact.broker_password))
+    provider: ((pact.pact_provider))
+    tag: ((pact.pact_consumer_version_tag_dev))
+    username: ((pact.broker_username))
+  type: pact-resource
