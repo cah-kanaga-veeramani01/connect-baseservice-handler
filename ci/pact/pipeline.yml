@@ -314,7 +314,7 @@ resource_types:
 resources:
 - name: git-deploy-service-config-handler-stage
   source:
-    branch: HL-1514
+    branch: deploy/staging
     password: ((github.personal_access_token))
     paths:
     - package.json
