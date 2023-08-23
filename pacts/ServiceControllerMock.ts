@@ -40,6 +40,7 @@ export default class ServiceControllerMock {
 				totalServices: 15
 			});
 		} catch (error) {
+			logger.nonPhi.error('Error while fetching the attributes details ' + error);
 			next(error);
 		}
 	}
