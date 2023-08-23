@@ -43,8 +43,7 @@ resources:
     source:
       broker_url: #@ "((pact-policy-" + environment.name + ".broker_url))"
       consumers:
-      - #@ "((pact-policy-" + environment.name + ".pact_consumer))"
-      - #@ "((pact-policy-" + environment.name + ".pact_consumer_ss))"
+      - #@ "((pact-policy-" + environment.name + ".pact_consumer_services_ss))"
       password: #@ "((pact-policy-" + environment.name + ".broker_password))"
       provider: #@ "((pact-policy-" + environment.name + ".pact_provider))"
       tag: #@ "((pact-policy-" + environment.name + ".pact_consumer_version_tags))"
