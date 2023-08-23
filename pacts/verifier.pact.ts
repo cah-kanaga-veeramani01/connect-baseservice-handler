@@ -33,6 +33,7 @@ new Verifier(opts)
 		logger.nonPhi.info('pact verification done successfully');
 	})
 	.catch((error) => {
+		logger.nonPhi.error('Error while verifying the pacts.' + error);
 		throw error;
 	})
 	.finally(() => {
