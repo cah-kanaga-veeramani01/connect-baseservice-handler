@@ -15,9 +15,9 @@ export default class ServiceControllerMock {
 			res.json({
 				serviceAttributes: [
 					{
-						serviceID: 1,
-						legacyTIPDetailID: 31,
-						globalServiceVersion: 2,
+						serviceID: serviceID,
+						legacyTIPDetailID: legacyTIPDetailID,
+						globalServiceVersion: globalServiceVersion,
 						validFrom: '2023-05-10T04:00:00.000Z',
 						validTill: null,
 						status: 'ACTIVE',
@@ -26,15 +26,6 @@ export default class ServiceControllerMock {
 							Group: ['LEGACY'],
 							Role: ['TECHELIGIBLE']
 						}
-					},
-					{
-						serviceID: 2,
-						legacyTIPDetailID: 32,
-						globalServiceVersion: 1,
-						validFrom: '2014-12-08T16:23:47.850Z',
-						validTill: '2023-05-20T03:59:59.999Z',
-						status: 'ACTIVE',
-						attributes: {}
 					}
 				],
 				totalServices: 15
