@@ -43,10 +43,9 @@ resources:
     source:
       broker_url: #@ "((pact-policy-" + environment.name + ".broker_url))"
       consumers:
-      - #@ "((pact-policy-" + environment.name + ".pact_consumer))"
-      - #@ "((pact-policy-" + environment.name + ".pact_consumer_ss))"
+      - #@ "((pact-policy-" + environment.name + ".pact_consumer_services_ss))"
       password: #@ "((pact-policy-" + environment.name + ".broker_password))"
-      provider: #@ "((pact-policy-" + environment.name + ".pact_provider))"
+      provider: #@ "((pact-policy-" + environment.name + ".pact_provider_ss))"
       tag: #@ "((pact-policy-" + environment.name + ".pact_consumer_version_tags))"
       username: #@ "((pact-policy-" + environment.name + ".broker_username))"
   - name: #@ "git-deploy-" + project.name + "-" + environment.name

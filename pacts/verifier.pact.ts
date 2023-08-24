@@ -12,7 +12,7 @@ app.use(requestLogger);
 app.use(express.json());
 app.use(generateLogId);
 app.use(errorHandler);
-app.use('/service/external', ServiceRoute);
+app.use('/service-config-handler/service/external', ServiceRoute);
 const server = app.listen('8080'),
 	opts: VerifierOptions = {
 		providerBaseUrl: 'http://localhost:8080',
