@@ -1,1 +1,0 @@
-ALTER TABLE program."SNSMessageDetails" ADD COLUMN IF NOT EXISTS "ackSystem" VARCHAR(50);
