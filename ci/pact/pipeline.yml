@@ -146,7 +146,7 @@ jobs:
       PACT_BROKER_URL: ((pact.broker_url))
       PACT_CONSUMER_VERSION_TAGS: ((pact.pact_consumer_version_tags))
       PACT_PASSWORD: ((pact.broker_password))
-      PACT_PROVIDER: ((pact.pact_provider))
+      PACT_PROVIDER: ((pact.pact_provider_ss))
       PACT_USERNAME: ((pact.broker_username))
       PACT_PROVIDER_TAG: ((pact.pact_provider_version_tag_stage))
     task: pact-verification
@@ -291,7 +291,7 @@ jobs:
       PACT_BROKER_URL: ((pact.broker_url))
       PACT_CONSUMER_VERSION_TAGS: ((pact.pact_consumer_version_tag_dev))
       PACT_PASSWORD: ((pact.broker_password))
-      PACT_PROVIDER: ((pact.pact_provider))
+      PACT_PROVIDER: ((pact.pact_provider_ss))
       PACT_USERNAME: ((pact.broker_username))
       PACT_PROVIDER_TAG: ((pact.pact_provider_version_tag_dev))
     task: pact-verification
@@ -314,7 +314,7 @@ resource_types:
 resources:
 - name: git-deploy-service-config-handler-stage
   source:
-    branch: HL-1514
+    branch: deploy/staging
     password: ((github.personal_access_token))
     paths:
     - package.json
@@ -332,9 +332,9 @@ resources:
   source:
     broker_url: ((pact.broker_url))
     consumers:
-    - ((pact.pact_consumer_ss))
+    - ((pact.pact_consumer_services_ss))
     password: ((pact.broker_password))
-    provider: ((pact.pact_provider))
+    provider: ((pact.pact_provider_ss))
     tag: ((pact.pact_consumer_version_tags))
     username: ((pact.broker_username))
   type: pact-resource
@@ -343,9 +343,9 @@ resources:
   source:
     broker_url: ((pact.broker_url))
     consumers:
-    - ((pact.pact_consumer_ss))
+    - ((pact.pact_consumer_services_ss))
     password: ((pact.broker_password))
-    provider: ((pact.pact_provider))
+    provider: ((pact.pact_provider_ss))
     tag: ((pact.pact_consumer_version_tag_dev))
     username: ((pact.broker_username))
   type: pact-resource

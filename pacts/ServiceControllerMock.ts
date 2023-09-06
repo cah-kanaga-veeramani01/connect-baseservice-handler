@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { logger } from '../utils';
+import { HTTP_STATUS_CODES, logger } from '../utils';
 
 export default class ServiceControllerMock {
 	public async getServiceAttributesDetails(req: Request, res: Response, next: NextFunction) {
@@ -12,12 +12,16 @@ export default class ServiceControllerMock {
 				offset = req.query.from ? Number(req.query.from) : 0,
 				limit = req.query.limit ? Number(req.query.limit) : 10;
 			logger.nonPhi.debug('Get Service attributes details api invoked with following parameter', { serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit });
+			if (serviceID !== 1) {
+				logger.nonPhi.error('ServiceID not found');
+				return res.status(HTTP_STATUS_CODES.badRequest).json({ name: 'ServiceDoesNotExists', code: 'SC0001', message: 'Service does not exists.' });
+			}
 			res.json({
 				serviceAttributes: [
 					{
-						serviceID: 1,
-						legacyTIPDetailID: 31,
-						globalServiceVersion: 2,
+						serviceID: serviceID,
+						legacyTIPDetailID: legacyTIPDetailID,
+						globalServiceVersion: globalServiceVersion,
 						validFrom: '2023-05-10T04:00:00.000Z',
 						validTill: null,
 						status: 'ACTIVE',
@@ -26,15 +30,6 @@ export default class ServiceControllerMock {
 							Group: ['LEGACY'],
 							Role: ['TECHELIGIBLE']
 						}
-					},
-					{
-						serviceID: 2,
-						legacyTIPDetailID: 32,
-						globalServiceVersion: 1,
-						validFrom: '2014-12-08T16:23:47.850Z',
-						validTill: '2023-05-20T03:59:59.999Z',
-						status: 'ACTIVE',
-						attributes: {}
 					}
 				],
 				totalServices: 15
