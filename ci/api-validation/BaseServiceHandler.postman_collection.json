@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "6039cb48-0074-496e-9a49-12cf084769aa",
-		"name": "BaseServiceHandler",
+		"_postman_id": "f42c57d6-dd13-4f35-8b12-6fcd04b1bd74",
+		"name": "BaseServiceHandler Copy",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "18100381"
 	},
@@ -38,7 +38,7 @@
 						},
 						{
 							"key": "password",
-							"value": "LeguvJRw5vcd6LSA5Rmv!",
+							"value": "fJA2rmsQLpUwbnMPZeRX!",
 							"type": "text"
 						}
 					]
@@ -443,6 +443,33 @@
 						],
 						"type": "text/javascript"
 					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"//var moment = require('moment');",
+							"//pm.environment.set('currentdate', moment().format((\"YYYY-MM-DD\")));",
+							"",
+							"var moment = require('moment');",
+							"",
+							"const yearsInTheFuture = 1;",
+							"const monthsInTheFuture = 2;",
+							"const daysInTheFuture = 3;",
+							"",
+							"const startDate= moment()",
+							"    .add(yearsInTheFuture, 'years')",
+							"    .add(monthsInTheFuture, 'months')",
+							"    .add(daysInTheFuture, 'days');",
+							"    ",
+							"console.log(\"startDate: \" + startDate);",
+							"",
+							"pm.environment.set(\"startDate \", startDate);",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
 				}
 			],
 			"request": {
@@ -466,7 +493,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"serviceID\":213,\"globalServiceVersion\":3,\"startDate\":\"2023-08-30\"}",
+					"raw": "{\n    \"serviceID\": 213,\n    \"globalServiceVersion\": 3,\n    \"startDate\": \"2024-10-10\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -976,7 +1003,21 @@
 			"script": {
 				"type": "text/javascript",
 				"exec": [
-					""
+					"var moment = require('moment');",
+					"",
+					"const yearsInTheFuture = 1;",
+					"const monthsInTheFuture = 2;",
+					"const daysInTheFuture = 3;",
+					"",
+					"const start_date = moment()",
+					"    .add(yearsInTheFuture, 'years')",
+					"    .add(monthsInTheFuture, 'months')",
+					"    .add(daysInTheFuture, 'days');",
+					"",
+					"",
+					"console.log(\"start_date: \" + start_date);",
+					"",
+					"pm.environment.set(\"start_date \", start_date);"
 				]
 			}
 		},
@@ -1009,6 +1050,11 @@
 		},
 		{
 			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "startdate",
 			"value": "",
 			"type": "string"
 		}
