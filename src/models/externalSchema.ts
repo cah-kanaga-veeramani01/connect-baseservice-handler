@@ -108,3 +108,25 @@ export const getServiceDetailsSchema = {
 	},
 	required: ['query']
 };
+
+export const refreshSNSMessages = {
+	$schema: definedSchema,
+	$id: 'https://cardinal-domain.com/schemas/program-config/refreshSNSMessages.json',
+	title: 'Request Parameters to refresh all SNS messages for given ack system - for external teams',
+	description: 'This is a schema to refresh all SNS messages for given ack system - for external teams.',
+	type: 'object',
+	properties: {
+		query: {
+			type: 'object',
+			properties: {
+				applicationName: {
+					type: 'string'
+				},
+				requestingApplication: {
+					type: 'string'
+				}
+			},
+			required: ['applicationName', 'requestingApplication']
+		}
+	}
+};

@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { logger } from '../../utils';
 import { HTTP_STATUS_CODES } from '../../utils/constants';
 import config from 'config';
+import SNSServiceManager from '../managers/SNSServiceManager';
 
 /**
  * config based Constants
@@ -13,7 +14,7 @@ const defaultSortBy: string = config.get('service.serviceList.sortBy'),
 	defaultLimit: number = config.get('service.serviceList.limit');
 
 export default class ExternalServiceController {
-	constructor(public ExternalServiceManager) {}
+	constructor(public ExternalServiceManager, public snsServiceManager: SNSServiceManager) {}
 
 	public async addModuleConfig(req: Request, res: Response, next: NextFunction) {
 		try {
@@ -51,6 +52,30 @@ export default class ExternalServiceController {
 				legacyTIPDetailID = Number(req.query?.legacyTIPDetailID);
 			logger.nonPhi.debug('get seriveDeatils api invoked with following parameter', { serviceID, legacyTIPDetailID });
 			res.send(await this.ExternalServiceManager.getServiceDetails(serviceID, legacyTIPDetailID));
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			next(error);
+		}
+	}
+
+	/**
+	 * API to refresh all SNS messages for given requesting application.
+	 * @function refreshSNSMessages
+	 * @async
+	 * @param {Request} req - request body contains requestingApplication and applicationName as query params
+	 * @param {Response} res - response object consists of two parts.
+	 * 			 1. HTTP response containing success or failure message string to acknowledge the request received.
+	 * 			 2. All the active and scheduled programs or services will be published to SNS topic.
+	 * @param {NextFunction} next - use to call the next middleware, error handler in this case
+	 */
+	public async refreshSNSMessages(req: Request, res: Response, next: NextFunction) {
+		try {
+			const applicationName = req.query?.applicationName,
+				requestingApplication = req.query?.requestingApplication;
+			logger.nonPhi.debug('refreshSNSMessages API called with following parameters ', { applicationName, requestingApplication });
+
+			const snsMessages = this.ExternalServiceManager.refreshSNSMessages(applicationName, requestingApplication),
+				snsResponse = this.snsServiceManager.publishRefreshEventMessagesToSNS(snsMessages, requestingApplication, req.headers);
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			next(error);

@@ -4,7 +4,7 @@ import { validateRequest } from '../../middleware';
 import ExternalServiceManager from '../../managers/externalServiceManager';
 import db from '../../../database/DBManager';
 import { getKeycloak } from '../../../config/keycloak-config';
-import { updateModuleConfig, getServiceAttributesSchema, getServiceDetailsSchema } from '../../models/externalSchema';
+import { updateModuleConfig, getServiceAttributesSchema, getServiceDetailsSchema, refreshSNSMessages } from '../../models/externalSchema';
 import { Service } from '../../../database/models/Service';
 import { ServiceModuleConfig } from '../../../database/models/ServiceModuleConfig';
 
@@ -12,6 +12,8 @@ const externalController = new ExternalServiceController(new ExternalServiceMana
 	keycloak = getKeycloak(),
 	SERVICE_API_CREATE = process.env.SERVICE_CREATE_ROLE;
 export const ServicesExternalRouter = Router({ mergeParams: true });
+
+ServicesExternalRouter.route('/refreshSNSMessages').get(keycloak.protect(SERVICE_API_CREATE), validateRequest(refreshSNSMessages), externalController.getRefreshSNSMessages.bind(externalController));
 
 ServicesExternalRouter.route('/:serviceID/module/:moduleID').post(
 	keycloak.protect(SERVICE_API_CREATE),

@@ -18,6 +18,7 @@ import { QueryTypes } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
 import db from '../../database/DBManager';
 import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
+import { Op } from 'sequelize';
 
 export default class ExternalServiceManager {
 	constructor(public serviceRepository: Repository<Service>, public ServiceModuleConfigRepository: Repository<ServiceModuleConfig>) {}
@@ -322,5 +323,30 @@ export default class ExternalServiceManager {
 			type: QueryTypes.SELECT,
 			raw: true
 		});
+	}
+
+	async refreshSNSMessages(application: string, requestingSystem: string) {
+		// const snsRefreshMessageRepository = db.getRepository(SNSRefreshEventMessageDetails);
+		// await snsRefreshMessageRepository.create({ application, ackSystem: requestingSystem, status: 'IN PROCESS' });
+
+		const activeAndScheduledServices = await this.serviceRepository.findAll({
+				attributes: ['programID', 'globalProgramVersion', 'isPublished', 'validFrom', 'validTill'],
+				where: { isPublished: true, validFrom: { [Op.not]: null }, validTill: { [Op.or]: [{ [Op.eq]: null }, { [Op.gte]: Date.now() }] } }
+			}),
+			mappedServices = activeAndScheduledServices.map((service) => {
+				return {
+					moduleID: 'N/A',
+					serviceID: service.serviceID,
+					globalServiceVersion: service.globalServiceVersion,
+					isPublished: service.isPublished,
+					startDate: service.validFrom,
+					endDate: service.validTill
+				};
+			}),
+			snsMessages = {
+				type: 'Service-REFRESH-EVENT',
+				result: mappedServices
+			};
+		return snsMessages;
 	}
 }
