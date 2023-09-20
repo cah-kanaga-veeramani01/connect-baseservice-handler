@@ -325,8 +325,8 @@ export default class ExternalServiceManager {
 	}
 
 	async refreshSNSMessages(application: string, requestingSystem: string) {
-		//const snsRefreshMessageRepository = db.getRepository(SNSRefreshEventMessageDetails);
-		//await snsRefreshMessageRepository.create({ application, ackSystem: requestingSystem, status: 'IN PROCESS' });
+		const snsRefreshMessageRepository = db.getRepository(null);
+		await snsRefreshMessageRepository.create({ application, ackSystem: requestingSystem, status: 'IN PROCESS' });
 		try {
 			const activeAndScheduledServices = await this.serviceRepository.findAll({
 					attributes: ['programID', 'globalProgramVersion', 'isPublished', 'validFrom', 'validTill'],
