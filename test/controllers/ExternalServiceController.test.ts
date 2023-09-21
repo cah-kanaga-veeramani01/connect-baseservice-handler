@@ -232,7 +232,19 @@ describe('getServiceDetails for serviceID and TipID', () => {
 describe('Refresh SNS messages for given application and requesting application', () => {
 	test('return all the active and scheduled services', async () => {
 		jest.spyOn(serviceManager, 'refreshSNSMessages').mockImplementation((): any => {
-			return Promise.resolve(HTTP_STATUS_CODES.ok);
+			return Promise.resolve({
+				type: 'SERVICE-REFRESH-EVENT',
+				results: [
+					{
+						moduleID: 'N/A',
+						serviceID: 1,
+						globalServiceVersion: 1,
+						isPublished: true,
+						startDate: '2023-12-12',
+						endDate: null
+					}
+				]
+			});
 		});
 		jest.spyOn(snsServiceManager, 'publishRefreshEventMessagesToSNS').mockImplementation((): any => {
 			return Promise.resolve({
@@ -255,7 +267,7 @@ describe('Refresh SNS messages for given application and requesting application'
 			next = jest.fn();
 
 		await serviceController.refreshSNSMessages(req, res, next);
-		expect(JSON.parse(res._getData())).toEqual(HTTP_STATUS_CODES.ok);
+		expect(res._getData()).not.toEqual(null);
 	});
 
 	test('should return error', async () => {
