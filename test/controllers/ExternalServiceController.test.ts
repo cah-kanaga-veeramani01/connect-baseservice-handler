@@ -234,6 +234,15 @@ describe('Refresh SNS messages for given application and requesting application'
 		jest.spyOn(serviceManager, 'refreshSNSMessages').mockImplementation((): any => {
 			return Promise.resolve(HTTP_STATUS_CODES.ok);
 		});
+		jest.spyOn(snsServiceManager, 'publishRefreshEventMessagesToSNS').mockImplementation((): any => {
+			return Promise.resolve({
+				data: { ResponseMetadata: { RequestId: '84d7af89-1164-55d0-ad82-f3bb1699d425' }, MessageId: '7ea5e55e-aaf3-5552-a726-b96cad0e84a7', SequenceNumber: '10000000000000027000' },
+				status: 200,
+				statusText: 'Ok',
+				headers: {},
+				config: {}
+			});
+		});
 		const req = mocks.createRequest({
 				method: 'GET',
 				url: '/service/external/refreshSNSMessages',
