@@ -14,7 +14,7 @@ const externalController = new ExternalServiceController(new ExternalServiceMana
 	SERVICE_API_CREATE = process.env.SERVICE_CREATE_ROLE;
 export const ServicesExternalRouter = Router({ mergeParams: true });
 
-ServicesExternalRouter.route('/refreshSNSMessages').get(keycloak.protect(SERVICE_API_CREATE), validateRequest(refreshSNSMessages), externalController.refreshSNSMessages.bind(externalController));
+ServicesExternalRouter.route('/refreshSNSMessages').get(validateRequest(refreshSNSMessages), externalController.refreshSNSMessages.bind(externalController));
 
 ServicesExternalRouter.route('/:serviceID/module/:moduleID').post(
 	keycloak.protect(SERVICE_API_CREATE),

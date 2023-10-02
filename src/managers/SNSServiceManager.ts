@@ -44,33 +44,33 @@ export default class SNSServiceManager {
 		return response.data;
 	}
 
-	async publishRefreshEventMessagesToSNS(messages: any, requestingApplication: any, headers: any) {
-		const data = JSON.stringify({
-				messages,
-				topic: process.env.SNS_TOPIC,
-				metadata: {
-					eventType: messages.type,
-					requestingApplication
-				}
-			}),
-			config = {
-				method: 'post',
-				url: process.env.PUBLISH_URL,
-				headers: {
-					'Content-Type': 'application/json',
-					Cookie: headers.cookie,
-					'X-XSRF-TOKEN': headers['x-xsrf-token']
-				},
-				data
-			};
-		await axios(config)
-			.then((response) => {
-				return response.data;
-			})
-			.catch((error) => {
-				logger.nonPhi.error(error.message, { _err: error });
-				if (error instanceof HandleError) throw error;
-				else throw new HandleError({ name: 'ParentPublishToSNSTopicError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
-			});
-	}
+	// async publishRefreshEventMessagesToSNS(messages: any, requestingApplication: any, headers: any) {
+	// 	const data = JSON.stringify({
+	// 			messages,
+	// 			topic: process.env.SNS_TOPIC,
+	// 			metadata: {
+	// 				eventType: messages.type,
+	// 				requestingApplication
+	// 			}
+	// 		}),
+	// 		config = {
+	// 			method: 'post',
+	// 			url: process.env.PUBLISH_URL,
+	// 			headers: {
+	// 				'Content-Type': 'application/json',
+	// 				Cookie: headers.cookie,
+	// 				'X-XSRF-TOKEN': headers['x-xsrf-token']
+	// 			},
+	// 			data
+	// 		};
+	// 	await axios(config)
+	// 		.then((response) => {
+	// 			return response.data;
+	// 		})
+	// 		.catch((error) => {
+	// 			logger.nonPhi.error(error.message, { _err: error });
+	// 			if (error instanceof HandleError) throw error;
+	// 			else throw new HandleError({ name: 'ParentPublishToSNSTopicError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+	// 		});
+	// }
 }

@@ -119,14 +119,11 @@ export const refreshSNSMessages = {
 		query: {
 			type: 'object',
 			properties: {
-				applicationName: {
-					type: 'string'
-				},
 				requestingApplication: {
 					type: 'string'
 				}
 			},
-			required: ['applicationName', 'requestingApplication']
+			required: ['requestingApplication']
 		}
 	}
 };

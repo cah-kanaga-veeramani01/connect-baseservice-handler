@@ -70,12 +70,12 @@ export default class ExternalServiceController {
 	 */
 	public async refreshSNSMessages(req: Request, res: Response, next: NextFunction) {
 		try {
-			const applicationName = req.query?.applicationName,
-				requestingApplication = req.query?.requestingApplication;
-			logger.nonPhi.debug('refreshSNSMessages API called with following parameters ', { applicationName, requestingApplication });
-
-			const snsMessages = await this.ExternalServiceManager.refreshSNSMessages(applicationName, requestingApplication);
-			res.json(this.snsServiceManager.publishRefreshEventMessagesToSNS(snsMessages, requestingApplication, req.headers));
+			const requestingApplication = req.query?.requestingApplication;
+			logger.nonPhi.debug('refreshSNSMessages API called with following parameters ', { requestingApplication });
+			console.log('HELLO FROM BASE SERVICE HANDLER');
+			const snsMessages = await this.ExternalServiceManager.refreshSNSMessages();
+			res.json(snsMessages);
+			//this.snsServiceManager.publishRefreshEventMessagesToSNS(snsMessages, requestingApplication, req.headers));
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			next(error);

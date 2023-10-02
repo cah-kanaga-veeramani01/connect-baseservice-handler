@@ -324,19 +324,17 @@ export default class ExternalServiceManager {
 		});
 	}
 
-	async refreshSNSMessages(application: string, requestingSystem: string) {
-		const snsRefreshMessageRepository = db.getRepository(null);
-		await snsRefreshMessageRepository.create({ application, ackSystem: requestingSystem, status: 'IN PROCESS' });
+	async refreshSNSMessages() {
 		try {
 			const activeAndScheduledServices = await this.serviceRepository.findAll({
-					attributes: ['programID', 'globalProgramVersion', 'isPublished', 'validFrom', 'validTill'],
-					where: { isPublished: true, validFrom: { [Op.not]: null }, validTill: { [Op.or]: [{ [Op.eq]: null }, { [Op.gte]: Date.now() }] } }
+					attributes: ['serviceID', 'globalServiceVersion', 'legacyTIPDetailID', 'isPublished', 'validFrom', 'validTill'],
+					where: { isPublished: 1, validFrom: { [Op.not]: null }, validTill: { [Op.or]: [{ [Op.eq]: null }, { [Op.gte]: Date.now() }] } }
 				}),
 				mappedServices = activeAndScheduledServices.map((service) => {
 					return {
-						moduleID: 'N/A',
 						serviceID: service.serviceID,
 						globalServiceVersion: service.globalServiceVersion,
+						legacyTIPDetailID: service.legacyTIPDetailID,
 						isPublished: service.isPublished,
 						startDate: service.validFrom,
 						endDate: service.validTill
