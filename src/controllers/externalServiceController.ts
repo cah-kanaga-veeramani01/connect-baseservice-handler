@@ -72,7 +72,6 @@ export default class ExternalServiceController {
 		try {
 			const requestingApplication = req.query?.requestingApplication;
 			logger.nonPhi.debug('refreshSNSMessages API called with following parameters ', { requestingApplication });
-			console.log('HELLO FROM BASE SERVICE HANDLER');
 			const snsMessages = await this.ExternalServiceManager.refreshSNSMessages();
 			res.json(snsMessages);
 			//this.snsServiceManager.publishRefreshEventMessagesToSNS(snsMessages, requestingApplication, req.headers));
