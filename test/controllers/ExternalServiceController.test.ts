@@ -231,7 +231,7 @@ describe('getServiceDetails for serviceID and TipID', () => {
 
 describe('Refresh SNS messages for given application and requesting application', () => {
 	test('return all the active and scheduled services', async () => {
-		jest.spyOn(serviceManager, 'refreshSNSMessages').mockImplementation((): any => {
+		jest.spyOn(serviceManager, 'getAllActiveAndScheduledServices').mockImplementation((): any => {
 			return Promise.resolve({
 				type: 'SERVICE-REFRESH-EVENT',
 				results: [
@@ -249,7 +249,7 @@ describe('Refresh SNS messages for given application and requesting application'
 
 		const req = mocks.createRequest({
 				method: 'GET',
-				url: '/service/external/refreshSNSMessages',
+				url: '/service/external/getAllActiveAndScheduledServices',
 				query: {
 					requestingApplication: 'SD'
 				}
@@ -257,17 +257,17 @@ describe('Refresh SNS messages for given application and requesting application'
 			res = mocks.createResponse(),
 			next = jest.fn();
 
-		await serviceController.refreshSNSMessages(req, res, next);
+		await serviceController.getAllActiveAndScheduledServices(req, res, next);
 		expect(res._getData()).not.toEqual(null);
 	});
 
 	test('should return error', async () => {
-		jest.spyOn(serviceManager, 'refreshSNSMessages').mockImplementation(() => {
+		jest.spyOn(serviceManager, 'getAllActiveAndScheduledServices').mockImplementation(() => {
 			return Promise.reject(new Error());
 		});
 		const req = mocks.createRequest({
 				method: 'GET',
-				url: '/service/external/refreshSNSMessages',
+				url: '/service/external/getAllActiveAndScheduledServices',
 				query: {
 					requestingApplication: 'SD'
 				}
@@ -276,9 +276,9 @@ describe('Refresh SNS messages for given application and requesting application'
 			next = jest.fn();
 
 		try {
-			await serviceController.refreshSNSMessages(req, res, next);
+			await serviceController.getAllActiveAndScheduledServices(req, res, next);
 		} catch (error) {
-			expect(error.name).toBe('RefreshSNSMessagesError');
+			expect(error.name).toBe('FetchServicesError');
 		}
 	});
 });

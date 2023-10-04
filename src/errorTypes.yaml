@@ -100,7 +100,7 @@ ServiceDetailsFetchError:
   EN:
     message: "An error occurred while fetching service details for the service."
 
-RefreshSNSMessagesError:
+FetchServicesError:
   code: "SCE026"
   EN:
     message: "An error occurred while fetching active and scheduled services."

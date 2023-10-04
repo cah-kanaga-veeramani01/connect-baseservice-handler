@@ -202,12 +202,12 @@
                 }
             }
         },
-        "/service/external/refreshSNSMessages": {
+        "/service/external/getAllActiveAndScheduledServices": {
             "get": {
                 "tags": [
                     "Services"
                 ],
-                "summary": "Refresh SNS Messages - publish all active and scheduled services to SNS topic.",
+                "summary": "getAllActiveAndScheduledServices - fetch all active and scheduled services.",
                 "parameters": [
                     {
                         "name": "requestingApplication",
@@ -222,11 +222,11 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Refresh SNS messages request received.",
+                        "description": "getAllActiveAndScheduledServices request received.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/refreshSNSMessages"
+                                    "$ref": "#/components/schemas/getAllActiveAndScheduledServices"
                                 }
                             }
                         }
@@ -387,7 +387,7 @@
                     }
 				}
 			},
-            "refreshSNSMessages": {
+            "getAllActiveAndScheduledServices": {
                 "type": "object",
 				"properties": {
                     "type" : {

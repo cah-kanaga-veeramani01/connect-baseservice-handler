@@ -830,7 +830,7 @@ describe('Refresh SNS Messages', () => {
 	test('should return all the active and scheduled services', async () => {
 		const externalServiceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository, mockServiceModuleConfigRepo);
 
-		expect(await externalServiceManager.refreshSNSMessages()).toStrictEqual({
+		expect(await externalServiceManager.getAllActiveAndScheduledServices()).toStrictEqual({
 			type: 'SERVICE-REFRESH-EVENT',
 			result: [
 				{
@@ -856,9 +856,9 @@ describe('Refresh SNS Messages', () => {
 		const externalServiceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepositoryWithError, mockServiceModuleConfigRepo);
 
 		try {
-			await externalServiceManager.refreshSNSMessages();
+			await externalServiceManager.getAllActiveAndScheduledServices();
 		} catch (error: any) {
-			expect(error.name).toBe('RefreshSNSMessagesError');
+			expect(error.name).toBe('FetchServicesError');
 		}
 	});
 });

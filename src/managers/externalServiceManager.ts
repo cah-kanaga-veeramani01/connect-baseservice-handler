@@ -324,7 +324,7 @@ export default class ExternalServiceManager {
 		});
 	}
 
-	async refreshSNSMessages() {
+	async getAllActiveAndScheduledServices() {
 		try {
 			const activeAndScheduledServices = await this.serviceRepository.findAll({
 					attributes: ['serviceID', 'globalServiceVersion', 'legacyTIPDetailID', 'isPublished', 'validFrom', 'validTill'],
@@ -349,7 +349,7 @@ export default class ExternalServiceManager {
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
-			throw new HandleError({ name: 'RefreshSNSMessagesError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+			throw new HandleError({ name: 'FetchServicesError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
 }
