@@ -58,6 +58,11 @@ const mockServiceModuleConfigRepoForInsert: Repository<ServiceModuleConfig> = {
 			});
 		})
 	},
+	mockServiceRepositoryWithError: Repository<Service> = {
+		findAll: jest.fn().mockImplementation(() => {
+			throw new Error();
+		})
+	},
 	mockServiceRepository: Repository<Service> = {
 		findOne: jest
 			.fn()
@@ -96,6 +101,28 @@ const mockServiceModuleConfigRepoForInsert: Repository<ServiceModuleConfig> = {
 			}),
 		create: jest.fn().mockImplementation(() => {
 			return Promise.reject({ serviceID: 1, serviceName: 'Service A', validFrom: null, validTill: null });
+		}),
+		findAll: jest.fn().mockImplementation(() => {
+			return Promise.resolve([
+				{
+					serviceID: 1,
+					serviceName: 'Service A',
+					globalServiceVersion: 3,
+					validFrom: 2022 - 10 - 10,
+					validTill: null,
+					isPublished: 1,
+					legacyTIPDetailID: 1817
+				},
+				{
+					serviceID: 2,
+					serviceName: 'Service B',
+					globalServiceVersion: 3,
+					validFrom: 2022 - 11 - 11,
+					validTill: null,
+					isPublished: 1,
+					legacyTIPDetailID: 1816
+				}
+			]);
 		})
 	};
 
@@ -795,6 +822,43 @@ describe('getServiceDetails', () => {
 			await serviceManager.getServiceDetails(1, NaN);
 		} catch (error: any) {
 			expect(error.name).toBe('ServiceDetailsFetchError');
+		}
+	});
+});
+
+describe('Refresh SNS Messages', () => {
+	test('should return all the active and scheduled services', async () => {
+		const externalServiceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepository, mockServiceModuleConfigRepo);
+
+		expect(await externalServiceManager.getAllActiveAndScheduledServices()).toStrictEqual({
+			type: 'SERVICE-REFRESH-EVENT',
+			result: [
+				{
+					serviceID: 1,
+					globalServiceVersion: 3,
+					startDate: 2022 - 10 - 10,
+					endDate: null,
+					isPublished: 1,
+					legacyTIPDetailID: 1817
+				},
+				{
+					serviceID: 2,
+					globalServiceVersion: 3,
+					startDate: 2022 - 11 - 11,
+					endDate: null,
+					isPublished: 1,
+					legacyTIPDetailID: 1816
+				}
+			]
+		});
+	});
+	test('should return error ', async () => {
+		const externalServiceManager: ExternalServiceManager = new ExternalServiceManager(mockServiceRepositoryWithError, mockServiceModuleConfigRepo);
+
+		try {
+			await externalServiceManager.getAllActiveAndScheduledServices();
+		} catch (error: any) {
+			expect(error.name).toBe('FetchServicesError');
 		}
 	});
 });

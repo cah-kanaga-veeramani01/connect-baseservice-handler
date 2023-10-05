@@ -14,7 +14,7 @@ import {
 	QServiceDetailsForVersions,
 	QGetAttributesMetaDataForVersion
 } from '../../database/queries/service';
-import { QueryTypes } from 'sequelize';
+import { QueryTypes, Op } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
 import db from '../../database/DBManager';
 import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
@@ -322,5 +322,34 @@ export default class ExternalServiceManager {
 			type: QueryTypes.SELECT,
 			raw: true
 		});
+	}
+
+	async getAllActiveAndScheduledServices() {
+		try {
+			const activeAndScheduledServices = await this.serviceRepository.findAll({
+					attributes: ['serviceID', 'globalServiceVersion', 'legacyTIPDetailID', 'isPublished', 'validFrom', 'validTill'],
+					where: { isPublished: 1, validFrom: { [Op.not]: null }, validTill: { [Op.or]: [{ [Op.eq]: null }, { [Op.gte]: Date.now() }] } }
+				}),
+				mappedServices = activeAndScheduledServices.map((service) => {
+					return {
+						serviceID: service.serviceID,
+						globalServiceVersion: service.globalServiceVersion,
+						legacyTIPDetailID: service.legacyTIPDetailID,
+						isPublished: service.isPublished,
+						startDate: service.validFrom,
+						endDate: service.validTill
+					};
+				}),
+				snsMessages = {
+					type: 'SERVICE-REFRESH-EVENT',
+					result: mappedServices
+				};
+			logger.nonPhi.info('Fetched all active and scheduled services');
+			return snsMessages;
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'FetchServicesError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
 	}
 }
