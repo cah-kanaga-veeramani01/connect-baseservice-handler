@@ -2,6 +2,8 @@ import { NextFunction, Request, Response } from 'express';
 import { logger } from '../../utils';
 import { HTTP_STATUS_CODES } from '../../utils/constants';
 import config from 'config';
+import SNSServiceManager from '../managers/SNSServiceManager';
+import ExternalServiceManager from '../managers/externalServiceManager';
 
 /**
  * config based Constants
@@ -13,14 +15,14 @@ const defaultSortBy: string = config.get('service.serviceList.sortBy'),
 	defaultLimit: number = config.get('service.serviceList.limit');
 
 export default class ExternalServiceController {
-	constructor(public ExternalServiceManager) {}
+	constructor(public externalServiceManager: ExternalServiceManager, public snsServiceManager: SNSServiceManager) {}
 
 	public async addModuleConfig(req: Request, res: Response, next: NextFunction) {
 		try {
 			const { moduleVersion } = req.body,
 				{ serviceID, moduleID }: any = req.params;
 			logger.nonPhi.debug('Update modules with module version invoked with following parameter', { moduleVersion, moduleID, serviceID });
-			await this.ExternalServiceManager.addModuleConfig(serviceID, moduleVersion, moduleID);
+			await this.externalServiceManager.addModuleConfig(serviceID, moduleVersion, moduleID);
 			res.status(HTTP_STATUS_CODES.ok).json({ moduleID, moduleVersion, message: config.get('service.updateModules.success.message') });
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
@@ -38,7 +40,7 @@ export default class ExternalServiceController {
 				offset = req.query.from ? Number(req.query.from) : defaultFrom,
 				limit = req.query.limit ? Number(req.query.limit) : defaultLimit;
 			logger.nonPhi.debug('get service attributes deatils api invoked with following parameter', { serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit });
-			res.send(await this.ExternalServiceManager.getServiceAttributesDetails(serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit));
+			res.send(await this.externalServiceManager.getServiceAttributesDetails(serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit));
 		} catch (error) {
 			logger.nonPhi.error(error.message, { _err: error });
 			next(error);
@@ -50,7 +52,28 @@ export default class ExternalServiceController {
 			const serviceID = Number(req.query?.serviceID),
 				legacyTIPDetailID = Number(req.query?.legacyTIPDetailID);
 			logger.nonPhi.debug('get seriveDeatils api invoked with following parameter', { serviceID, legacyTIPDetailID });
-			res.send(await this.ExternalServiceManager.getServiceDetails(serviceID, legacyTIPDetailID));
+			res.send(await this.externalServiceManager.getServiceDetails(serviceID, legacyTIPDetailID));
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			next(error);
+		}
+	}
+
+	/**
+	 * API to fetch all active and scheduled services.
+	 * @function getAllActiveAndScheduledServices
+	 * @async
+	 * @param {Request} req - request body contains requestingApplication  as query params
+	 * @param {Response} res - response object
+	 * 			 1. All the active and scheduled services will be fetched from service schema.
+	 * @param {NextFunction} next - use to call the next middleware, error handler in this case
+	 */
+	public async getAllActiveAndScheduledServices(req: Request, res: Response, next: NextFunction) {
+		try {
+			const requestingApplication = req.query?.requestingApplication;
+			logger.nonPhi.info('getAllActiveAndScheduledServices API called with following parameters ', { requestingApplication });
+			const snsMessages = await this.externalServiceManager.getAllActiveAndScheduledServices();
+			res.json(snsMessages);
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			next(error);

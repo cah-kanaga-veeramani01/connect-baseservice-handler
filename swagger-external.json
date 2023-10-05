@@ -201,6 +201,38 @@
                     }
                 }
             }
+        },
+        "/service/external/getAllActiveAndScheduledServices": {
+            "get": {
+                "tags": [
+                    "Services"
+                ],
+                "summary": "getAllActiveAndScheduledServices - fetch all active and scheduled services.",
+                "parameters": [
+                    {
+                        "name": "requestingApplication",
+                        "in": "query",
+                        "description": "requestingApplication",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "getAllActiveAndScheduledServices request received.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/getAllActiveAndScheduledServices"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
        
     },
@@ -332,6 +364,54 @@
                                 "serviceDisplayName": {
                                     "type": "string",
                                     "description": "Name of the service which is present in legacyTip",
+                                    "example": "abc"
+                                },
+                                "globalServiceVersion": {
+                                    "type": "integer",
+                                    "description": "Unique version for base service",
+                                    "example": 1
+                                },
+                                "validFrom": {
+                                    "type": "string",
+                                    "description": "starting date of the servcie",
+                                    "example": "mm-dd-yyyy"
+                                },
+                                "validTill": {
+                                    "type": "integer",
+                                    "description": "End date of the base service",
+                                    "example": "mm-dd-yyyy"
+                                }
+                            }
+                        }
+
+                    }
+				}
+			},
+            "getAllActiveAndScheduledServices": {
+                "type": "object",
+				"properties": {
+                    "type" : {
+                        "type": "string",
+                        "description" : "Name of the event"
+                    },
+                    "result":{
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "serviceID": {
+                                    "type": "integer",
+                                    "description": "Unique ID for base service",
+                                    "example": "Tip"
+                                },
+                                "legacyTIPDetailID": {
+                                    "type": "integer",
+                                    "description": "Unique ID for base service from legacy TIP engine",
+                                    "example": 1
+                                },
+                                "isPublished": {
+                                    "type": "integer",
+                                    "description": "Indicates whether a service is active/ scheduled or draft",
                                     "example": "abc"
                                 },
                                 "globalServiceVersion": {

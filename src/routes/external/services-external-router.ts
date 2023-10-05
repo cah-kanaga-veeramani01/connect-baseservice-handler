@@ -4,14 +4,17 @@ import { validateRequest } from '../../middleware';
 import ExternalServiceManager from '../../managers/externalServiceManager';
 import db from '../../../database/DBManager';
 import { getKeycloak } from '../../../config/keycloak-config';
-import { updateModuleConfig, getServiceAttributesSchema, getServiceDetailsSchema } from '../../models/externalSchema';
+import { updateModuleConfig, getServiceAttributesSchema, getServiceDetailsSchema, getAllActiveAndScheduledServices } from '../../models/externalSchema';
 import { Service } from '../../../database/models/Service';
 import { ServiceModuleConfig } from '../../../database/models/ServiceModuleConfig';
+import SNSServiceManager from '../../managers/SNSServiceManager';
 
-const externalController = new ExternalServiceController(new ExternalServiceManager(db.getRepository(Service), db.getRepository(ServiceModuleConfig))),
+const externalController = new ExternalServiceController(new ExternalServiceManager(db.getRepository(Service), db.getRepository(ServiceModuleConfig)), new SNSServiceManager()),
 	keycloak = getKeycloak(),
 	SERVICE_API_CREATE = process.env.SERVICE_CREATE_ROLE;
 export const ServicesExternalRouter = Router({ mergeParams: true });
+
+ServicesExternalRouter.route('/getAllActiveAndScheduledServices').get(validateRequest(getAllActiveAndScheduledServices), externalController.getAllActiveAndScheduledServices.bind(externalController));
 
 ServicesExternalRouter.route('/:serviceID/module/:moduleID').post(
 	keycloak.protect(SERVICE_API_CREATE),
