@@ -13,7 +13,7 @@ const authUrl = `${process.env.AUTH_URL}${process.env.AUTH_ROUTE}`;
  */
 export const auth = async (req: Request, _res: Response, next: NextFunction) => {
 	try {
-		logger.nonPhi.debug('cookies', req.headers.cookie);
+		logger.debug('cookies', req.headers.cookie);
 		if (!req.headers.cookie) {
 			throw new HandleError({ name: 'AuthenticationError', errorStatus: HTTP_STATUS_CODES.unauthenticated, message: 'Error while authenticating,', stack: 'Error while authenticating' });
 		}
@@ -38,7 +38,7 @@ export const auth = async (req: Request, _res: Response, next: NextFunction) => 
 			});
 		}
 	} catch (error: any) {
-		logger.nonPhi.error(error.message, { _error: error });
+		logger.error(error.message, { _error: error });
 		if (error instanceof HandleError) {
 			next(error);
 		} else {

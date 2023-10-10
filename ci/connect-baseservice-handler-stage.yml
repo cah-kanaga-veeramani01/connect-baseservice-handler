@@ -248,6 +248,7 @@ jobs:
         realm: ((base-service-config.keycloak-realm))
         service_read_role: ((base-service-config.keycloak-service-read-role))
         sns_topic: ((base-service-config.sns-topic))
+        log_level: ((base-service-config.log-level))
     put: np1-pcf
   - config:
       image_resource:
