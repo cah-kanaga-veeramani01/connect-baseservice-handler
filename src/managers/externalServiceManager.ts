@@ -32,7 +32,7 @@ export default class ExternalServiceManager {
 	 */
 	async addModuleConfig(serviceID: number, moduleVersion: number, moduleID: number) {
 		try {
-			logger.nonPhi.debug('AddModuleConfig API invoked with following parameters', { serviceID, moduleVersion, moduleID });
+			logger.debug('AddModuleConfig API invoked with following parameters', { serviceID, moduleVersion, moduleID });
 			const serviceDetails: any = await this.serviceRepository.findOne({ where: { serviceID, globalServiceVersion: moduleVersion } });
 			if (!serviceDetails) {
 				throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
@@ -55,7 +55,7 @@ export default class ExternalServiceManager {
 				});
 			}
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceModuleUpdateError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
@@ -70,7 +70,7 @@ export default class ExternalServiceManager {
 	 */
 	async getServiceAttributesDetails(serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit) {
 		try {
-			logger.nonPhi.debug('getServiceAttributesDetails API invoked with following parameters', { serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit });
+			logger.debug('getServiceAttributesDetails API invoked with following parameters', { serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit });
 
 			let attributes, attributesMetaData, activeOrInActiveService;
 			if (serviceID === null && legacyTIPDetailID === null && globalServiceVersion === null) {
@@ -149,7 +149,7 @@ export default class ExternalServiceManager {
 				totalServices: serviceAttributes.length
 			};
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceAttributesFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
@@ -254,7 +254,7 @@ export default class ExternalServiceManager {
 	 */
 	async getServiceDetails(serviceID, legacyTIPDetailID) {
 		try {
-			logger.nonPhi.debug('getServiceDetails API invoked with following parameters', { serviceID, legacyTIPDetailID });
+			logger.debug('getServiceDetails API invoked with following parameters', { serviceID, legacyTIPDetailID });
 			let serviceDetails, activeOrInActiveServices;
 			if (!legacyTIPDetailID) {
 				await this.serviceDoesnotExists(serviceID);
@@ -280,7 +280,7 @@ export default class ExternalServiceManager {
 			}
 			return { serviceDetails: serviceDetails };
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceDetailsFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
@@ -344,10 +344,10 @@ export default class ExternalServiceManager {
 					type: 'SERVICE-REFRESH-EVENT',
 					result: mappedServices
 				};
-			logger.nonPhi.info('Fetched all active and scheduled services');
+			logger.info('Fetched all active and scheduled services');
 			return snsMessages;
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'FetchServicesError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}

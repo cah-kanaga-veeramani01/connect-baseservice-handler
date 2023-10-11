@@ -11,9 +11,9 @@ export default class ServiceControllerMock {
 				sortOrder = req.query.sortOrder ? String(req.query.sortOrder) : 'asc',
 				offset = req.query.from ? Number(req.query.from) : 0,
 				limit = req.query.limit ? Number(req.query.limit) : 10;
-			logger.nonPhi.debug('Get Service attributes details api invoked with following parameter', { serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit });
+			logger.debug('Get Service attributes details api invoked with following parameter', { serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit });
 			if (serviceID !== 1) {
-				logger.nonPhi.error('ServiceID not found');
+				logger.error('ServiceID not found');
 				return res.status(HTTP_STATUS_CODES.badRequest).json({ name: 'ServiceDoesNotExists', code: 'SC0001', message: 'Service does not exists.' });
 			}
 			res.json({
@@ -35,7 +35,7 @@ export default class ServiceControllerMock {
 				totalServices: 15
 			});
 		} catch (error) {
-			logger.nonPhi.error('Error while fetching the attributes details ' + error);
+			logger.error('Error while fetching the attributes details ' + error);
 			next(error);
 		}
 	}

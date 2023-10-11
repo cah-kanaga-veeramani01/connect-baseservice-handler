@@ -30,10 +30,10 @@ const server = app.listen('8080'),
 new Verifier(opts)
 	.verifyProvider()
 	.then(() => {
-		logger.nonPhi.info('pact verification done successfully');
+		logger.info('pact verification done successfully');
 	})
 	.catch((error) => {
-		logger.nonPhi.error('Error while verifying the pacts.' + error);
+		logger.error('Error while verifying the pacts.' + error);
 		throw error;
 	})
 	.finally(() => {
