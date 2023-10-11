@@ -14,7 +14,7 @@ export const generateLogId = (req: Request, res: Response, next: NextFunction) =
 	try {
 		let logId = '';
 		if (!req.headers[HEADERS.LOG_ID]) {
-			logger.nonPhi.debug('LOG_ID generated with the length', { _logIdLength: LOG_ID.LENGTH });
+			logger.debug('LOG_ID generated with the length', { _logIdLength: LOG_ID.LENGTH });
 			logId = nanoid(LOG_ID.LENGTH);
 			httpContext.set('logID', logId);
 			req.headers[HEADERS.LOG_ID] = logId;

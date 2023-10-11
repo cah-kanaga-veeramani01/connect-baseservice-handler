@@ -14,7 +14,7 @@ export default class ServiceController {
 	public async createService(req: Request, res: Response) {
 		try {
 			const servicePayload: IService = req.body;
-			logger.nonPhi.info('ADD Service has been invoked with following parameters ', { ...servicePayload });
+			logger.info('ADD Service has been invoked with following parameters ', { ...servicePayload });
 			res.json(await this.serviceManager.createService(servicePayload));
 		} catch (error) {
 			res.json(error);
@@ -29,7 +29,7 @@ export default class ServiceController {
 				limit = req.query.limit ? Number(req.query.limit) : serviceList.defaultLimit,
 				keyword = req.query.keyword ? String(req.query.keyword).replace(/_/g, '\\_') : EMPTY_STRING,
 				showInactive = req.query.showInactive ? Number(req.query.showInactive) : 0;
-			logger.nonPhi.debug('Service list invoked with following parameters', { sortBy, sortOrder, from, limit, keyword, showInactive });
+			logger.debug('Service list invoked with following parameters', { sortBy, sortOrder, from, limit, keyword, showInactive });
 			res.send(await this.serviceManager.getServiceList(sortBy, sortOrder, from, limit, keyword, showInactive));
 		} catch (error) {
 			throw new HandleError({ name: 'ServiceListFetchError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
@@ -39,7 +39,7 @@ export default class ServiceController {
 	public async createDraft(req: Request, res: Response) {
 		try {
 			const serviceID = req.body?.serviceID;
-			logger.nonPhi.debug('Create draft invoked with following parameter', { serviceID });
+			logger.debug('Create draft invoked with following parameter', { serviceID });
 			const service = JSON.parse(JSON.stringify(await this.serviceManager.getDetails(serviceID)));
 			const serviceDraftVersion = await this.serviceManager.createDraft(serviceID);
 			res.json(serviceDraftVersion);
@@ -79,11 +79,11 @@ export default class ServiceController {
 			const { moduleVersion } = req.body,
 				{ modules } = req.body,
 				{ serviceID }: any = req.params;
-			logger.nonPhi.debug('Update modules with module version invoked with following parameter', { moduleVersion, modules, serviceID });
+			logger.debug('Update modules with module version invoked with following parameter', { moduleVersion, modules, serviceID });
 			await this.serviceManager.addModuleConfig(serviceID, moduleVersion, modules);
 			res.status(HTTP_STATUS_CODES.ok).json({ modules, moduleVersion, message: config.get('service.updateModules.success.message') });
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			res.json(error.message);
 		}
 	}
@@ -91,11 +91,11 @@ export default class ServiceController {
 		try {
 			const serviceID = Number(req.query?.serviceID),
 				globalServiceVersion = Number(req.query?.globalServiceVersion);
-			logger.nonPhi.debug('Get serviceModule config invoked with following parameter', { serviceID, globalServiceVersion });
+			logger.debug('Get serviceModule config invoked with following parameter', { serviceID, globalServiceVersion });
 			const serviceModule = await this.serviceManager.getMissingModules(serviceID, globalServiceVersion);
 			res.send(serviceModule);
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			next(error);
 		}
 	}
@@ -111,7 +111,7 @@ export default class ServiceController {
 	public async schedule(req: Request, res: Response, next: NextFunction) {
 		try {
 			const { serviceID, globalServiceVersion, startDate, endDate } = req.body;
-			logger.nonPhi.debug('Schedule service invoked with following parameter', { serviceID, globalServiceVersion, startDate, endDate });
+			logger.debug('Schedule service invoked with following parameter', { serviceID, globalServiceVersion, startDate, endDate });
 			const scheduledService = JSON.parse(JSON.stringify(await this.serviceManager.schedule(serviceID, globalServiceVersion, startDate, endDate)));
 			res.send(scheduledService);
 			const validTill = endDate ? endDateWithClientTZ(endDate) : null;
@@ -140,7 +140,7 @@ export default class ServiceController {
 				);
 			}
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			next(error);
 		}
 	}
@@ -156,7 +156,7 @@ export default class ServiceController {
 	public async getDetails(req: Request, res: Response, next: NextFunction) {
 		try {
 			const serviceID = Number(req.query.serviceID);
-			logger.nonPhi.debug('Get service details invoked with following parameter', { serviceID });
+			logger.debug('Get service details invoked with following parameter', { serviceID });
 			const serviceDetails = await this.serviceManager.getDetails(serviceID);
 			res.send(serviceDetails);
 		} catch (error: any) {
@@ -165,7 +165,7 @@ export default class ServiceController {
 	}
 	public async getActiveServices(req: Request, res: Response, next: NextFunction) {
 		try {
-			logger.nonPhi.info('Geting service list');
+			logger.info('Geting service list');
 			const serviceDetails = await this.serviceManager.getActiveServices();
 			res.send(serviceDetails);
 		} catch (error: any) {

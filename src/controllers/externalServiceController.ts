@@ -21,11 +21,11 @@ export default class ExternalServiceController {
 		try {
 			const { moduleVersion } = req.body,
 				{ serviceID, moduleID }: any = req.params;
-			logger.nonPhi.debug('Update modules with module version invoked with following parameter', { moduleVersion, moduleID, serviceID });
+			logger.debug('Update modules with module version invoked with following parameter', { moduleVersion, moduleID, serviceID });
 			await this.externalServiceManager.addModuleConfig(serviceID, moduleVersion, moduleID);
 			res.status(HTTP_STATUS_CODES.ok).json({ moduleID, moduleVersion, message: config.get('service.updateModules.success.message') });
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			next(error);
 		}
 	}
@@ -39,10 +39,10 @@ export default class ExternalServiceController {
 				sortOrder = req.query.sortOrder ? String(req.query.sortOrder) : defaultSortOrder,
 				offset = req.query.from ? Number(req.query.from) : defaultFrom,
 				limit = req.query.limit ? Number(req.query.limit) : defaultLimit;
-			logger.nonPhi.debug('get service attributes deatils api invoked with following parameter', { serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit });
+			logger.debug('get service attributes deatils api invoked with following parameter', { serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit });
 			res.send(await this.externalServiceManager.getServiceAttributesDetails(serviceID, legacyTIPDetailID, globalServiceVersion, sortBy, sortOrder, offset, limit));
 		} catch (error) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			next(error);
 		}
 	}
@@ -51,10 +51,10 @@ export default class ExternalServiceController {
 		try {
 			const serviceID = Number(req.query?.serviceID),
 				legacyTIPDetailID = Number(req.query?.legacyTIPDetailID);
-			logger.nonPhi.debug('get seriveDeatils api invoked with following parameter', { serviceID, legacyTIPDetailID });
+			logger.debug('get seriveDeatils api invoked with following parameter', { serviceID, legacyTIPDetailID });
 			res.send(await this.externalServiceManager.getServiceDetails(serviceID, legacyTIPDetailID));
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			next(error);
 		}
 	}
@@ -71,11 +71,11 @@ export default class ExternalServiceController {
 	public async getAllActiveAndScheduledServices(req: Request, res: Response, next: NextFunction) {
 		try {
 			const requestingApplication = req.query?.requestingApplication;
-			logger.nonPhi.info('getAllActiveAndScheduledServices API called with following parameters ', { requestingApplication });
+			logger.info('getAllActiveAndScheduledServices API called with following parameters ', { requestingApplication });
 			const snsMessages = await this.externalServiceManager.getAllActiveAndScheduledServices();
 			res.json(snsMessages);
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			next(error);
 		}
 	}
