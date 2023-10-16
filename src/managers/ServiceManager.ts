@@ -56,7 +56,7 @@ export default class ServiceManager {
 				isPublished: 1,
 				createdBy: httpContext.get('userId')
 			});
-			logger.nonPhi.debug('Created a New Service Successfully.');
+			logger.debug('Created a New Service Successfully.');
 			const serviceResponse = service.toJSON();
 
 			return { ...serviceResponse };
@@ -128,10 +128,10 @@ export default class ServiceManager {
 	 */
 	public async createDraft(serviceID: number) {
 		try {
-			logger.nonPhi.debug('createDraft invoked with following parameters', { serviceID });
+			logger.debug('createDraft invoked with following parameters', { serviceID });
 
 			const serviceDetails: any = await this.getDetails(serviceID);
-			logger.nonPhi.debug('Service details', { serviceDetails });
+			logger.debug('Service details', { serviceDetails });
 			if (!serviceDetails) {
 				throw new HandleError({ name: 'ServicDetailsNotFound', message: 'Service details not found', stack: 'Service details not found', errorStatus: HTTP_STATUS_CODES.badRequest });
 			}
@@ -224,7 +224,7 @@ export default class ServiceManager {
 				serviceType: serviceDetails.serviceType
 			};
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceDraftFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
@@ -240,7 +240,7 @@ export default class ServiceManager {
 	 */
 	async addModuleConfig(serviceID: number, moduleVersion: number, modules: number) {
 		try {
-			logger.nonPhi.debug('AddModuleConfig API invoked with following parameters', { serviceID, moduleVersion, modules });
+			logger.debug('AddModuleConfig API invoked with following parameters', { serviceID, moduleVersion, modules });
 			const params: any = { serviceID: serviceID };
 			if ((await this.serviceRepository.count({ where: params })) === 0) {
 				throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
@@ -273,14 +273,14 @@ export default class ServiceManager {
 				});
 			}
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceModuleUpdateError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
 	async getMissingModules(serviceID: number, globalServiceVersion: number) {
 		try {
-			logger.nonPhi.debug('GetModuleEntry API invoked with following parameters', { serviceID, globalServiceVersion });
+			logger.debug('GetModuleEntry API invoked with following parameters', { serviceID, globalServiceVersion });
 			const serviceDetails: any = await this.serviceRepository.findOne({ where: { serviceID, globalServiceVersion } });
 			if (!serviceDetails) {
 				throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
@@ -303,7 +303,7 @@ export default class ServiceManager {
 			}
 			return { serviceID, globalServiceVersion, missingModules };
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ModuleConfigFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
@@ -379,7 +379,7 @@ export default class ServiceManager {
 			);
 			return updatedProgram[1][0];
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceScheduleError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
@@ -419,7 +419,7 @@ export default class ServiceManager {
 			delete result['serviceType.serviceType'];
 			return result;
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceDetailFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
@@ -475,7 +475,7 @@ export default class ServiceManager {
 			}, {});
 			return Object.values(mappedObject);
 		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			throw new HandleError({ name: 'ServiceDetailFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}

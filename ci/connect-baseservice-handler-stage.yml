@@ -248,12 +248,14 @@ jobs:
         realm: ((base-service-config.keycloak-realm))
         service_read_role: ((base-service-config.keycloak-service-read-role))
         sns_topic: ((base-service-config.sns-topic))
+        log_level: ((base-service-config.log-level))
     put: np1-pcf
   - config:
       image_resource:
         name: ""
         source:
-          repository: postman/newman_alpine33
+          repository: postman/newman
+          tag: latest
         type: docker-image
       inputs:
       - name: service-config-handler-output
@@ -267,7 +269,6 @@ jobs:
           cd service-config-handler-output
           ls -lrt
           npm config set unsafe-perm =true
-          npm install -g newman
           newman run ci/api-validation/ConnectBaseServiceHandler.postman_collection.json
         path: sh
     on_failure:
