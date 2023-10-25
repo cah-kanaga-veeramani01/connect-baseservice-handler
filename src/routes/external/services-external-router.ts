@@ -11,10 +11,11 @@ import SNSServiceManager from '../../managers/SNSServiceManager';
 
 const externalController = new ExternalServiceController(new ExternalServiceManager(db.getRepository(Service), db.getRepository(ServiceModuleConfig)), new SNSServiceManager()),
 	keycloak = getKeycloak(),
-	SERVICE_API_CREATE = process.env.SERVICE_CREATE_ROLE;
+	SERVICE_API_CREATE = process.env.SERVICE_CREATE_ROLE,
+	SERVICE_API_READ = process.env.SERVICE_READ_ROLE;
 export const ServicesExternalRouter = Router({ mergeParams: true });
 
-ServicesExternalRouter.route('/getAllActiveAndScheduledServices').get(keycloak.protect(SERVICE_API_CREATE), externalController.getAllActiveAndScheduledServices.bind(externalController));
+ServicesExternalRouter.route('/getAllActiveAndScheduledServices').get(keycloak.protect(SERVICE_API_READ), externalController.getAllActiveAndScheduledServices.bind(externalController));
 
 ServicesExternalRouter.route('/:serviceID/module/:moduleID').post(
 	keycloak.protect(SERVICE_API_CREATE),
