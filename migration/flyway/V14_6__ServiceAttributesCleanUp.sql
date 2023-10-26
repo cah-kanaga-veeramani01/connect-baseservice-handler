@@ -1,3 +1,31 @@
+/**
+* AttributesDefinition sequence correction
+**/
+CREATE SEQUENCE IF NOT EXISTS service."new_AttributesDefinition_attributesDefinitionID_seq"
+    INCREMENT 1
+    START 2
+    MINVALUE 1
+    MAXVALUE 9223372036854775807
+    CACHE 1;
+	
+ALTER TABLE service."AttributesDefinition" ALTER "attributesDefinitionID" SET DEFAULT nextval('service."new_AttributesDefinition_attributesDefinitionID_seq"'::regclass);
+
+DROP SEQUENCE service."AttributesDefinition_attributesDefinitionID_seq";
+
+ALTER SEQUENCE service."new_AttributesDefinition_attributesDefinitionID_seq" RENAME TO "AttributesDefinition_attributesDefinitionID_seq";
+
+ALTER SEQUENCE service."AttributesDefinition_attributesDefinitionID_seq"
+    OWNER TO pcdb_admin;
+
+GRANT ALL ON SEQUENCE service."AttributesDefinition_attributesDefinitionID_seq" TO pcdb_admin;
+
+GRANT ALL ON SEQUENCE service."AttributesDefinition_attributesDefinitionID_seq" TO pcdb_dml;
+
+
+
+/**
+* Service Attribute cleanup
+**/
 
 DELETE FROM service."AttributesDefinition"
 WHERE "attributesDefinitionID"!=1;
