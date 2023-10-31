@@ -1,0 +1,81 @@
+{
+    "name": "connect-baseservice-handler",
+    "concourseTeam": "program-management",
+    "pcfOrganization": "hidden-leaf",
+    "groupId": "com.outcomesone.programmanagement",
+    "repo": "cahcommercial/connect-baseservice-handler",
+    "deployable": true,
+    "promotable": true,
+    "deployToS3": false,
+    "deployToEnvs": [
+        "fluffle",
+        "stage"
+    ],
+    "cf": {
+        "stage": {
+            "instances": "1"
+        }
+    },
+    "flywayConfig": {
+    },
+    "flywaySecrets": {
+    },
+    "buildConfig": {
+    },
+    "hasFlyway": false,
+    "buildSecrets": {
+    },
+    "hasPactVerify": false,
+    "preventDeployIfPactsFail": false,
+    "isPactConsumer": false,
+    "isPactProvider": false,
+    "mainBranch": "deploy/staging",
+    "versionBranch": "version",
+    "makeDocumentation": false,
+    "healthCheck": false,
+    "prodNotify": false,
+    "openRouteToInternet": false,
+    "slack": "hidden-leaf-deployments",
+    "prodSlack": "#hidden-leaf-deployments",
+    "routeOverrides": [
+    ],
+    "apmLogLevel": "info",
+    "addPcfFlywayJobs": false,
+    "cypress": false,
+    "configType": "app",
+    "configVersion": "25",
+    "expandedMemory": "2147483648",
+    "k8sInfo": {
+        "nonProdCluster": "np-outcomesone-shared-eks-cluster",
+        "deployRepo": "cahcommercial/outcomesone-program-management-k8s-application-config",
+        "workloadType": "API",
+        "restricted": false
+        
+    },
+    "platform": "Technical Platform",
+    "product": "program-management",
+    "deployments": [
+        {
+            "name": "connect-baseservice-handler",
+            "config": {
+            },
+            "secrets": {
+                "DB_PORT": "baseservice-handler/{env}.db_port",
+                "DB_HOST": "baseservice-handler/{env}.db_host",
+                "DB_NAME": "baseservice-handler/{env}.db_name",
+                "DB_SCHEMA": "baseservice-handler/{env}.db_schema",
+                "DB_USERNAME_DDL": "baseservice-handler/{env}.db_username_ddl",
+                "DB_PASSWORD_DDL": "baseservice-handler/{env}.db_password_ddl",
+                "DB_USERNAME_DML": "baseservice-handler/{env}.db_username_dml",
+                "DB_PASSWORD_DML": "baseservice-handler/{env}.db_password_dml",
+                "DB_SSL": "baseservice-handler/{env}.db_ssl",
+                "NODE_ENV": "baseservice-handler/{env}.node_env",
+                "AUTH_URL": "baseservice-handler/{env}.auth_url",
+                "AUTH_ROUTE": "baseservice-handler/{env}.auth_route",
+                "PUBLISH_URL": "baseservice-handler/{env}.publish_url",
+                "SNS_TOPIC": "baseservice-handler/{env}.sns_topic",
+                "LOG_LEVEL": "baseservice-handler/{env}.log_level"
+            }
+        }
+    ]
+}
