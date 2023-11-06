@@ -1,0 +1,539 @@
+resource_types:
+- name: slack-notification
+  type: registry-image
+  source:
+    password: ((config/artifacts.password))
+    repository: artifacts.cahcommtech.com/cfcommunity/slack-notification-resource
+    tag: latest
+    username: ((config/artifacts.username))
+- name: meta
+  type: registry-image
+  source:
+    password: ((config/artifacts.password))
+    repository: artifacts.cahcommtech.com/swce/metadata-resource
+    username: ((config/artifacts.username))
+- name: maven-resource
+  type: registry-image
+  source:
+    password: ((config/artifacts.password))
+    repository: artifacts.cahcommtech.com/maven-resource
+    username: ((config/artifacts.username))
+- name: http
+  type: docker-image
+  source:
+    repository: jgriff/http-resource
+resources:
+- name: meta
+  type: meta
+  source:
+- name: source
+  type: git
+  icon: git
+  check_every: 5m
+  source:
+    uri: git@github.com:cahcommercial/connect-baseservice-handler
+    private_key: ((deploy-keys.connect-baseservice-handler))
+    branch: deploy/staging
+- name: k8s-repo
+  type: git
+  icon: git
+  check_every: 15m
+  source:
+    uri: git@github.com:cahcommercial/outcomesone-program-management-k8s-application-config.git
+    branch: main
+    private_key: ((deploy-keys.k8s-repo))
+- name: nexus
+  type: maven-resource
+  icon: source-repository
+  check_every: 5m
+  source:
+    artifact: com.outcomesone.programmanagement:connect-baseservice-handler:zip
+    password: ((config/artifacts.password))
+    url: https://artifacts.cahcommtech.com/repository/commtech-internal/
+    username: ((config/artifacts.username))
+- name: version-snapshot
+  type: git
+  icon: numeric
+  check_every: 5m
+  source:
+    uri: git@github.com:cahcommercial/connect-baseservice-handler.git
+    branch: version
+    private_key: ((deploy-keys.connect-baseservice-handler))
+- name: week-day-morning
+  type: time
+  icon: clock-outline
+  check_every: 60m
+  source:
+    start: 7:00 AM
+    stop: 8:30 AM
+    location: America/Chicago
+    days: [Monday, Tuesday, Wednesday, Thursday, Friday]
+    initial_version: true
+- name: tools
+  type: git
+  version:
+    ref: 2933d027fd14b869d1e91c82f0c389798f70bb35
+  icon: git
+  check_every: 5m
+  source:
+    uri: git@github.com:cahcommercial/outcomes-pipeline-tools
+    branch: master
+    private_key: ((config/deploy-keys.connect-sidecar-tools))
+- name: full-pt
+  type: git
+  icon: git
+  check_every: 15m
+  source:
+    uri: git@github.com:cahcommercial/outcomes-pipeline-tools.git
+    branch: master
+    private_key: ((config/deploy-keys.connect-sidecar-tools))
+- name: weekly
+  type: time
+  icon: clock-outline
+  check_every: 60m
+  source:
+    start: 12:51 AM
+    stop: 01:06 AM
+    location: America/Chicago
+    days: [Monday]
+    initial_version: true
+- name: nexus-snapshot
+  type: maven-resource
+  icon: source-repository
+  check_every: 5m
+  source:
+    artifact: com.outcomesone.programmanagement:connect-baseservice-handler:zip
+    debug: true
+    password: ((config/artifacts.password))
+    snapshot_url: https://artifacts.cahcommtech.com/repository/commtech-internal-snapshots/
+    username: ((config/artifacts.username))
+- name: slack-alert
+  type: slack-notification
+  icon: slack
+  source:
+    url: ((connect-deploy-slack-webhook-url))
+- name: version
+  type: git
+  icon: numeric
+  check_every: 5m
+  source:
+    uri: git@github.com:cahcommercial/connect-baseservice-handler.git
+    branch: version
+    private_key: ((deploy-keys.connect-baseservice-handler))
+- name: version-fluffle
+  type: git
+  icon: numeric
+  check_every: 30m
+  source:
+    paths: [fluffle]
+    uri: git@github.com:cahcommercial/connect-baseservice-handler.git
+    private_key: ((deploy-keys.connect-baseservice-handler))
+    branch: version
+- name: version-stage
+  type: git
+  icon: numeric
+  check_every: 30m
+  source:
+    paths: [stage]
+    uri: git@github.com:cahcommercial/connect-baseservice-handler.git
+    private_key: ((deploy-keys.connect-baseservice-handler))
+    branch: version
+groups:
+- name: development
+  jobs:
+  - check-pipeline-version
+  - deploy-to-fluffle
+  - deploy/staging-build
+- name: deploy
+  jobs:
+  - deploy-to-stage
+- name: promote
+  jobs:
+  - promote
+jobs:
+- name: check-pipeline-version
+  plan:
+    - get: weekly
+      trigger: true
+    - get: tools
+    - get: full-pt
+    - task: check-version
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            password: ((config/artifacts.password))
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+            tag: latest
+            username: ((config/artifacts.username))
+        params:
+          PROJECT_NAME: connect-baseservice-handler
+          CONCOURSE_TEAM: program-management
+          REGEN_COMMAND: "`gradlew run --args='connect-baseservice-handler' && fly -t program-management sp -c connect-baseservice-handler-pipeline.yml -p connect-baseservice-handler`"
+          CURRENT_COMMIT: 2933d027fd14b869d1e91c82f0c389798f70bb35
+          REPO: cahcommercial/connect-baseservice-handler
+          CURRENT_CONFIG_COMMIT: 477f24ed577d81a8ce8e065bc7729c7100b4236d
+          DAYS_NEEDED_TO_TRIGGER_WARNING: 60
+        run:
+          path: kotlinc
+          args:
+          - "-script"
+          - "tools/tasks/check-pipeline-version.main.kts"
+        inputs:
+        - name: tools
+        - name: full-pt
+      on_failure:
+        put: slack-alert
+        params:
+          channel: hidden-leaf-deployments
+          text: "Pipeline for connect-baseservice-handler is behind master! (More details in the failed check-pipeline-version job). Please pull latest pipeline tools and regenerate with `gradlew run --args='connect-baseservice-handler' && fly -t program-management sp -c connect-baseservice-handler-pipeline.yml -p connect-baseservice-handler`"
+- name: deploy-to-fluffle
+  plan:
+    - get: nexus-snapshot
+      trigger: true
+      passed: [deploy/staging-build]
+    - get: week-day-morning
+      trigger: true
+    - get: tools
+    - get: version-fluffle
+    - get: k8s-repo
+    - task: create-yamls
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            password: ((config/artifacts.password))
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+            tag: latest
+            username: ((config/artifacts.username))
+        params:
+          NEXUS_PASSWORD: ((config/artifacts.password))
+          NEXUS_USERNAME: ((config/artifacts.username))
+          CONFIG_FILE_PATH: source/concourse/config.json
+          DEPLOY_TO_ENV: fluffle
+          VERSION_FILE: fluffle
+          NAME: connect-baseservice-handler
+          ROUTES: connect-baseservice-handler-fluffle.apps.internal
+        run:
+          path: tools/tasks/k8s/create-yamls.sh
+        inputs:
+        - name: tools
+        - name: version
+        - name: source
+        - name: environment
+          optional: true
+        outputs:
+        - name: out
+      input_mapping:
+        version: version-fluffle
+      output_mapping:
+        out: generated-ymls
+    - task: commit-k8s-files
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            password: ((config/artifacts.password))
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+            tag: latest
+            username: ((config/artifacts.username))
+        params:
+          REPO: cahcommercial/outcomesone-program-management-k8s-application-config
+          YMLS_PATH: apps/connect-baseservice-handler/fluffle/connect-baseservice-handler
+          VERSION_FILE: fluffle
+          APP_NAME: connect-baseservice-handler
+        run:
+          path: tools/tasks/k8s/commit-ymls.sh
+        inputs:
+        - name: tools
+        - name: k8s-repo
+        - name: generated-ymls
+        - name: version
+        outputs:
+        - name: k8s-repo
+        - name: change-count
+      input_mapping:
+        version: version-fluffle
+    - put: k8s-repo
+      params:
+        repository: k8s-repo
+- name: deploy-to-stage
+  plan:
+    - get: tools
+    - get: version-stage
+      trigger: true
+    - get: k8s-repo
+    - put: slack-alert
+      params:
+        channel: hidden-leaf-deployments
+        text: "Deploying connect-baseservice-handler to stage"
+    - task: create-yamls
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            password: ((config/artifacts.password))
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+            tag: latest
+            username: ((config/artifacts.username))
+        params:
+          NEXUS_PASSWORD: ((config/artifacts.password))
+          NEXUS_USERNAME: ((config/artifacts.username))
+          CONFIG_FILE_PATH: source/concourse/config.json
+          DEPLOY_TO_ENV: stage
+          VERSION_FILE: stage
+          NAME: connect-baseservice-handler
+          ROUTES: connect-baseservice-handler-stage.apps.internal
+        run:
+          path: tools/tasks/k8s/create-yamls.sh
+        inputs:
+        - name: tools
+        - name: version
+        - name: source
+        - name: environment
+          optional: true
+        outputs:
+        - name: out
+      input_mapping:
+        version: version-stage
+      output_mapping:
+        out: generated-ymls
+    - task: commit-k8s-files
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            password: ((config/artifacts.password))
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+            tag: latest
+            username: ((config/artifacts.username))
+        params:
+          REPO: cahcommercial/outcomesone-program-management-k8s-application-config
+          YMLS_PATH: apps/connect-baseservice-handler/stage/connect-baseservice-handler
+          VERSION_FILE: stage
+          APP_NAME: connect-baseservice-handler
+        run:
+          path: tools/tasks/k8s/commit-ymls.sh
+        inputs:
+        - name: tools
+        - name: k8s-repo
+        - name: generated-ymls
+        - name: version
+        outputs:
+        - name: k8s-repo
+        - name: change-count
+      input_mapping:
+        version: version-stage
+    - put: k8s-repo
+      params:
+        repository: k8s-repo
+    - put: slack-alert
+      params:
+        channel: hidden-leaf-deployments
+        text: "connect-baseservice-handler stage deployment complete"
+- name: promote
+  plan:
+    - get: tools
+    - get: version-snapshot
+    - get: version-fluffle
+    - get: source
+    - get: meta
+    - task: promote_snapshot
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            password: ((config/artifacts.password))
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+            tag: latest
+            username: ((config/artifacts.username))
+        params:
+          NEXUS_PASSWORD: ((config/artifacts.password))
+          NEXUS_USERNAME: ((config/artifacts.username))
+          NAME: connect-baseservice-handler
+          ARTIFACT_EXTENSION: zip
+          GROUP_ID: com.outcomesone.programmanagement
+        run:
+          path: tools/tasks/promote.sh
+        inputs:
+        - name: tools
+        - name: version-snapshot
+        outputs:
+        - name: target
+        caches:
+        - path: source/node_modules
+        - path: tools/.mvn/.m2
+      output_mapping:
+        target: target
+    - put: nexus
+      params:
+        file: target/*.zip
+        version_file: target/version-file
+      on_failure:
+        put: slack-alert
+        params:
+          channel: hidden-leaf-deployments
+          text: ":this_is_fine: connect-baseservice-handler release push failed :this_is_fine:"
+    - task: tag_release
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            password: ((config/artifacts.password))
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+            tag: latest
+            username: ((config/artifacts.username))
+        params:
+          PROJECT_NAME: connect-baseservice-handler
+          BASE_BRANCH: deploy/staging
+          TAG_WITH_V: false
+          MONO_REPO: false
+        run:
+          path: kotlinc
+          args:
+          - "-script"
+          - "tools/tasks/tag-release.main.kts"
+        inputs:
+        - name: tools
+        - name: source
+        - name: version-snapshot
+        - name: target
+        outputs:
+        - name: tagRepo
+      output_mapping:
+        tagRepo: tagRepo
+    - put: source
+      params:
+        repository: tagRepo
+        only_tag: true
+    - task: increment_snapshot
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            password: ((config/artifacts.password))
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+            tag: latest
+            username: ((config/artifacts.username))
+        params:
+          VERSION_BRANCH: version
+        run:
+          path: tools/tasks/increment.sh
+        inputs:
+        - name: tools
+        - name: version-snapshot
+        - name: version-fluffle
+        outputs:
+        - name: updatedRepo
+      output_mapping:
+        updatedRepo: updatedRepo
+    - put: version-snapshot
+      params:
+        repository: updatedRepo
+- name: deploy/staging-build
+  plan:
+    - get: tools
+    - get: version
+    - get: meta
+    - get: source
+      trigger: true
+    - config:
+        container_limits:
+          cpu: 0
+          memory: 4294967296
+        image_resource:
+          name: ""
+          source:
+            password: ((artifacts.password))
+            repository: ((artifacts.url))/connect/node
+            tag: 16
+            username: ((artifacts.username))
+          type: registry-image
+        inputs:
+        - name: tools
+        - name: source
+        outputs:
+        - name: service-config-handler-output
+          path: service-config-handler-output
+        params:
+          DB_HOST: ((connect-baseservice-handler/stage.db-host))
+          DB_NAME: ((connect-baseservice-handler/stage.db-name))
+          DB_PASSWORD_DDL: ((connect-baseservice-handler/stage.db-password-ddl))
+          DB_SCHEMA: ((connect-baseservice-handler/stage.db-schema))
+          DB_USERNAME_DDL: ((connect-baseservice-handler/stage.db-username-ddl))
+          NODE_ENV: ((connect-baseservice-handler/stage.node-env))
+        platform: linux
+        run:
+          args:
+          - -c
+          - |
+            ls
+            cd source
+            echo New
+            npm install
+            echo Started flyway migration
+            npm run migrate
+          path: /bin/sh
+      on_failure:
+        params:
+          text: Service config handler => Failed To Execute Flyway Migration Scripts
+            In Staging!
+        put: slack-alert
+      on_success:
+        params:
+          text: Service config handler => Executed Flyway Migration Scripts In Staging
+            Successfully!
+        put: slack-alert
+      task: run-flyway-migration-scripts
+    - task: generate_snapshot_artifact
+      config:
+        platform: linux
+        image_resource:
+          type: registry-image
+          source:
+            password: ((config/artifacts.password))
+            repository: artifacts.cahcommtech.com/connect/node
+            tag: 16
+            username: ((config/artifacts.username))
+        run:
+          path: tools/tasks/node/publish.sh
+        inputs:
+        - name: tools
+        - name: source
+        container_limits:
+          memory: 2147483648
+        outputs:
+        - name: target
+        caches:
+        - path: source/node_modules
+      params:
+        GIT_USERNAME: ((config/github.username))
+        GIT_PASSWORD: ((config/github.password))
+        GIT_REGISTRY_TOKEN: ((config/github.personal_access_token))
+        NEXUS_PASSWORD: ((config/artifacts.password))
+        NEXUS_USERNAME: ((config/artifacts.username))
+      on_failure:
+        put: slack-alert
+        params:
+          channel: hidden-leaf-deployments
+          text: ":selfie: connect-baseservice-handler generate snapshot artifact failed :selfie:"
+    - put: nexus-snapshot
+      params:
+        file: target/*.zip
+        version_file: version/snapshot
+      on_failure:
+        put: slack-alert
+        params:
+          channel: hidden-leaf-deployments
+          text: ":thanos_snap: connect-baseservice-handler snapshot push failed :thanos_snap:"
+          attachments:
+          - color: "#bc091e"
+            text: ":alert_shiny:"
