@@ -3,7 +3,7 @@
 applications:
   - name: service-config-handler
     command: npm run start
-    buildpack: https://github.com/cloudfoundry/nodejs-buildpack#v1.7.69
+    buildpack: https://github.com/cloudfoundry/nodejs-buildpack#v1.8.13
     random-route: false
     routes:
       - route: service-config-handler.apps.fuseapps.io
