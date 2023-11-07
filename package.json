@@ -3,6 +3,9 @@
   "version": "1.4.0",
   "description": "Handler for Base Service Configuration",
   "main": "server.ts",
+  "publishConfig": {
+		"registry": "https://artifacts.cahcommtech.com/repository/commtech-npmjs-internal/"
+	},
   "scripts": {
     "build": "rm -rf dist && rm -rf build && tsc && mkdir dist && cp -rf build/ dist/",
     "build:server": "tsc && npm run copy-files",
