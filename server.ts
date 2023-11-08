@@ -59,7 +59,7 @@ app.use(httpContext.middleware);
 app.use(contextStore);
 app.use(generateLogId);
 app.use('/actuator/health',(req: Request, res: Response, next: NextFunction) => {
-	res.send({"status":"UP"});
+	res.json({"status":"UP"});
 });
 app.use(/^((?!external|swagger).)*$/i, auth); // authenticate every route except /swagger
 
