@@ -4,8 +4,8 @@
   "description": "Handler for Base Service Configuration",
   "main": "server.ts",
   "publishConfig": {
-		"registry": "https://artifacts.cahcommtech.com/repository/commtech-npmjs-internal/"
-	},
+    "registry": "https://artifacts.cahcommtech.com/repository/commtech-npmjs-internal/"
+  },
   "scripts": {
     "build": "rm -rf dist && rm -rf build && tsc && mkdir dist && cp -rf build/ dist/",
     "build:server": "tsc && npm run copy-files",
@@ -28,9 +28,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@pact-foundation/pact": "^9.17.0",
-    "pino-pretty": "^9.1.1",
     "@casl/ability": "^5.4.3",
+    "@pact-foundation/pact": "^9.17.0",
     "@types/config": "^3.3.0",
     "@types/csurf": "^1.11.2",
     "@types/express": "^4.17.13",
@@ -43,6 +42,7 @@
     "csurf": "^1.11.0",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
+    "express-actuator": "^1.8.4",
     "express-http-context": "^1.2.4",
     "express-session": "^1.17.3",
     "helmet": "^4.6.0",
@@ -54,6 +54,7 @@
     "node-flywaydb": "^3.0.7",
     "pg": "^8.7.1",
     "pg-hstore": "^2.3.4",
+    "pino-pretty": "^9.1.1",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "sequelize": "^6.16.1",
@@ -66,6 +67,7 @@
   "devDependencies": {
     "@types/cookie-parser": "^1.4.2",
     "@types/cors": "^2.8.12",
+    "@types/express-actuator": "^1.8.3",
     "@types/jest": "^29.2.5",
     "@types/js-yaml": "^4.0.3",
     "@types/node": "^18.11.18",
@@ -74,6 +76,7 @@
     "@typescript-eslint/eslint-plugin": "^5.12.0",
     "@typescript-eslint/parser": "^5.12.0",
     "concurrently": "^6.2.1",
+    "copyfiles": "^2.4.1",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-babel": "^5.3.1",
@@ -88,10 +91,9 @@
     "sequelize-mock": "^0.10.2",
     "ts-jest": "^29.0.3",
     "tsc-hooks": "1.1.0",
-    "typescript": "^4.5.5",
-    "copyfiles": "^2.4.1"
+    "typescript": "^4.5.5"
   },
   "engines": {
-		"node": "16.20.1"
-	}
+    "node": "16.20.1"
+  }
 }
