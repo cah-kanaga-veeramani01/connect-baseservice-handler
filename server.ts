@@ -94,4 +94,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 	next(new HandleError({ name: 'NotFound', message: 'You have landed on an incorrect route.', stack: 'Not Found', errorStatus: 404 }));
 });
 app.use(errorHandler);
-app.listen(PORT, () => process.stdout.write(`Base Service config server started at ${PORT}`));
+app.listen(PORT, () => {
+	process.stdout.write(`Base Service config server started at ${PORT}`);
+	console.log(process.env);
+});
