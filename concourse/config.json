@@ -74,7 +74,8 @@
                 "SNS_TOPIC": "{env:fluffle=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo,stage=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo}",
                 "PUBLISH_URL": "{env:fluffle=https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish,stage=https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish}",
                 "KEYCLOAK_BASE_URL":"{env:fluffle=https://cc-keycloak-stage.apps.np1.fuseapps.io,stage=https://cc-keycloak-stage.apps.np1.fuseapps.io}",
-                "SERVICE_READ_ROLE":"{env:fluffle=SERVICE_API_READ,stage=SERVICE_API_READ}"
+                "SERVICE_READ_ROLE":"{env:fluffle=SERVICE_API_READ,stage=SERVICE_API_READ}",
+                "PORT":"{env:fluffle=8080,stage=8080}"
             },
             "secrets": {
                 "DB_USERNAME_DDL": "connect-baseservice-handler/{env}.db-username-ddl",
