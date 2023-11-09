@@ -17,7 +17,7 @@ import * as swaggerExternalDocument from './swagger-external.json';
 
 const memoryStore = new session.MemoryStore(),
 	keycloak = initKeyclock(memoryStore),
-	PORT = Number(process.env.PORT) || 5000,
+	PORT = Number(process.env.PORT) || 8080,
 	app: Application = express();
 
 import { ExternalRouterManager } from './src/routes/external/external-router-manager';
