@@ -97,5 +97,5 @@ app.use(errorHandler);
 app.listen(PORT, () => {
 	process.stdout.write(`Base Service config server started at ${PORT}`);
 	
-	console.log(process.env);
+	//console.log(process.env);
 });

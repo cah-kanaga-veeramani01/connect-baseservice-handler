@@ -48,12 +48,12 @@ try {
 	});
 
 	sequelizeAdmin
-		.sync()
+		.authenticate()
 		.then(() => {
 			sequelizeAdmin.close();
 		})
 		.catch((error) => {
-			logger.error('Error from Sequelize admin', { stack: error });
+			logger.error('Error from Sequelize Admin', { stack: error });
 		});
 } catch (error) {
 	logger.error('Error from Sequelize admin', { stack: error });
