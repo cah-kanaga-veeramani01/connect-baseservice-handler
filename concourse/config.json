@@ -70,7 +70,7 @@
                 "AUTH_URL": "{env:fluffle=https://staging.outcomesmtm.com/rest/services,stage=https://staging.outcomesmtm.com/rest/services}",
                 "AUTH_ROUTE": "/user/internal",
                 "NODE_ENV": "{env:fluffle=fluffle,stage=staging}",
-                "LOG_LEVEL": "{env:fluffle=info,stage=info}",
+                "LOG_LEVEL": "{env:fluffle=info,stage=silly}",
                 "SNS_TOPIC": "{env:fluffle=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo,stage=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo}",
                 "PUBLISH_URL": "{env:fluffle=https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish,stage=https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish}",
                 "KEYCLOAK_BASE_URL":"{env:fluffle=https://cc-keycloak-stage.apps.np1.fuseapps.io,stage=https://cc-keycloak-stage.apps.np1.fuseapps.io}",
