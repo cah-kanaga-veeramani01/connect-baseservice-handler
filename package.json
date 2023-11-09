@@ -7,13 +7,13 @@
     "registry": "https://artifacts.cahcommtech.com/repository/commtech-npmjs-internal/"
   },
   "scripts": {
-    "build": "NODE_TLS_REJECT_UNAUTHORIZED='0' && rm -rf dist && rm -rf build && tsc && mkdir dist && cp -rf build/ dist/",
+    "build": "rm -rf dist && rm -rf build && tsc && mkdir dist && cp -rf build/ dist/",
     "build:server": "tsc && npm run copy-files",
     "copy-files": "copyfiles --all resources/* ./build",
     "preserve": "npm run build",
     "serve": "cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon -q build/server.js\"",
     "cache": "jest --clear-cache",
-    "start": "node -r dotenv/config build/server.js",
+    "start": "node build/server.js",
     "start:dev": "nodemon -e ts -w ./ -x ts-node -r dotenv/config server.ts dotenv_config_path=./env/dev.env",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
