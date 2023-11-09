@@ -18,12 +18,9 @@ try {
 		},
 		dialect: 'postgres',
 		dialectOptions: {
-			//ssl: String(process.env.DB_SSL).toLowerCase() === 'true',
-			//trustServerCertificate: true
-			ssl: {
-				require: true,
-				rejectUnauthorized: false // <<<<<<< YOU NEED THIS
-			  }
+			ssl: String(process.env.DB_SSL).toLowerCase() === 'true',
+			rejectUnauthorized: false // <<<<<<< YOU NEED THIS
+			
 		},
 		username: process.env.DB_USERNAME_DDL,
 		password: process.env.DB_PASSWORD_DDL,
@@ -43,12 +40,9 @@ try {
 		},
 		dialect: 'postgres',
 		dialectOptions: {
-			//ssl: String(process.env.DB_SSL).toLowerCase() === 'true',
-			//trustServerCertificate: true,
-			ssl: {
-				require: true,
-				rejectUnauthorized: false // <<<<<<< YOU NEED THIS
-			  }
+			ssl: String(process.env.DB_SSL).toLowerCase() === 'true',
+			rejectUnauthorized: false // <<<<<<< YOU NEED THIS
+			  
 		},
 		username: process.env.DB_USERNAME_DML,
 		password: process.env.DB_PASSWORD_DML,
