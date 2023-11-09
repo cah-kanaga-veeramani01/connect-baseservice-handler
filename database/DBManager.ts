@@ -6,10 +6,10 @@ const trackAll = require('sequelize-history').all;
 let sequelizeAdmin, sequelizeManager;
 
 
-const sequelize = new Sequelize(
+const sequelizeh = new Sequelize(
 	process.env.DB_NAME,
-	process.env.DB_USER,
-	process.env.DB_PASS,
+	process.env.DB_USERNAME_DML,
+	process.env.DB_PASSWORD_DML,
 	{
 	  host: process.env.DB_HOST,
 	  port: Number(process.env.DB_PORT),
@@ -24,7 +24,7 @@ const sequelize = new Sequelize(
 	},
   );
   
-  sequelize
+  sequelizeh
 	.authenticate()
 	.then(() => {
 	  console.log('Connection has been established successfully.');
