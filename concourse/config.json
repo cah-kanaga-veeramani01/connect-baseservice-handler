@@ -66,7 +66,7 @@
                 "DB_HOST": "{env:fluffle=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com,stage=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com}",
                 "DB_NAME": "postgres",
                 "DB_SCHEMA": "service",
-                "DB_SSL": "false",
+                "DB_SSL": "true",
                 "AUTH_URL": "{env:fluffle=https://staging.outcomesmtm.com/rest/services,stage=https://staging.outcomesmtm.com/rest/services}",
                 "AUTH_ROUTE": "/user/internal",
                 "NODE_ENV": "{env:fluffle=fluffle,stage=staging}",
@@ -83,7 +83,8 @@
                 "DB_PASSWORD_DML": "connect-baseservice-handler/{env}.db-password-dml",
                 "CLIENT_ID": "connect-baseservice-handler/{env}.keycloak-client-id",
                 "PUBLIC_KEY": "connect-baseservice-handler/{env}.keycloak-public-key",
-                "REALM": "connect-baseservice-handler/{env}.keycloak-realm"
+                "REALM": "connect-baseservice-handler/{env}.keycloak-realm",
+                "NODE_TLS_REJECT_UNAUTHORIZED":"0"
             }
         }
     ],
