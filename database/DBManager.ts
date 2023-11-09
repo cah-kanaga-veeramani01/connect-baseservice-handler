@@ -5,6 +5,34 @@ const trackAll = require('sequelize-history').all;
 
 let sequelizeAdmin, sequelizeManager;
 
+
+const sequelize = new Sequelize(
+	process.env.DB_NAME,
+	process.env.DB_USER,
+	process.env.DB_PASS,
+	{
+	  host: process.env.DB_HOST,
+	  port: Number(process.env.DB_PORT),
+	  dialect: 'postgres',
+	  dialectOptions: {
+		options: {
+		  trustServerCertificate: true,
+		  encrypt: true,
+		  validateBulkLoadParameters: true,
+		},
+	  },
+	},
+  );
+  
+  sequelize
+	.authenticate()
+	.then(() => {
+	  console.log('Connection has been established successfully.');
+	})
+	.catch((err) => {
+	  console.error('Unable to connect to the database:', err);
+	});
+
 try {
 	console.log("inside db",process.env);
 	sequelizeAdmin = new Sequelize({
@@ -59,6 +87,9 @@ try {
 	logger.error('Error from Sequelize admin', { stack: error });
 	throw HandleError.generateHandleError(error);
 }
+
+
+
 
 export default sequelizeManager;
 export { sequelizeAdmin };
