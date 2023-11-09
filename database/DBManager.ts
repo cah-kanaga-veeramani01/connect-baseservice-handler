@@ -1,6 +1,8 @@
 import { Sequelize } from 'sequelize-typescript';
 import { logger } from '../utils/logger';
 import { HandleError } from '../utils/HandleError';
+import fs from 'fs';
+import { join } from 'path';
 const trackAll = require('sequelize-history').all;
 
 let sequelizeAdmin, sequelizeManager;
@@ -19,8 +21,7 @@ try {
 		dialect: 'postgres',
 		dialectOptions: {
 			ssl: String(process.env.DB_SSL).toLowerCase() === 'true',
-			rejectUnauthorized: false // <<<<<<< YOU NEED THIS
-			
+			ca:  fs.readFileSync(join(__dirname, '../us-east-1-bundle.pem')).toString()
 		},
 		username: process.env.DB_USERNAME_DDL,
 		password: process.env.DB_PASSWORD_DDL,
@@ -41,8 +42,8 @@ try {
 		dialect: 'postgres',
 		dialectOptions: {
 			ssl: String(process.env.DB_SSL).toLowerCase() === 'true',
-			rejectUnauthorized: false // <<<<<<< YOU NEED THIS
-			  
+			ca:  fs.readFileSync(join(__dirname, '../us-east-1-bundle.pem')).toString()
+			
 		},
 		username: process.env.DB_USERNAME_DML,
 		password: process.env.DB_PASSWORD_DML,
