@@ -4,6 +4,7 @@ import { HandleError } from '../utils/HandleError';
 const trackAll = require('sequelize-history').all;
 
 let sequelizeAdmin, sequelizeManager;
+
 try {
 	console.log("inside db",process.env);
 	sequelizeAdmin = new Sequelize({
@@ -15,7 +16,8 @@ try {
 		},
 		dialect: 'postgres',
 		dialectOptions: {
-			ssl: String(process.env.DB_SSL).toLowerCase() === 'true'
+			ssl: String(process.env.DB_SSL).toLowerCase() === 'true',
+			trustServerCertificate: true
 		},
 		username: process.env.DB_USERNAME_DDL,
 		password: process.env.DB_PASSWORD_DDL,
@@ -35,7 +37,8 @@ try {
 		},
 		dialect: 'postgres',
 		dialectOptions: {
-			ssl: String(process.env.DB_SSL).toLowerCase() === 'true'
+			ssl: String(process.env.DB_SSL).toLowerCase() === 'true',
+			trustServerCertificate: true,
 		},
 		username: process.env.DB_USERNAME_DML,
 		password: process.env.DB_PASSWORD_DML,
