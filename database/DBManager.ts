@@ -5,6 +5,7 @@ const trackAll = require('sequelize-history').all;
 
 let sequelizeAdmin, sequelizeManager;
 try {
+	console.log("inside db",process.env);
 	sequelizeAdmin = new Sequelize({
 		host: process.env.DB_HOST,
 		port: Number(process.env.DB_PORT),
