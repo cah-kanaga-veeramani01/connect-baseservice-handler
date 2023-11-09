@@ -7,7 +7,7 @@
     "registry": "https://artifacts.cahcommtech.com/repository/commtech-npmjs-internal/"
   },
   "scripts": {
-    "build": "rm -rf dist && rm -rf build && tsc && mkdir dist && cp -rf build/ dist/",
+    "build": "NODE_TLS_REJECT_UNAUTHORIZED='0' && rm -rf dist && rm -rf build && tsc && mkdir dist && cp -rf build/ dist/",
     "build:server": "tsc && npm run copy-files",
     "copy-files": "copyfiles --all resources/* ./build",
     "preserve": "npm run build",
