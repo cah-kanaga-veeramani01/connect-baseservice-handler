@@ -54,20 +54,7 @@
             "memoryRequest": "1Gi",
             "memoryLimit": "1Gi",
             "cpuRequest": "2000m"
-        },
-        "secrets":[
-            {
-                "referenceName": "connect-baseservice-handler",
-                "mappings": {
-                  "DB_USERNAME_DDL": "DB_USERNAME_DDL",
-                  "DB_PASSWORD_DDL": "DB_PASSWORD_DDL",
-                  "DB_USERNAME_DML": "DB_USERNAME_DML",
-                  "DB_PASSWORD_DML": "DB_PASSWORD_DML",
-                  "CLIENT_ID": "CLIENT_ID",
-                  "PUBLIC_KEY": "PUBLIC_KEY"
-                }
-              }
-        ]
+        }
     },
     "platform": "TechnicalPlatform",
     "product": "program-management",
@@ -79,7 +66,7 @@
                 "DB_HOST": "{env:fluffle=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com,stage=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com}",
                 "DB_NAME": "postgres",
                 "DB_SCHEMA": "service",
-                "DB_SSL": "true",
+                "DB_SSL": "false",
                 "AUTH_URL": "{env:fluffle=https://staging.outcomesmtm.com/rest/services,stage=https://staging.outcomesmtm.com/rest/services}",
                 "AUTH_ROUTE": "/user/internal",
                 "NODE_ENV": "{env:fluffle=fluffle,stage=staging}",
