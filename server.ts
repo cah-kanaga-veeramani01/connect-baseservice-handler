@@ -97,12 +97,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(errorHandler);
 app.listen(PORT, () => {
 	process.stdout.write(`Base Service config server started at ${PORT}`);
-	console.log("this is 2");
-	//console.log(process.env);
-	const sequel = new Sequelize('postgres://'+process.env.DB_USERNAME_DML+':'+process.env.DB_PASSWORD_DML+'@'+process.env.DB_HOST+':5432/'+process.env.DB_NAME); 
-	sequel.authenticate().then(()=>{
-		console.log("success connection")
-	}).catch((err)=>{
-		console.log("failed connect",err);
-	})
+	console.log("this is 4");
+	
 });
