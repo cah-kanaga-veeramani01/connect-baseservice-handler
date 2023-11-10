@@ -97,6 +97,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(errorHandler);
 app.listen(PORT, () => {
 	process.stdout.write(`Base Service config server started at ${PORT}`);
-	console.log("this is 5");
+	console.log("this is 6");
 	
 });
