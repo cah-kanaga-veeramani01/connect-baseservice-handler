@@ -21,7 +21,7 @@ try {
 		dialect: 'postgres',
 		dialectOptions: {
 			ssl: String(process.env.DB_SSL).toLowerCase() === 'true',
-			ca:  fs.readFileSync(join(__dirname, '../us-east-1-bundle.pem')).toString()
+			//ca:  fs.readFileSync(join(__dirname, '../us-east-1-bundle.pem')).toString()
 		},
 		username: process.env.DB_USERNAME_DDL,
 		password: process.env.DB_PASSWORD_DDL,
@@ -42,7 +42,7 @@ try {
 		dialect: 'postgres',
 		dialectOptions: {
 			ssl: String(process.env.DB_SSL).toLowerCase() === 'true',
-			ca:  fs.readFileSync(join(__dirname, '../us-east-1-bundle.pem')).toString()
+			//ca:  fs.readFileSync(join(__dirname, '../us-east-1-bundle.pem')).toString()
 			
 		},
 		username: process.env.DB_USERNAME_DML,
