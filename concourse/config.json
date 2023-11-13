@@ -49,8 +49,12 @@
         "nonProdCluster": "np-outcomesone-shared-eks-cluster",
         "deployRepo": "cahcommercial/outcomesone-program-management-k8s-application-config",
         "workloadType": "API",
-        "restricted": false
-        
+        "restricted": false,
+        "resourcesConfig": {
+            "memoryRequest": "1Gi",
+            "memoryLimit": "1Gi",
+            "cpuRequest": "2000m"
+        }
     },
     "platform": "TechnicalPlatform",
     "product": "program-management",
@@ -58,23 +62,30 @@
         {
             "name": "connect-baseservice-handler",
             "config": {
+                "DB_PORT": "5432",
+                "DB_HOST": "{env:fluffle=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com,stage=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com}",
+                "DB_NAME": "postgres",
+                "DB_SCHEMA": "service",
+                "DB_SSL": "true",
+                "AUTH_URL": "{env:fluffle=https://staging.outcomesmtm.com/rest/services,stage=https://staging.outcomesmtm.com/rest/services}",
+                "AUTH_ROUTE": "/user/internal",
+                "NODE_ENV": "{env:fluffle=fluffle,stage=staging}",
+                "LOG_LEVEL": "{env:fluffle=info,stage=silly}",
+                "SNS_TOPIC": "{env:fluffle=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo,stage=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo}",
+                "PUBLISH_URL": "{env:fluffle=https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish,stage=https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish}",
+                "KEYCLOAK_BASE_URL":"{env:fluffle=https://cc-keycloak-stage.apps.np1.fuseapps.io,stage=https://cc-keycloak-stage.apps.np1.fuseapps.io}",
+                "SERVICE_READ_ROLE":"{env:fluffle=SERVICE_API_READ,stage=SERVICE_API_READ}",
+                "PORT":"{env:fluffle=8080,stage=8080}"
             },
             "secrets": {
-                "DB_PORT": "connect-baseservice-handler/{env}.db_port",
-                "DB_HOST": "connect-baseservice-handler/{env}.db_host",
-                "DB_NAME": "connect-baseservice-handler/{env}.db_name",
-                "DB_SCHEMA": "connect-baseservice-handler/{env}.db_schema",
-                "DB_USERNAME_DDL": "connect-baseservice-handler/{env}.db_username_ddl",
-                "DB_PASSWORD_DDL": "connect-baseservice-handler/{env}.db_password_ddl",
-                "DB_USERNAME_DML": "connect-baseservice-handler/{env}.db_username_dml",
-                "DB_PASSWORD_DML": "connect-baseservice-handler/{env}.db_password_dml",
-                "DB_SSL": "connect-baseservice-handler/{env}.db_ssl",
-                "NODE_ENV": "connect-baseservice-handler/{env}.node_env",
-                "AUTH_URL": "connect-baseservice-handler/{env}.auth_url",
-                "AUTH_ROUTE": "connect-baseservice-handler/{env}.auth_route",
-                "PUBLISH_URL": "connect-baseservice-handler/{env}.publish_url",
-                "SNS_TOPIC": "connect-baseservice-handler/{env}.sns_topic",
-                "LOG_LEVEL": "connect-baseservice-handler/{env}.log_level"
+                "DB_USERNAME_DDL": "connect-baseservice-handler/{env}.db-username-ddl",
+                "DB_PASSWORD_DDL": "connect-baseservice-handler/{env}.db-password-ddl",
+                "DB_USERNAME_DML": "connect-baseservice-handler/{env}.db-username-dml",
+                "DB_PASSWORD_DML": "connect-baseservice-handler/{env}.db-password-dml",
+                "CLIENT_ID": "connect-baseservice-handler/{env}.keycloak-client-id",
+                "PUBLIC_KEY": "connect-baseservice-handler/{env}.keycloak-public-key",
+                "REALM": "connect-baseservice-handler/{env}.keycloak-realm",
+                "NODE_TLS_REJECT_UNAUTHORIZED":"0"
             }
         }
     ],

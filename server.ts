@@ -17,10 +17,12 @@ import * as swaggerExternalDocument from './swagger-external.json';
 
 const memoryStore = new session.MemoryStore(),
 	keycloak = initKeyclock(memoryStore),
-	PORT = Number(process.env.PORT) || 5000,
+	PORT = Number(process.env.PORT) || 8080,
 	app: Application = express();
 
 import { ExternalRouterManager } from './src/routes/external/external-router-manager';
+import actuator from 'express-actuator';
+
 dotenv.config();
 
 app.use(
@@ -49,7 +51,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 app.use(helmet());
 app.use(express.urlencoded({ extended: false }));
-
+app.use(actuator());
 //middlewares for each request
 app.use(cookieParser());
 app.use(requestLogger);
@@ -57,6 +59,9 @@ app.use(express.json());
 app.use(httpContext.middleware);
 app.use(contextStore);
 app.use(generateLogId);
+app.use('/actuator/health', (req: Request, res: Response, _next: NextFunction) => {
+	res.json({ status: 'UP' });
+});
 app.use(/^((?!external|swagger).)*$/i, auth); // authenticate every route except /swagger
 
 app.get('/', (req: Request, res: Response, _next: NextFunction) => {
