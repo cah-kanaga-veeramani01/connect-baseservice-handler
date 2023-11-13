@@ -1,13 +1,9 @@
 import { Sequelize } from 'sequelize-typescript';
 import { logger } from '../utils/logger';
 import { HandleError } from '../utils/HandleError';
-import fs from 'fs';
-import { join } from 'path';
 const trackAll = require('sequelize-history').all;
 
 let sequelizeAdmin, sequelizeManager;
-
-
 
 try {
 	sequelizeAdmin = new Sequelize({
@@ -19,8 +15,7 @@ try {
 		},
 		dialect: 'postgres',
 		dialectOptions: {
-			ssl: String(process.env.DB_SSL).toLowerCase() === 'true',
-			//ca:  fs.readFileSync(join(__dirname, '../us-east-1-bundle.pem')).toString()
+			ssl: String(process.env.DB_SSL).toLowerCase() === 'true'
 		},
 		username: process.env.DB_USERNAME_DDL,
 		password: process.env.DB_PASSWORD_DDL,
@@ -40,9 +35,7 @@ try {
 		},
 		dialect: 'postgres',
 		dialectOptions: {
-			ssl: String(process.env.DB_SSL).toLowerCase() === 'true',
-			//ca:  fs.readFileSync(join(__dirname, '../us-east-1-bundle.pem')).toString()
-			
+			ssl: String(process.env.DB_SSL).toLowerCase() === 'true'
 		},
 		username: process.env.DB_USERNAME_DML,
 		password: process.env.DB_PASSWORD_DML,
@@ -64,9 +57,6 @@ try {
 	logger.error('Error from Sequelize admin', { stack: error });
 	throw HandleError.generateHandleError(error);
 }
-
-
-
 
 export default sequelizeManager;
 export { sequelizeAdmin };

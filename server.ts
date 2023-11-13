@@ -22,7 +22,7 @@ const memoryStore = new session.MemoryStore(),
 
 import { ExternalRouterManager } from './src/routes/external/external-router-manager';
 import actuator from 'express-actuator';
-import { Sequelize } from 'sequelize';
+
 dotenv.config();
 
 app.use(
@@ -59,8 +59,8 @@ app.use(express.json());
 app.use(httpContext.middleware);
 app.use(contextStore);
 app.use(generateLogId);
-app.use('/actuator/health',(req: Request, res: Response, next: NextFunction) => {
-	res.json({"status":"UP"});
+app.use('/actuator/health', (req: Request, res: Response, _next: NextFunction) => {
+	res.json({ status: 'UP' });
 });
 app.use(/^((?!external|swagger).)*$/i, auth); // authenticate every route except /swagger
 
@@ -95,8 +95,4 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 	next(new HandleError({ name: 'NotFound', message: 'You have landed on an incorrect route.', stack: 'Not Found', errorStatus: 404 }));
 });
 app.use(errorHandler);
-app.listen(PORT, () => {
-	process.stdout.write(`Base Service config server started at ${PORT}`);
-	console.log("this is 6");
-	
-});
+app.listen(PORT, () => process.stdout.write(`Base Service config server started at ${PORT}`));
