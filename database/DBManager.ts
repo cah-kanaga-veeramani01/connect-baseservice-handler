@@ -4,6 +4,7 @@ import { HandleError } from '../utils/HandleError';
 const trackAll = require('sequelize-history').all;
 
 let sequelizeAdmin, sequelizeManager;
+
 try {
 	sequelizeAdmin = new Sequelize({
 		host: process.env.DB_HOST,
@@ -46,10 +47,11 @@ try {
 	sequelizeAdmin
 		.sync()
 		.then(() => {
+			logger.info('connected');
 			sequelizeAdmin.close();
 		})
 		.catch((error) => {
-			logger.error('Error from Sequelize admin', { stack: error });
+			logger.error('Error from Sequelize Admin', { stack: error });
 		});
 } catch (error) {
 	logger.error('Error from Sequelize admin', { stack: error });

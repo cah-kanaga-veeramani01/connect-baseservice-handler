@@ -88,6 +88,7 @@
     "resources/*" ,
     "**/*.ts",
     "**/*.js",
+    "us-east-1-bundle.pem"
   ],
   "hooks": [ "copy-files" ] /* <-- NEW OPTION HERE */
 }
