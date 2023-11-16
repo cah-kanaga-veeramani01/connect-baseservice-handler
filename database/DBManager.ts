@@ -15,10 +15,10 @@ try {
 		},
 		dialect: 'postgres',
 		dialectOptions: {
-			"ssl": {
-                            "require": true,
-                            "rejectUnauthorized": false
-                        }
+			ssl: {
+				require: true,
+				rejectUnauthorized: false
+			}
 		},
 		username: process.env.DB_USERNAME_DDL,
 		password: process.env.DB_PASSWORD_DDL,
