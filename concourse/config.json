@@ -1,0 +1,95 @@
+{
+    "name": "connect-baseservice-handler",
+    "concourseTeam": "program-management",
+    "pcfOrganization": "hidden-leaf",
+    "groupId": "com.outcomesone.programmanagement",
+    "repo": "cahcommercial/connect-baseservice-handler",
+    "deployable": true,
+    "promotable": true,
+    "deployToS3": false,
+    "deployToEnvs": [
+        "fluffle",
+        "stage",
+        "prod"
+    ],
+    "cf": {
+        "stage": {
+            "instances": "1"
+        }
+    },
+    "flywayConfig": {
+    },
+    "flywaySecrets": {
+    },
+    "buildConfig": {
+    },
+    "buildSecrets": {
+    },
+    "hasPactVerify": false,
+    "preventDeployIfPactsFail": false,
+    "isPactConsumer": false,
+    "isPactProvider": false,
+    "mainBranch": "deploy/staging-k8s",
+    "versionBranch": "version",
+    "makeDocumentation": false,
+    "healthCheck": false,
+    "prodNotify": false,
+    "openRouteToInternet": false,
+    "slack": "hidden-leaf-deployments",
+    "prodSlack": "#hidden-leaf-deployments",
+    "routeOverrides": [
+    ],
+    "apmLogLevel": "info",
+    "cypress": false,
+    "configType": "app",
+    "configVersion": "27",
+    "expandedMemory": "2147483648",
+    "k8sInfo": {
+        "nonProdCluster": "np-outcomesone-shared-eks-cluster",
+        "deployRepo": "cahcommercial/outcomesone-program-management-k8s-application-config",
+        "workloadType": "API",
+        "restricted": false,
+        "resourcesConfig": {
+            "memoryRequest": "1Gi",
+            "memoryLimit": "1Gi",
+            "cpuRequest": "2000m"
+        }
+    },
+    "platform": "TechnicalPlatform",
+    "product": "program-management",
+    "deployments": [
+        {
+            "name": "connect-baseservice-handler",
+            "config": {
+                "DB_PORT": "{env:fluffle=5432,stage=5432}",
+                "DB_HOST": "{env:fluffle=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com,stage=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com}",
+                "DB_NAME": "{env:fluffle=postgres,stage=postgres}",
+                "DB_SCHEMA": "{env:fluffle=service,stage=service}",
+                "DB_SSL": "{env:fluffle=true,stage=true}",
+                "AUTH_URL": "{env:fluffle=https://staging.outcomesmtm.com/rest/services,stage=https://staging.outcomesmtm.com/rest/services}",
+                "AUTH_ROUTE": "{env:fluffle=/user/internal,stage=/user/internal}",
+                "NODE_ENV": "{env:fluffle=fluffle,stage=staging}",
+                "LOG_LEVEL": "{env:fluffle=info,stage=silly}",
+                "SNS_TOPIC": "{env:fluffle=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo,stage=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo}",
+                "PUBLISH_URL": "{env:fluffle=https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish,stage=https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish}",
+                "KEYCLOAK_BASE_URL": "{env:fluffle=https://cc-keycloak-stage.apps.np1.fuseapps.io,stage=https://cc-keycloak-stage.apps.np1.fuseapps.io}",
+                "SERVICE_READ_ROLE": "{env:fluffle=SERVICE_API_READ,stage=SERVICE_API_READ}",
+                "PORT": "{env:fluffle=8080,stage=8080}"
+            },
+            "secrets": {
+                "DB_USERNAME_DDL": "connect-baseservice-handler/{env}.DB_USERNAME_DDL",
+                "DB_PASSWORD_DDL": "connect-baseservice-handler/{env}.DB_PASSWORD_DDL",
+                "DB_USERNAME_DML": "connect-baseservice-handler/{env}.DB_USERNAME_DML",
+                "DB_PASSWORD_DML": "connect-baseservice-handler/{env}.DB_PASSWORD_DML",
+                "CLIENT_ID": "connect-baseservice-handler/{env}.CLIENT_ID",
+                "PUBLIC_KEY": "connect-baseservice-handler/{env}.PUBLIC_KEY",
+                "REALM": "connect-baseservice-handler/{env}.REALM"
+            }
+        }
+    ],
+    "language": "node",
+    "appProjectType": "node",
+    "deploymentPlatform": "K8s",
+    "databaseMigrateOnDeploy": false,
+    "databaseMigrateOnTest": false
+}
