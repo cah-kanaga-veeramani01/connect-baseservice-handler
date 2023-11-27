@@ -29,7 +29,7 @@
     "preventDeployIfPactsFail": false,
     "isPactConsumer": false,
     "isPactProvider": false,
-    "mainBranch": "deploy/staging-k8s",
+    "mainBranch": "deploy/k8s",
     "versionBranch": "version",
     "makeDocumentation": false,
     "healthCheck": false,
