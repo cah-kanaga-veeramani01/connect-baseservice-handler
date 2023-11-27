@@ -4,7 +4,8 @@
   "description": "Handler for Base Service Configuration",
   "main": "server.ts",
   "scripts": {
-    "build": "rimraf build && tsc",
+    "build": "rm -rf dist && rm -rf build && tsc && mkdir dist && cp -rf build/ dist/ && cp -rf cert dist",
+    "buildbk": "rimraf build && tsc",
     "build:server": "tsc",
     "preserve": "npm run build",
     "serve": "cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon -q build/server.js\"",
