@@ -13,7 +13,7 @@
     "start:dev": "nodemon -e ts -w ./ -x ts-node -r dotenv/config server.ts dotenv_config_path=./env/dev.env",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
-    "test": "jest --watch --detectOpenHandles --logHeapUsage",
+    "test": "node --max-old-space-size=1024 ./node_modules/.bin/jest --coverage --logHeapUsage --runInBand",
     "doc": "typedoc",
     "migrate": "NODE_TLS_REJECT_UNAUTHORIZED='0' flyway -c migration/flyway/flyway.js migrate",
     "info": "flyway -c migration/flyway/flyway.js info",
