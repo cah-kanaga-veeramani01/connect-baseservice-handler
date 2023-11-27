@@ -1,6 +1,6 @@
 {
   "name": "@service-config/connect-baseservice-handler",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Handler for Base Service Configuration",
   "main": "server.ts",
   "scripts": {
@@ -36,6 +36,7 @@
     "csurf": "^1.11.0",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
+    "express-actuator": "^1.8.4",
     "express-http-context": "^1.2.4",
     "express-session": "^1.17.3",
     "helmet": "^4.6.0",
@@ -59,6 +60,7 @@
   "devDependencies": {
     "@types/cookie-parser": "^1.4.2",
     "@types/cors": "^2.8.12",
+    "@types/express-actuator": "^1.8.3",
     "@types/jest": "^29.2.5",
     "@types/js-yaml": "^4.0.3",
     "@types/node": "^18.11.18",
