@@ -14,7 +14,6 @@ import session from 'express-session';
 import swaggerUi from 'swagger-ui-express';
 import * as swaggerDocument from './swagger.json';
 import * as swaggerExternalDocument from './swagger-external.json';
-import actuator from 'express-actuator';
 
 const memoryStore = new session.MemoryStore(),
 	keycloak = initKeyclock(memoryStore),

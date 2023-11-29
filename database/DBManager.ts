@@ -57,10 +57,10 @@ try {
 	sequelizeManager
 		.authenticate()
 		.then(() => {
-			logger.nonPhi.info('connected from manager');
+			logger.info('connected from manager');
 		})
 		.catch((error) => {
-			logger.nonPhi.error('Error from Sequelize Admin manager', { stack: error });
+			logger.error('Error from Sequelize Admin manager', { stack: error });
 		});
 
 	sequelizeAdmin
