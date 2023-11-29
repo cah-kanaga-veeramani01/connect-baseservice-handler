@@ -1,6 +1,7 @@
 import { Sequelize } from 'sequelize-typescript';
 import { logger } from '../utils/logger';
 import { HandleError } from '../utils/HandleError';
+import fs from 'fs';
 const trackAll = require('sequelize-history').all;
 
 let sequelizeAdmin, sequelizeManager;
@@ -17,7 +18,8 @@ try {
 		dialectOptions: {
 			ssl: {
 				require: true,
-				rejectUnauthorized: false
+				rejectUnauthorized: false,
+				ca: fs.readFileSync('cert/us-east-1-bundle.crt').toString()
 			}
 		},
 		username: process.env.DB_USERNAME_DDL,
@@ -38,7 +40,12 @@ try {
 		},
 		dialect: 'postgres',
 		dialectOptions: {
-			ssl: String(process.env.DB_SSL).toLowerCase() === 'true'
+			//ssl: String(process.env.DB_SSL).toLowerCase() === 'true'
+			ssl: {
+				require: true,
+				rejectUnauthorized: false,
+				ca: fs.readFileSync('cert/us-east-1-bundle.crt').toString()
+			}
 		},
 		username: process.env.DB_USERNAME_DML,
 		password: process.env.DB_PASSWORD_DML,
@@ -46,6 +53,15 @@ try {
 		models: [`${__dirname}/models`],
 		logging: (logs: any) => logger.debug(logs)
 	});
+
+	sequelizeManager
+		.authenticate()
+		.then(() => {
+			logger.nonPhi.info('connected from manager');
+		})
+		.catch((error) => {
+			logger.nonPhi.error('Error from Sequelize Admin manager', { stack: error });
+		});
 
 	sequelizeAdmin
 		.sync()

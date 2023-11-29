@@ -9,7 +9,8 @@
     "deployToS3": false,
     "deployToEnvs": [
         "fluffle",
-        "stage"
+        "stage",
+        "prod"
     ],
     "cf": {
         "stage": {
@@ -29,7 +30,7 @@
     "preventDeployIfPactsFail": false,
     "isPactConsumer": false,
     "isPactProvider": false,
-    "mainBranch": "deploy/staging",
+    "mainBranch": "deploy/k8s",
     "versionBranch": "version",
     "makeDocumentation": false,
     "healthCheck": false,
@@ -62,34 +63,37 @@
         {
             "name": "connect-baseservice-handler",
             "config": {
-                "DB_PORT": "5432",
+
+                "DB_PORT": "{env:fluffle=5432,stage=5432}",
                 "DB_HOST": "{env:fluffle=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com,stage=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com}",
-                "DB_NAME": "postgres",
-                "DB_SCHEMA": "service",
-                "DB_SSL": "true",
+                "DB_NAME": "{env:fluffle=postgres,stage=postgres}",
+                "DB_SCHEMA": "{env:fluffle=service,stage=service}",
+                "DB_SSL": "{env:fluffle=true,stage=true}",
                 "AUTH_URL": "{env:fluffle=https://staging.outcomesmtm.com/rest/services,stage=https://staging.outcomesmtm.com/rest/services}",
-                "AUTH_ROUTE": "/user/internal",
+                "AUTH_ROUTE": "{env:fluffle=/user/internal,stage=/user/internal}",
                 "NODE_ENV": "{env:fluffle=fluffle,stage=staging}",
                 "LOG_LEVEL": "{env:fluffle=info,stage=silly}",
                 "SNS_TOPIC": "{env:fluffle=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo,stage=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo}",
                 "PUBLISH_URL": "{env:fluffle=https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish,stage=https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish}",
-                "KEYCLOAK_BASE_URL":"{env:fluffle=https://cc-keycloak-stage.apps.np1.fuseapps.io,stage=https://cc-keycloak-stage.apps.np1.fuseapps.io}",
-                "SERVICE_READ_ROLE":"{env:fluffle=SERVICE_API_READ,stage=SERVICE_API_READ}",
-                "PORT":"{env:fluffle=8080,stage=8080}"
+                "KEYCLOAK_BASE_URL": "{env:fluffle=https://cc-keycloak-stage.apps.np1.fuseapps.io,stage=https://cc-keycloak-stage.apps.np1.fuseapps.io}",
+                "SERVICE_READ_ROLE": "{env:fluffle=SERVICE_API_READ,stage=SERVICE_API_READ}",
+                "PORT": "{env:fluffle=8080,stage=8080}"
             },
+            
             "secrets": {
-                "DB_USERNAME_DDL": "connect-baseservice-handler/{env}.db-username-ddl",
-                "DB_PASSWORD_DDL": "connect-baseservice-handler/{env}.db-password-ddl",
-                "DB_USERNAME_DML": "connect-baseservice-handler/{env}.db-username-dml",
-                "DB_PASSWORD_DML": "connect-baseservice-handler/{env}.db-password-dml",
-                "CLIENT_ID": "connect-baseservice-handler/{env}.keycloak-client-id",
-                "PUBLIC_KEY": "connect-baseservice-handler/{env}.keycloak-public-key",
-                "REALM": "connect-baseservice-handler/{env}.keycloak-realm",
-                "NODE_TLS_REJECT_UNAUTHORIZED":"0"
+                "DB_USERNAME_DDL": "connect-baseservice-handler/{env}.DB_USERNAME_DDL",
+                "DB_PASSWORD_DDL": "connect-baseservice-handler/{env}.DB_PASSWORD_DDL",
+                "DB_USERNAME_DML": "connect-baseservice-handler/{env}.DB_USERNAME_DML",
+                "DB_PASSWORD_DML": "connect-baseservice-handler/{env}.DB_PASSWORD_DML",
+                "CLIENT_ID": "connect-baseservice-handler/{env}.CLIENT_ID",
+                "PUBLIC_KEY": "connect-baseservice-handler/{env}.PUBLIC_KEY",
+                "REALM": "connect-baseservice-handler/{env}.REALM"
             }
         }
     ],
     "language": "node",
     "appProjectType": "node",
-    "deploymentPlatform": "K8s"
+    "deploymentPlatform": "K8s",
+    "databaseMigrateOnDeploy": false,
+    "databaseMigrateOnTest": false
 }
