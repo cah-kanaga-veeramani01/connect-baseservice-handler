@@ -51,6 +51,7 @@
         "deployRepo": "cahcommercial/outcomesone-program-management-k8s-application-config",
         "workloadType": "API",
         "restricted": false,
+        "proxyToPCF": false,
         "resourcesConfig": {
             "memoryRequest": "1Gi",
             "memoryLimit": "1Gi",
