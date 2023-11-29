@@ -5,6 +5,7 @@ import fs from 'fs';
 const trackAll = require('sequelize-history').all;
 
 let sequelizeAdmin, sequelizeManager;
+
 try {
 	sequelizeAdmin = new Sequelize({
 		host: process.env.DB_HOST,
@@ -25,7 +26,7 @@ try {
 		password: process.env.DB_PASSWORD_DDL,
 		repositoryMode: true,
 		models: [`${__dirname}/models`],
-		logging: (logs: any) => logger.nonPhi.debug(logs)
+		logging: (logs: any) => logger.debug(logs)
 	});
 
 	trackAll(sequelizeAdmin);
@@ -50,7 +51,7 @@ try {
 		password: process.env.DB_PASSWORD_DML,
 		repositoryMode: true,
 		models: [`${__dirname}/models`],
-		logging: (logs: any) => logger.nonPhi.debug(logs)
+		logging: (logs: any) => logger.debug(logs)
 	});
 
 	sequelizeManager
@@ -65,14 +66,14 @@ try {
 	sequelizeAdmin
 		.sync()
 		.then(() => {
-			logger.nonPhi.info('connected');
+			logger.info('connected');
 			sequelizeAdmin.close();
 		})
 		.catch((error) => {
-			logger.nonPhi.error('Error from Sequelize Admin', { stack: error });
+			logger.error('Error from Sequelize Admin', { stack: error });
 		});
 } catch (error) {
-	logger.nonPhi.error('Error from Sequelize admin', { stack: error });
+	logger.error('Error from Sequelize admin', { stack: error });
 	throw HandleError.generateHandleError(error);
 }
 

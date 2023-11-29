@@ -9,17 +9,22 @@ export default class SNSServiceManager {
 		const eventType = event === SERVICE_SCHEDULE_EVENT ? 'SERVICE-SCHEDULE-EVENT' : 'SERVICE-CHANGE-EVENT';
 		const data = JSON.stringify({
 				message: {
-					type: eventType,
-					result: {
-						globalServiceVersion,
-						legacyTipID,
-						serviceID,
-						isPublished,
-						startDate,
-						endDate
-					}
+					result: [
+						{
+							globalServiceVersion,
+							legacyTipID,
+							serviceID,
+							isPublished,
+							startDate,
+							endDate
+						}
+					]
 				},
-				topic: process.env.SNS_TOPIC
+				topic: process.env.SNS_TOPIC,
+				metadata: {
+					eventType,
+					ackSystem: 'ALL'
+				}
 			}),
 			config = {
 				method: 'post',
@@ -32,7 +37,7 @@ export default class SNSServiceManager {
 				data
 			};
 		const response = await axios.post(config.url, config.data, { headers: config.headers }).catch((error) => {
-			logger.nonPhi.error(error.message, { _err: error });
+			logger.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			else throw new HandleError({ name: 'ParentPublishToSNSTopicError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		});

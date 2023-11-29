@@ -1,0 +1,174 @@
+#! @formatter:off
+#@ load("@ytt:data", "data")
+#@ load("@ytt:template", "template")
+#@ load("@ytt:struct", "struct")
+#@ if data.values.slack.enabled:
+resource_types:
+  - name: slack-notification
+    type: registry-image
+    source:
+      repository: artifacts.cahcommtech.com/cfcommunity/slack-notification-resource
+      tag: latest
+      _:  #@ template.replace(data.values.artifacts_credentials)
+  - name: pact-resource
+    type: registry-image
+    source:
+      repository: artifacts.cahcommtech.com/concourse/pact-resource
+      tag: latest
+      _:  #@ template.replace(data.values.artifacts_credentials)
+#@ end
+#@ def vaultify(secret_name, variables):
+#@   result = {}
+#@   for name, value in struct.decode(variables).items():
+#@     result.update({
+#@       name: "((" + secret_name + "." + value + "))"
+#@     })
+#@   end
+#@   return result
+#@ end
+resources:
+  #@ if/end data.values.slack.enabled:
+  - name: slack-alert
+    type: slack-notification
+    icon: slack
+    source:
+      url: ((base-service-config.slack-webhook-url))
+  #@ for environment in data.values.environments:
+    #@ if environment.enabled:
+        #@ for project in data.values.projects:
+          #@ if project.enabled:
+  - name: #@ environment.name + "-" + project.name + "-" + "pacts"
+    icon: handcuffs
+    type: pact-resource
+    source:
+      broker_url: #@ "((pact-policy-" + environment.name + ".broker_url))"
+      consumers:
+      - #@ "((pact-policy-" + environment.name + ".pact_consumer_services_ss))"
+      password: #@ "((pact-policy-" + environment.name + ".broker_password))"
+      provider: #@ "((pact-policy-" + environment.name + ".pact_provider_ss))"
+      tag: #@ "((pact-policy-" + environment.name + ".pact_consumer_version_tags))"
+      username: #@ "((pact-policy-" + environment.name + ".broker_username))"
+  - name: #@ "git-deploy-" + project.name + "-" + environment.name
+    type: git
+    source:
+      _: #@ template.replace(data.values.git_params)
+      branch: #@ "deploy/" + environment.name
+      paths:
+        - package.json
+        - #@ "manifest-" + environment.name + ".yml"
+          #@ end
+        #@ end
+      #@ end
+    #@ end
+jobs:
+  #@ for project in data.values.projects:
+  #@   if project.enabled:
+  #@     for environment in data.values.environments:
+  #@       if environment.enabled:
+  #@         job_name = project.name + "-" + environment.name + "-verification"
+  #@         git_resource =  "git-deploy-" + project.name + "-" + environment.name
+  #@         pact_resource =  environment.name + "-" + project.name + "-" + "pacts"
+  - name: #@ job_name
+    serial: true
+    public: false
+    plan:
+      - get: #@ git_resource
+      - get: #@ pact_resource
+        trigger: true
+      - task: fetch-artifact
+        on_success:
+          put: slack-alert
+          params:
+            text: #@ "PACT - Policy config handler => Fetching artifact " + environment.name + " Successfully!"
+        on_failure:
+          put: slack-alert
+          params:
+            text: #@ "PACT - Policy config handler => Fetching artifact failed in " + environment.name + "!"
+        config:
+          _: #@ template.replace(data.values.task_config)
+          inputs:
+            - name: project
+          outputs:
+            - name: workspace
+              path: package
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - #@ data.read(project.deploy_script)
+        input_mapping:
+          project: #@ git_resource
+        params:
+          _: #@ template.replace(data.values.npm_rc_config)
+          PROJECT_NAME: baseservice-handler
+          NODE_ENV: #@ environment.name
+      - task: install-dependencies
+        on_success:
+          put: slack-alert
+          params:
+            text: #@ "PACT - Policy config handler => Installing dependencies in " + environment.name + " Successfully!"
+        on_failure:
+          put: slack-alert
+          params:
+            text: #@ "PACT - Policy config handler => Installing dependencies failed in " + environment.name + "!"
+        config:
+          _: #@ template.replace(data.values.task_config)
+          inputs:
+            - name: workspace
+          outputs:
+            - name: workspace
+              path: workspace
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                cd workspace
+                node --max-old-space-size=750 `which npm` install
+          params:
+            _: #@ template.replace(data.values.npm_rc_config)
+            PROJECT_NAME: baseservice-handler
+            NODE_ENV: #@ environment.name
+      - task: pact-verification
+        on_success:
+          put: slack-alert
+          params:
+            text: #@ "PACT - Policy config handler => Pact verification " + environment.name + " Successfully!"
+        on_failure:
+          put: slack-alert
+          params:
+            text: #@ "PACT - Policy config handler => Pact verification failed in " + environment.name + "!"
+        config:
+          container_limits:
+            memory: 0
+            cpu: 0
+          _: #@ template.replace(data.values.task_config)
+          inputs:
+            - name: workspace
+          outputs:
+            - name: workspace
+              path: workspace
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                cd workspace
+                npm run pact:verify:mock
+        params: #@ vaultify("pact-policy-" + environment.name, project.environment_variables)
+  #@       end
+  #@     end
+  #@   end
+  #@ end
+groups:
+  #@ for environment in data.values.environments:
+  #@ if environment.enabled:
+  - name: #@ "deploy-" + environment.name
+    jobs:
+      #@ for project in data.values.projects:
+      #@ if project.enabled:
+      - #@ project.name + "-" + environment.name + "-verification"
+        #@ end
+        #@ end
+        #@ end
+        #@ end
