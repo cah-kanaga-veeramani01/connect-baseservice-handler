@@ -54,6 +54,10 @@
             "memoryRequest": "1Gi",
             "memoryLimit": "1Gi",
             "cpuRequest": "2000m"
+        },
+        "readinessProbeConfig": {
+            "path": "/actuator/health",
+            "periodSeconds":30
         }
     },
     "platform": "TechnicalPlatform",
@@ -63,7 +67,7 @@
             "name": "connect-baseservice-handler",
             "config": {
                 "DB_PORT": "{env:fluffle=5432,stage=5432,prod=5432}",
-                "DB_HOST": "{env:fluffle=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com,stage=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com,prod=cc-client-operations-program-configuration-prod.cluster-cukimq938igp.us-east-1.rds.amazonaws.com/}",
+                "DB_HOST": "{env:fluffle=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com,stage=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com,prod=cc-client-operations-program-configuration-prod.cluster-cukimq938igp.us-east-1.rds.amazonaws.com}",
                 "DB_NAME": "{env:fluffle=postgres,stage=postgres,prod=postgres}",
                 "DB_SCHEMA": "{env:fluffle=service,stage=service,prod=service}",
                 "DB_SSL": "{env:fluffle=true,stage=true,prod=true}",
@@ -72,7 +76,7 @@
                 "NODE_ENV": "{env:fluffle=fluffle,stage=staging,prod=prod}",
                 "LOG_LEVEL": "{env:fluffle=silly,stage=silly,prod=silly}",
                 "SNS_TOPIC": "{env:fluffle=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo,stage=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo,prod=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-prod-topic.fifo}",
-                "PUBLISH_URL": "{env:fluffle=https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish,stage=http://connect-program-snssqs-handler-stage.np-apps.internal.outcomesone.cloud/sns/publish,prod=http://connect-program-snssqs-handler-prod.pr-apps.internal.outcomesone.cloud/sns/publish}",
+                "PUBLISH_URL": "{env:fluffle=https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish,stage=https://connect-program-snssqs-handler-stage.np-apps.internal.outcomesone.cloud/sns/publish,prod=https://connect-program-snssqs-handler-prod.pr-apps.internal.outcomesone.cloud/sns/publish}",
                 "KEYCLOAK_BASE_URL": "{env:fluffle=https://cc-keycloak-stage.apps.np1.fuseapps.io,stage=https://cc-keycloak-stage.apps.np1.fuseapps.io,prod=https://cc-keycloak-prod.apps.fuseapps.io}",
                 "SERVICE_READ_ROLE": "{env:fluffle=SERVICE_API_READ,stage=SERVICE_API_READ,prod=SERVICE_API_READ}",
                 "PORT": "{env:fluffle=8080,stage=8080,prod=8080}"
