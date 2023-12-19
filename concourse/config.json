@@ -66,14 +66,8 @@
         {
             "name": "connect-baseservice-handler",
             "envs": {
-                "fluffle": {
-                    "ingressType": "INTERNAL_AND_EXTERNAL"
-                },
                 "stage": {
                     "ingressType": "INTERNAL_AND_EXTERNAL"
-                },
-                "prod": {
-                    "ingressType": "INTERNAL_ONLY"
                 }
             },
             "config": {
