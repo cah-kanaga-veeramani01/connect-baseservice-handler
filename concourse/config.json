@@ -57,7 +57,7 @@
         },
         "readinessProbeConfig": {
             "path": "/actuator/health",
-            "periodSeconds":30
+            "periodSeconds":120
         }
     },
     "platform": "TechnicalPlatform",
@@ -92,6 +92,13 @@
             },
             "envs": {
                 "stage": {
+                    "resourcesConfig": {
+                            "memoryRequest": "1Gi",
+                            "memoryLimit": "1Gi",
+                            "cpuRequest": "1000m",
+                            "cpuLimit": null
+                        },
+                        "replicas": 2,
                     "ingressType": "INTERNAL_AND_EXTERNAL"
                 }
             }
