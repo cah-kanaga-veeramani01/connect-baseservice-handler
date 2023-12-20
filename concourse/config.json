@@ -91,7 +91,9 @@
                 "REALM": "connect-baseservice-handler/{env}.REALM"
             },
             "envs": {
-                "stage": "DeploymentEnv(resourcesConfig=ResourcesConfig(memoryRequest=1Gi, memoryLimit=2Gi, cpuRequest=250, cpuLimit=2000m, ephemeralStorageRequest=null, ephemeralStorageLimit=null), replicas=1, ingressType=INTERNAL_AND_EXTERNAL)"
+                "stage": {
+                    "ingressType": "INTERNAL_AND_EXTERNAL"
+                }
             }
         }
     ],
