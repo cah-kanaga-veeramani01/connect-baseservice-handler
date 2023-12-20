@@ -65,11 +65,6 @@
     "deployments": [
         {
             "name": "connect-baseservice-handler",
-            "envs": {
-                "stage": {
-                    "ingressType": "INTERNAL_AND_EXTERNAL"
-                }
-            },
             "config": {
                 "DB_PORT": "{env:fluffle=5432,stage=5432,prod=5432}",
                 "DB_HOST": "{env:fluffle=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com,stage=cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com,prod=cc-client-operations-program-configuration-prod.cluster-cukimq938igp.us-east-1.rds.amazonaws.com}",
@@ -94,6 +89,11 @@
                 "CLIENT_ID": "connect-baseservice-handler/{env}.CLIENT_ID",
                 "PUBLIC_KEY": "connect-baseservice-handler/{env}.PUBLIC_KEY",
                 "REALM": "connect-baseservice-handler/{env}.REALM"
+            },
+            "envs": {
+                "stage": {
+                    "ingressType": "INTERNAL_AND_EXTERNAL"
+                }
             }
         }
     ],
