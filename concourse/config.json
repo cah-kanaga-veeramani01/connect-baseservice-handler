@@ -57,7 +57,7 @@
         },
         "readinessProbeConfig": {
             "path": "/actuator/health",
-            "periodSeconds":121
+            "periodSeconds":120
         }
     },
     "platform": "TechnicalPlatform",
