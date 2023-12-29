@@ -1,6 +1,7 @@
 import express, { Application, NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import './apmLoader';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import httpContext from 'express-http-context';
@@ -14,6 +15,7 @@ import session from 'express-session';
 import swaggerUi from 'swagger-ui-express';
 import * as swaggerDocument from './swagger.json';
 import * as swaggerExternalDocument from './swagger-external.json';
+import actuator from 'express-actuator';
 
 const memoryStore = new session.MemoryStore(),
 	keycloak = initKeyclock(memoryStore),
@@ -49,7 +51,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 app.use(helmet());
 app.use(express.urlencoded({ extended: false }));
-
+app.use(actuator({ basePath: '/actuator' }));
 //middlewares for each request
 app.use(cookieParser());
 app.use(requestLogger);

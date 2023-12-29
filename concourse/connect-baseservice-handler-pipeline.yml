@@ -1,0 +1,604 @@
+artifacts-creds: &artifacts-creds
+  username: ((config/artifacts.username))
+  password: ((config/artifacts.password))
+nexus-creds: &nexus-creds
+  NEXUS_USERNAME: ((config/artifacts.username))
+  NEXUS_PASSWORD: ((config/artifacts.password))
+slack-channel: &slack-channel
+  channel: "hidden-leaf-deployments"
+prod-slack-channel: &prod-slack-channel
+  channel: "#hidden-leaf-deployments"
+resource_types:
+- name: slack-notification
+  type: registry-image
+  source:
+    tag: latest
+    <<: *artifacts-creds
+    repository: artifacts.cahcommtech.com/cfcommunity/slack-notification-resource
+- name: meta
+  type: registry-image
+  source:
+    <<: *artifacts-creds
+    repository: artifacts.cahcommtech.com/swce/metadata-resource
+- name: maven-resource
+  type: registry-image
+  source:
+    <<: *artifacts-creds
+    repository: artifacts.cahcommtech.com/maven-resource
+- name: http
+  type: docker-image
+  source:
+    repository: jgriff/http-resource
+resources:
+- name: meta
+  type: meta
+  source:
+- name: source
+  type: git
+  icon: git
+  check_every: 5m
+  source:
+    uri: git@github.com:cahcommercial/connect-baseservice-handler
+    private_key: ((deploy-keys.connect-baseservice-handler))
+    branch: HL-1691-hotfix
+- name: k8s-repo
+  type: git
+  icon: git
+  check_every: 15m
+  source:
+    uri: git@github.com:cahcommercial/outcomesone-program-management-k8s-application-config.git
+    branch: main
+    private_key: ((deploy-keys.k8s-repo))
+- name: connect_source
+  type: git
+  icon: git
+  check_every: 15m
+  source:
+    uri: git@github.com:cahcommercial/connect.git
+    branch: master
+    private_key: ((config/deploy-keys.connect))
+- name: nexus
+  type: maven-resource
+  icon: source-repository
+  check_every: 5m
+  source:
+    url: https://artifacts.cahcommtech.com/repository/commtech-internal/
+    artifact: com.outcomesone.programmanagement:connect-baseservice-handler:zip
+    <<: *artifacts-creds
+- name: version-release
+  type: semver
+  icon: numeric
+  check_every: 5m
+  source:
+    driver: git
+    uri: git@github.com:cahcommercial/connect-baseservice-handler
+    branch: version
+    file: release
+    private_key: ((deploy-keys.connect-baseservice-handler))
+- name: version-snapshot
+  type: git
+  icon: numeric
+  check_every: 5m
+  source:
+    uri: git@github.com:cahcommercial/connect-baseservice-handler.git
+    branch: version
+    private_key: ((deploy-keys.connect-baseservice-handler))
+- name: tools
+  type: git
+  version:
+    ref: 1a42bab948c89ea03f71163dbd1dde23ea5e1516
+  icon: git
+  check_every: 5m
+  source:
+    uri: git@github.com:cahcommercial/outcomes-pipeline-tools
+    branch: master
+    private_key: ((config/deploy-keys.connect-sidecar-tools))
+- name: nexus-snapshot
+  type: maven-resource
+  icon: source-repository
+  check_every: 5m
+  source:
+    snapshot_url: https://artifacts.cahcommtech.com/repository/commtech-internal-snapshots/
+    artifact: com.outcomesone.programmanagement:connect-baseservice-handler:zip
+    debug: true
+    <<: *artifacts-creds
+- name: slack-alert
+  type: slack-notification
+  icon: slack
+  source:
+    url: ((connect-deploy-slack-webhook-url))
+- name: version
+  type: git
+  icon: numeric
+  check_every: 5m
+  source:
+    uri: git@github.com:cahcommercial/connect-baseservice-handler.git
+    branch: version
+    private_key: ((deploy-keys.connect-baseservice-handler))
+- name: version-fluffle
+  type: git
+  icon: numeric
+  check_every: 30m
+  source:
+    paths: [fluffle]
+    uri: git@github.com:cahcommercial/connect-baseservice-handler.git
+    private_key: ((deploy-keys.connect-baseservice-handler))
+    branch: version
+- name: version-stage
+  type: git
+  icon: numeric
+  check_every: 30m
+  source:
+    paths: [stage]
+    uri: git@github.com:cahcommercial/connect-baseservice-handler.git
+    private_key: ((deploy-keys.connect-baseservice-handler))
+    branch: version
+- name: version-prod
+  type: git
+  icon: numeric
+  check_every: 30m
+  source:
+    paths: [prod]
+    uri: git@github.com:cahcommercial/connect-baseservice-handler.git
+    private_key: ((deploy-keys.connect-baseservice-handler))
+    branch: version
+groups:
+- name: development
+  jobs:
+  - check-pipeline-version
+  - deploy-to-fluffle
+  - HL-1691-hotfix-build
+- name: deploy
+  jobs:
+  - deploy-to-stage
+  - deploy-to-prod
+- name: promote
+  jobs:
+  - promote
+jobs:
+- name: check-pipeline-version
+  plan:
+    - get: tools
+    - task: check-version
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            <<: *artifacts-creds
+            tag: latest
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+        params:
+          PROJECT_NAME: connect-baseservice-handler
+          CONCOURSE_TEAM: program-management
+          REGEN_COMMAND: "`gradlew run --args='connect-baseservice-handler' && fly -t program-management sp -c connect-baseservice-handler-pipeline.yml -p connect-baseservice-handler`"
+          CURRENT_COMMIT: 1a42bab948c89ea03f71163dbd1dde23ea5e1516
+          REPO: cahcommercial/connect-baseservice-handler
+          CURRENT_CONFIG_COMMIT: dde387940c3069f211a4c2d23102240c3278490b
+          DAYS_NEEDED_TO_TRIGGER_WARNING: 60
+        run:
+          path: kotlinc
+          args:
+          - "-script"
+          - "tools/tasks/check-pipeline-version.main.kts"
+        inputs:
+        - name: tools
+      on_failure:
+        put: slack-alert
+        params:
+          <<: *slack-channel
+          text: "Pipeline for connect-baseservice-handler is behind master! (More details in the failed check-pipeline-version job). Please pull latest pipeline tools and regenerate with `gradlew run --args='connect-baseservice-handler' && fly -t program-management sp -c connect-baseservice-handler-pipeline.yml -p connect-baseservice-handler`"
+- name: deploy-to-fluffle
+  plan:
+    - get: nexus-snapshot
+      trigger: false
+      passed: [HL-1691-hotfix-build]
+    - get: tools
+    - get: version-fluffle
+    - get: k8s-repo
+    - task: create-yamls
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            <<: *artifacts-creds
+            tag: latest
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+        params:
+          <<: *nexus-creds
+          CONFIG_FILE_PATH: source/concourse/config.json
+          DEPLOY_TO_ENV: fluffle
+          VERSION_FILE: fluffle
+          NAME: connect-baseservice-handler
+          ROUTES: connect-baseservice-handler-fluffle.apps.internal
+          DEPLOY_DB_PORT: "5432"
+          DEPLOY_DB_HOST: "cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com"
+          DEPLOY_DB_NAME: "postgres"
+          DEPLOY_DB_SCHEMA: "service"
+          DEPLOY_DB_SSL: "true"
+          DEPLOY_AUTH_URL: "https://staging.outcomesmtm.com/rest/services"
+          DEPLOY_AUTH_ROUTE: "/user/internal"
+          DEPLOY_NODE_ENV: "fluffle"
+          DEPLOY_LOG_LEVEL: "info"
+          DEPLOY_SNS_TOPIC: "arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo"
+          DEPLOY_PUBLISH_URL: "https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish"
+          DEPLOY_KEYCLOAK_BASE_URL: "https://cc-keycloak-stage.apps.np1.fuseapps.io"
+          DEPLOY_SERVICE_READ_ROLE: "SERVICE_API_READ"
+          DEPLOY_PORT: "8080"
+          DEPLOY_APM_SERVER_URL: "https://apmdev.cahcommtech.com"
+          DEPLOY_APM_SERVICE_NAME: "connect-baseservice-handler"
+          DEPLOY_APM_TOKEN: "eoMpozdT4TfOUeFyuS"
+        run:
+          path: tools/tasks/k8s/create-yamls.sh
+        inputs:
+        - name: tools
+        - name: version
+        - name: source
+        - name: environment
+          optional: true
+        outputs:
+        - name: out
+      input_mapping:
+        version: version-fluffle
+      output_mapping:
+        out: generated-ymls
+    - task: commit-k8s-files
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            <<: *artifacts-creds
+            tag: latest
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+        params:
+          REPO: cahcommercial/outcomesone-program-management-k8s-application-config
+          YMLS_PATH: apps/connect-baseservice-handler/fluffle/connect-baseservice-handler
+          VERSION_FILE: fluffle
+          APP_NAME: connect-baseservice-handler
+        run:
+          path: tools/tasks/k8s/commit-ymls.sh
+        inputs:
+        - name: tools
+        - name: k8s-repo
+        - name: generated-ymls
+        - name: version
+        outputs:
+        - name: k8s-repo
+        - name: change-count
+      input_mapping:
+        version: version-fluffle
+    - put: k8s-repo
+      params:
+        repository: k8s-repo
+        rebase: true
+- name: deploy-to-stage
+  plan:
+    - get: tools
+    - get: source
+    - get: version-stage
+      trigger: false
+    - get: k8s-repo
+    - put: slack-alert
+      params:
+        <<: *slack-channel
+        text: "Deploying connect-baseservice-handler to stage"
+    - task: create-yamls
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            <<: *artifacts-creds
+            tag: latest
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+        params:
+          <<: *nexus-creds
+          CONFIG_FILE_PATH: source/concourse/config.json
+          DEPLOY_TO_ENV: stage
+          VERSION_FILE: stage
+          NAME: connect-baseservice-handler
+          ROUTES: connect-baseservice-handler-stage.apps.internal
+          DEPLOY_DB_PORT: "5432"
+          DEPLOY_DB_HOST: "cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com"
+          DEPLOY_DB_NAME: "postgres"
+          DEPLOY_DB_SCHEMA: "service"
+          DEPLOY_DB_SSL: "true"
+          DEPLOY_AUTH_URL: "https://staging.outcomesmtm.com/rest/services"
+          DEPLOY_AUTH_ROUTE: "/user/internal"
+          DEPLOY_NODE_ENV: "staging"
+          DEPLOY_LOG_LEVEL: "silly"
+          DEPLOY_SNS_TOPIC: "arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo"
+          DEPLOY_PUBLISH_URL: "https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish"
+          DEPLOY_KEYCLOAK_BASE_URL: "https://cc-keycloak-stage.apps.np1.fuseapps.io"
+          DEPLOY_SERVICE_READ_ROLE: "SERVICE_API_READ"
+          DEPLOY_PORT: "8080"
+          DEPLOY_APM_SERVER_URL: "https://apmdev.cahcommtech.com"
+          DEPLOY_APM_SERVICE_NAME: "connect-baseservice-handler"
+          DEPLOY_APM_TOKEN: "eoMpozdT4TfOUeFyuS"
+        run:
+          path: tools/tasks/k8s/create-yamls.sh
+        inputs:
+        - name: tools
+        - name: version
+        - name: source
+        - name: environment
+          optional: true
+        outputs:
+        - name: out
+      input_mapping:
+        version: version-stage
+      output_mapping:
+        out: generated-ymls
+    - task: commit-k8s-files
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            <<: *artifacts-creds
+            tag: latest
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+        params:
+          REPO: cahcommercial/outcomesone-program-management-k8s-application-config
+          YMLS_PATH: apps/connect-baseservice-handler/stage/connect-baseservice-handler
+          VERSION_FILE: stage
+          APP_NAME: connect-baseservice-handler
+        run:
+          path: tools/tasks/k8s/commit-ymls.sh
+        inputs:
+        - name: tools
+        - name: k8s-repo
+        - name: generated-ymls
+        - name: version
+        outputs:
+        - name: k8s-repo
+        - name: change-count
+      input_mapping:
+        version: version-stage
+    - put: k8s-repo
+      params:
+        repository: k8s-repo
+        rebase: true
+    - put: slack-alert
+      params:
+        <<: *slack-channel
+        text_file: pr_message/message.txt
+- name: deploy-to-prod
+  plan:
+    - get: tools
+    - get: source
+    - get: version-prod
+      trigger: false
+    - get: k8s-repo
+    - put: slack-alert
+      params:
+        <<: *slack-channel
+        text: "Deploying connect-baseservice-handler to prod"
+    - task: create-yamls
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            <<: *artifacts-creds
+            tag: latest
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+        params:
+          <<: *nexus-creds
+          CONFIG_FILE_PATH: source/concourse/config.json
+          DEPLOY_TO_ENV: prod
+          VERSION_FILE: prod
+          NAME: connect-baseservice-handler
+          ROUTES: connect-baseservice-handler-production.apps.internal
+          DEPLOY_DB_PORT: "prod"
+          DEPLOY_DB_HOST: "prod"
+          DEPLOY_DB_NAME: "prod"
+          DEPLOY_DB_SCHEMA: "prod"
+          DEPLOY_DB_SSL: "prod"
+          DEPLOY_AUTH_URL: "prod"
+          DEPLOY_AUTH_ROUTE: "prod"
+          DEPLOY_NODE_ENV: "prod"
+          DEPLOY_LOG_LEVEL: "prod"
+          DEPLOY_SNS_TOPIC: "prod"
+          DEPLOY_PUBLISH_URL: "prod"
+          DEPLOY_KEYCLOAK_BASE_URL: "prod"
+          DEPLOY_SERVICE_READ_ROLE: "prod"
+          DEPLOY_PORT: "prod"
+          DEPLOY_APM_SERVER_URL: "https://apmprod.cahcommtech.com"
+          DEPLOY_APM_SERVICE_NAME: "connect-baseservice-handler"
+          DEPLOY_APM_TOKEN: "Jc31jhJbN37YdKYYzD"
+        run:
+          path: tools/tasks/k8s/create-yamls.sh
+        inputs:
+        - name: tools
+        - name: version
+        - name: source
+        - name: environment
+          optional: true
+        outputs:
+        - name: out
+      input_mapping:
+        version: version-prod
+      output_mapping:
+        out: generated-ymls
+    - task: commit-k8s-files
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            <<: *artifacts-creds
+            tag: latest
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+        params:
+          REPO: cahcommercial/outcomesone-program-management-k8s-application-config
+          YMLS_PATH: apps/connect-baseservice-handler/prod/connect-baseservice-handler
+          VERSION_FILE: prod
+          APP_NAME: connect-baseservice-handler
+        run:
+          path: tools/tasks/k8s/commit-ymls.sh
+        inputs:
+        - name: tools
+        - name: k8s-repo
+        - name: generated-ymls
+        - name: version
+        outputs:
+        - name: k8s-repo
+        - name: change-count
+      input_mapping:
+        version: version-prod
+- name: promote
+  plan:
+    - get: tools
+    - get: version-snapshot
+    - get: version-fluffle
+    - get: version-release
+    - get: source
+    - get: connect_source
+    - get: meta
+    - task: promote_snapshot
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            <<: *artifacts-creds
+            tag: latest
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+        params:
+          <<: *nexus-creds
+          NAME: connect-baseservice-handler
+          ARTIFACT_EXTENSION: zip
+          GROUP_ID: com.outcomesone.programmanagement
+        run:
+          path: tools/tasks/promote.sh
+        inputs:
+        - name: tools
+        - name: version-snapshot
+        outputs:
+        - name: target
+        caches:
+        - path: source/node_modules
+        - path: tools/.mvn/.m2
+      output_mapping:
+        target: target
+    - put: nexus
+      params:
+        file: target/*.zip
+        version_file: target/version-file
+      on_failure:
+        put: slack-alert
+        params:
+          <<: *slack-channel
+          text: ":this_is_fine: connect-baseservice-handler release push failed :this_is_fine:"
+    - task: tag_release
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            <<: *artifacts-creds
+            tag: latest
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+        params:
+          PROJECT_NAME: connect-baseservice-handler
+          BASE_BRANCH: HL-1691-hotfix
+          TAG_WITH_V: false
+          MONO_REPO: false
+        run:
+          path: kotlinc
+          args:
+          - "-script"
+          - "tools/tasks/tag-release.main.kts"
+        inputs:
+        - name: tools
+        - name: source
+        - name: version-snapshot
+        - name: target
+        outputs:
+        - name: tagRepo
+      output_mapping:
+        tagRepo: tagRepo
+    - put: source
+      params:
+        repository: tagRepo
+        only_tag: true
+    - task: increment_snapshot
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            <<: *artifacts-creds
+            tag: latest
+            repository: artifacts.cahcommtech.com/pipeline-tools17
+        params:
+          VERSION_BRANCH: version
+        run:
+          path: tools/tasks/increment.sh
+        inputs:
+        - name: tools
+        - name: version-snapshot
+        - name: version-fluffle
+        outputs:
+        - name: updatedRepo
+      output_mapping:
+        updatedRepo: updatedRepo
+    - put: version-snapshot
+      params:
+        repository: updatedRepo
+    - put: version-release
+      params:
+        file: target/version-file
+- name: HL-1691-hotfix-build
+  plan:
+    - get: tools
+    - get: version
+    - get: connect_source
+    - get: meta
+    - get: source
+      trigger: true
+    - task: generate_snapshot_artifact
+      config:
+        platform: linux
+        image_resource:
+          type: registry-image
+          source:
+            <<: *artifacts-creds
+            tag: 18
+            repository: artifacts.cahcommtech.com/connect/node
+        run:
+          path: tools/tasks/node/publish.sh
+        inputs:
+        - name: tools
+        - name: source
+        container_limits:
+          memory: 2147483648
+        outputs:
+        - name: target
+        caches:
+        - path: source/node_modules
+      params:
+        GIT_USERNAME: ((config/github.username))
+        GIT_PASSWORD: ((config/github.personal_access_token))
+        GIT_REGISTRY_TOKEN: ((config/github.personal_access_token))
+        <<: *nexus-creds
+      on_failure:
+        put: slack-alert
+        params:
+          <<: *slack-channel
+          text: ":selfie: connect-baseservice-handler generate snapshot artifact failed :selfie:"
+    - put: nexus-snapshot
+      params:
+        file: target/*.zip
+        version_file: version/snapshot
+      on_failure:
+        put: slack-alert
+        params:
+          <<: *slack-channel
+          text: ":thanos_snap: connect-baseservice-handler snapshot push failed :thanos_snap:"
+          attachments:
+          - color: "#bc091e"
+            text: ":alert_shiny:"
