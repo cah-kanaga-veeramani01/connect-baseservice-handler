@@ -566,12 +566,10 @@ jobs:
           cpu: 0
           memory: 4294967296
         image_resource:
-          name: ""
           source:
-            password: ((config/artifacts.password))
+            <<: *artifacts-creds
             repository: artifacts.cahcommtech.com/connect/node
             tag: 16
-            username: ((config/artifacts.username))
           type: registry-image
         inputs:
         - name: tools
