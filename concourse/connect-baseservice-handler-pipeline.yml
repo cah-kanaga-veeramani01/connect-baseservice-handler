@@ -560,6 +560,52 @@ jobs:
     - get: meta
     - get: source
       trigger: true
+    - task: run-flyway-migration-scripts
+      config:
+        container_limits:
+          cpu: 0
+          memory: 4294967296
+        image_resource:
+          name: ""
+          source:
+            password: ((config/artifacts.password))
+            repository: artifacts.cahcommtech.com/connect/node
+            tag: 16
+            username: ((config/artifacts.username))
+          type: registry-image
+        inputs:
+        - name: tools
+        - name: source
+        params:
+          DB_HOST: ((connect-baseservice-handler/stage.db-host))
+          DB_NAME: ((connect-baseservice-handler/stage.db-name))
+          DB_PASSWORD_DDL: ((connect-baseservice-handler/stage.db-password-ddl))
+          DB_SCHEMA: ((connect-baseservice-handler/stage.db-schema))
+          DB_USERNAME_DDL: ((connect-baseservice-handler/stage.db-username-ddl))
+          NODE_ENV: ((connect-baseservice-handler/stage.node-env))
+        platform: linux
+        run:
+          args:
+          - -c
+          - |
+            ls
+            cd source
+            echo New
+            npm install
+            echo Started flyway migration
+            npm run migrate
+            cd ../
+          path: /bin/sh
+      on_failure:
+        params:
+          text: Service config handler => Failed To Execute Flyway Migration Scripts
+            In Staging!
+        put: slack-alert
+      on_success:
+        params:
+          text: Service config handler => Executed Flyway Migration Scripts In Staging
+            Successfully!
+        put: slack-alert  
     - task: generate_snapshot_artifact
       config:
         platform: linux
