@@ -39,7 +39,7 @@
     "prodSlack": "#hidden-leaf-deployments",
     "routeOverrides": [
     ],
-    "apmLogLevel": "info",
+    "apmLogLevel": "debug",
     "cypress": false,
     "configType": "app",
     "configVersion": "27",
@@ -79,7 +79,10 @@
                 "PUBLISH_URL": "{env:fluffle=https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish,stage=https://connect-program-snssqs-handler-stage.np-apps.internal.outcomesone.cloud/sns/publish,prod=https://connect-program-snssqs-handler-prod.pr-apps.internal.outcomesone.cloud/sns/publish}",
                 "KEYCLOAK_BASE_URL": "{env:fluffle=https://cc-keycloak-stage.apps.np1.fuseapps.io,stage=https://cc-keycloak-stage.apps.np1.fuseapps.io,prod=https://cc-keycloak-prod.apps.fuseapps.io}",
                 "SERVICE_READ_ROLE": "{env:fluffle=SERVICE_API_READ,stage=SERVICE_API_READ,prod=SERVICE_API_READ}",
-                "PORT": "{env:fluffle=8080,stage=8080,prod=8080}"
+                "PORT": "{env:fluffle=8080,stage=8080,prod=8080}",
+                "APM_SERVER_URL": "{env:fluffle=https://apmdev.cahcommtech.com,stage=https://apmdev.cahcommtech.com,prod=https://apmprod.cahcommtech.com}",
+                "APM_SERVICE_NAME": "{env:fluffle=connect-baseservice-handler,stage=connect-baseservice-handler,prod=connect-baseservice-handler}"  ,
+                "APM_TOKEN": "{env:fluffle=eoMpozdT4TfOUeFyuS,stage=eoMpozdT4TfOUeFyuS,prod=Jc31jhJbN37YdKYYzD}"
             },
             "secrets": {
                 "DB_USERNAME_DDL": "connect-baseservice-handler/{env}.DB_USERNAME_DDL",

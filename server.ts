@@ -1,6 +1,7 @@
 import express, { Application, NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import './apmLoader';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import httpContext from 'express-http-context';
