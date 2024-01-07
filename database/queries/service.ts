@@ -52,6 +52,8 @@ JSONB_AGG(
 					s1."isPublished",
 					s1."legacyTIPDetailID",
                     "ServiceType"."serviceType",
+					(select json_agg("name") from "service"."AttributesDefinition" where "attributesDefinitionID"
+					in ( select unnest(string_to_array(TRIM('[]' FROM metadata::json->>'attributes'),',')::int[]))) as attributes ,
 					CASE 
 					WHEN ((s1."validFrom" < now() AND s1."validTill" >= now()) OR (s1."validFrom" < now() AND s1."validTill" IS NULL)  AND s1."isPublished" = 1) THEN 'ACTIVE' 
 					WHEN (s1."validFrom" IS NOT NULL AND s1."validFrom" > now() AND ((s1."validTill" IS NOT NULL AND s1."validFrom" < s1."validTill") OR (s1."validTill" IS NULL)) AND s1."isPublished" = 1 ) THEN 'SCHEDULED' 
@@ -65,10 +67,11 @@ JSONB_AGG(
           
 from service."Service" s1
     JOIN service."ServiceType" on s1."serviceTypeID" = "ServiceType"."serviceTypeID" 
+	LEFT JOIN service."ServiceAttributes" on s1."serviceID" = "ServiceAttributes"."serviceID" and s1."globalServiceVersion" = "ServiceAttributes"."globalServiceVersion"
 where (s1."validTill" IS NULL 
 		  OR s1."validTill" > NOW()) 
 
-      group by "serviceID" 
+      group by s1."serviceID" 
         order by "serviceID" desc
 ) vs
 ) vvs
