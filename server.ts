@@ -1,6 +1,7 @@
 import express, { Application, NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import './apmLoader';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import httpContext from 'express-http-context';
@@ -25,6 +26,7 @@ import actuator from 'express-actuator';
 
 dotenv.config();
 
+app.use(actuator({ basePath: '/actuator' }));
 app.use(
 	session({
 		secret: process.env.NODE_ENV,
@@ -51,7 +53,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 app.use(helmet());
 app.use(express.urlencoded({ extended: false }));
-app.use(actuator());
+
 //middlewares for each request
 app.use(cookieParser());
 app.use(requestLogger);
@@ -59,9 +61,9 @@ app.use(express.json());
 app.use(httpContext.middleware);
 app.use(contextStore);
 app.use(generateLogId);
-app.use('/actuator/health', (req: Request, res: Response, _next: NextFunction) => {
-	res.json({ status: 'UP' });
-});
+// app.use('/actuator/health', (req: Request, res: Response, _next: NextFunction) => {
+// 	res.json({ status: 'UP' });
+// });
 app.use(/^((?!external|swagger).)*$/i, auth); // authenticate every route except /swagger
 
 app.get('/', (req: Request, res: Response, _next: NextFunction) => {
