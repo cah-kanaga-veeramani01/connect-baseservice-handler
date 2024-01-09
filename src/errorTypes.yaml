@@ -99,3 +99,8 @@ ServiceDetailsFetchError:
   code: "SCE025"
   EN:
     message: "An error occurred while fetching service details for the service."
+
+NonInActiveServicesListFetchError:
+  code: 'SCE026'
+  EN:
+    message: 'Error while fetching all non inactive services list.'

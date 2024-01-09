@@ -1,8 +1,7 @@
 import { Repository } from 'sequelize-typescript';
 import { Service } from '../../database/models/Service';
-import { serviceList, EMPTY_STRING, CLIENT_TZ } from '../../utils/constants';
+import { EMPTY_STRING, CLIENT_TZ } from '../../utils/constants';
 import {
-	QServiceList,
 	QServiceDetails,
 	QAddModuleConfig,
 	QCheckConfigCount,
@@ -10,10 +9,13 @@ import {
 	QMissingModules,
 	QServiceActiveOrInActive,
 	QServiceActiveVersion,
-	QExpiredServiceList,
-	QgetActiveServices
+	QgetActiveServices,
+	QGetNonInActiveServicesWithSearch,
+	QGetNonInActiveServices,
+	QGetAllServices,
+	QGetAllServicesWithSearch
 } from '../../database/queries/service';
-import { QueryTypes } from 'sequelize';
+import { QueryTypes, Op } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
 import { IService, ServiceListResponse } from '../interfaces/IServices';
 import db from '../../database/DBManager';
@@ -63,59 +65,6 @@ export default class ServiceManager {
 		} catch (error) {
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'CreateServiceError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
-		}
-	}
-
-	public async getServiceList(sortBy: string, sortOrder: string, offset: number, limit: number, keyword: string, showInactive: number): Promise<ServiceListResponse> {
-		try {
-			let totalServices = [];
-			let services = [];
-			let nonFilteredServices = [];
-			const searchKey = keyword !== EMPTY_STRING ? serviceList.matchAll + keyword.trim() + serviceList.matchAll : serviceList.matchAll;
-			if (showInactive === 1) {
-				// query to get total count of services filtered by status & search key
-				totalServices = await db.query(QExpiredServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
-					type: QueryTypes.SELECT,
-					replacements: { searchKey, limit: null, offset: null }
-				});
-				//query to fetch all services matching all criteria
-				services = await db.query(QExpiredServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
-					type: QueryTypes.SELECT,
-					replacements: { searchKey, limit, offset }
-				});
-				//query to get total count of services with no filter
-				nonFilteredServices = await db.query(QExpiredServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
-					type: QueryTypes.SELECT,
-					replacements: { searchKey: serviceList.matchAll, limit: null, offset: null }
-				});
-				await Promise.all([totalServices, services, nonFilteredServices]);
-			} else {
-				// query to get total count of services filtered by status & search key
-				totalServices = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
-					type: QueryTypes.SELECT,
-					replacements: { searchKey, limit: null, offset: null }
-				});
-				//query to fetch all services matching all criteria
-				services = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
-					type: QueryTypes.SELECT,
-					replacements: { searchKey, limit, offset }
-				});
-				//query to get total count of services with no filter
-				nonFilteredServices = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
-					type: QueryTypes.SELECT,
-					replacements: { searchKey: serviceList.matchAll, limit: null, offset: null }
-				});
-				await Promise.all([totalServices, services, nonFilteredServices]);
-			}
-
-			const response: ServiceListResponse = {
-				totalServices: totalServices.length,
-				nonFilteredServicesCount: nonFilteredServices.length,
-				services: services
-			};
-			return response;
-		} catch (error) {
-			throw new HandleError({ name: 'ServiceListFetchError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
 		}
 	}
 
@@ -478,5 +427,88 @@ export default class ServiceManager {
 			logger.nonPhi.error(error.message, { _err: error });
 			throw new HandleError({ name: 'ServiceDetailFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
+	}
+	public async getAllServicesList(sortBy: string, sortOrder: string, offset: number, limit: number, searchKey: string): Promise<ServiceListResponse> {
+		try {
+			let services = [];
+			if (searchKey !== EMPTY_STRING) {
+				logger.nonPhi.info('Fetching all services with search filter');
+				services = await this.getAllServicesWithSearchFilter(sortBy, sortOrder, offset, limit, searchKey);
+			} else {
+				logger.nonPhi.info('Fetching all services without any search filter');
+				services = await this.getAllServicesWithoutFilter(sortBy, sortOrder, offset, limit);
+			}
+			const response: ServiceListResponse = {
+				totalServices: services.length,
+				nonFilteredServicesCount: await this.getTotalServices(),
+				services
+			};
+			logger.nonPhi.info('Returning the list of all services.');
+			return response;
+		} catch (error) {
+			logger.nonPhi.error('Error while fetching all the services', error);
+			throw new HandleError({ name: 'ServiceListFetchError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
+		}
+	}
+
+	public async getNonInActiveServicesList(sortBy: string, sortOrder: string, offset: number, limit: number, searchKey: string): Promise<ServiceListResponse> {
+		try {
+			let services = [];
+			if (searchKey !== EMPTY_STRING) {
+				logger.nonPhi.info('Fetching all the non inactive services with search filter');
+				services = await this.getNonInActiveServicesWithSearchFilter(sortBy, sortOrder, offset, limit, searchKey);
+			} else {
+				logger.nonPhi.info('Fetching all the non inactive services without search filter');
+				services = await this.getAllNonInActiveServicesWithoutFilter(sortBy, sortOrder, offset, limit);
+			}
+			const response: ServiceListResponse = {
+				totalServices: services.length,
+				nonFilteredServicesCount: await this.getTotalNonInActiveServices(),
+				services
+			};
+			logger.nonPhi.info('Returning all the non inactive services.');
+			return response;
+		} catch (error) {
+			logger.nonPhi.error('Error while fetching all the non inactive services', error);
+			throw new HandleError({ name: 'NonInActiveServicesListFetchError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
+		}
+	}
+
+	private async getTotalNonInActiveServices(): Promise<number> {
+		logger.nonPhi.info('Returning the count of total number of non inactive services.');
+		return this.serviceRepository.count({ where: { status: { [Op.ne]: 'INACTIVE' } }, distinct: true, col: 'serviceID' });
+	}
+
+	private async getTotalServices(): Promise<number> {
+		logger.nonPhi.info('Returning the count of all services including inactive services.');
+		return this.serviceRepository.count({ distinct: true, col: 'serviceID' });
+	}
+
+	private async getNonInActiveServicesWithSearchFilter(sortBy: string, sortOrder: string, offset: number, limit: number, searchKey: string): Promise<[]> {
+		return await db.query(QGetNonInActiveServicesWithSearch(sortBy, sortOrder), {
+			type: QueryTypes.SELECT,
+			replacements: { searchKey, limit, offset }
+		});
+	}
+
+	private async getAllNonInActiveServicesWithoutFilter(sortBy: string, sortOrder: string, offset: number, limit: number): Promise<[]> {
+		return await db.query(QGetNonInActiveServices(sortBy, sortOrder), {
+			type: QueryTypes.SELECT,
+			replacements: { limit, offset }
+		});
+	}
+
+	private async getAllServicesWithSearchFilter(sortBy: string, sortOrder: string, offset: number, limit: number, searchKey: string): Promise<[]> {
+		return await db.query(QGetAllServicesWithSearch(sortBy, sortOrder), {
+			type: QueryTypes.SELECT,
+			replacements: { searchKey, limit, offset }
+		});
+	}
+
+	private async getAllServicesWithoutFilter(sortBy: string, sortOrder: string, offset: number, limit: number): Promise<[]> {
+		return await db.query(QGetAllServices(sortBy, sortOrder), {
+			type: QueryTypes.SELECT,
+			replacements: { limit, offset }
+		});
 	}
 }
