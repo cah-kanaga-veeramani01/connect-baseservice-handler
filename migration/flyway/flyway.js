@@ -2,7 +2,7 @@ module.exports = function () {
 	return {
 		flywayArgs: {
 			
-			url: `jdbc:postgresql://${process.env.DB_HOST}:5432/${process.env.DB_NAME}?ssl=true&sslmode=require&sslcert=cert/us-east-1-bundle.crt`,
+			url: `jdbc:postgresql://${process.env.DB_HOST}:5432/${process.env.DB_NAME}?ssl=true&sslmode=require&sslcert=./cert/us-east-1-bundle.crt`,
 			schemas: process.env.DB_SCHEMA,
 			locations: 'filesystem:migration/flyway',
 			user: process.env.DB_USERNAME_DDL,
