@@ -1,7 +1,8 @@
 module.exports = function () {
 	return {
 		flywayArgs: {
-			url: `jdbc:postgresql://${process.env.DB_HOST}/${process.env.DB_NAME}?ssl=true`,
+			//url: `jdbc:postgresql://${process.env.DB_HOST}/${process.env.DB_NAME}?ssl=true`,
+			url: `jdbc:postgresql://${process.env.DB_HOST}:5432/postgres`,
 			schemas: process.env.DB_SCHEMA,
 			locations: 'filesystem:migration/flyway',
 			user: process.env.DB_USERNAME_DDL,
