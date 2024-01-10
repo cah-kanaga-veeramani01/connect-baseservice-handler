@@ -16,7 +16,7 @@
     "lint:fix": "eslint . --ext .ts --fix",
     "test": "node --max-old-space-size=1024 ./node_modules/.bin/jest --coverage --logHeapUsage --runInBand",
     "doc": "typedoc",
-    "migrate": "NODE_TLS_REJECT_UNAUTHORIZED='0' flyway -c migration/flyway/flyway.js migrate",
+    "migrate": "NODE_TLS_REJECT_UNAUTHORIZED='1' flyway -c migration/flyway/flyway.js migrate",
     "info": "flyway -c migration/flyway/flyway.js info",
     "coverage": "node --max-old-space-size=1024 ./node_modules/.bin/jest --coverage --logHeapUsage --runInBand"
   },
