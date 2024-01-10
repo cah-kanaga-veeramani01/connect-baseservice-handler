@@ -17,7 +17,7 @@ import {
 } from '../../database/queries/service';
 import { QueryTypes, Op } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
-import { IService, ServiceListResponse } from '../interfaces/IServices';
+import { IService } from '../interfaces/IServices';
 import db from '../../database/DBManager';
 import httpContext from 'express-http-context';
 import { ServiceType } from '../../database/models/ServiceType';
@@ -428,7 +428,7 @@ export default class ServiceManager {
 			throw new HandleError({ name: 'ServiceDetailFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
-	public async getAllServicesList(sortBy: string, sortOrder: string, offset: number, limit: number, searchKey: string): Promise<ServiceListResponse> {
+	public async getAllServicesList(sortBy: string, sortOrder: string, offset: number, limit: number, searchKey: string): Promise<{}> {
 		try {
 			let services = [];
 			if (searchKey !== EMPTY_STRING) {
@@ -438,10 +438,25 @@ export default class ServiceManager {
 				logger.nonPhi.info('Fetching all services without any search filter');
 				services = await this.getAllServicesWithoutFilter(sortBy, sortOrder, offset, limit);
 			}
-			const response: ServiceListResponse = {
-				totalServices: services.length,
+			const servicesMap = new Map<number, object>();
+
+			services.forEach((service) => {
+				if (servicesMap.has(service.serviceid)) {
+					const _service = JSON.parse(JSON.stringify(servicesMap.get(service.serviceid)));
+					_service.statuses.push(this.getServiceDetails(service));
+					this.removeVersionSpecificDetailsFromService(service);
+					servicesMap.set(_service.serviceid, _service);
+				} else {
+					service.statuses = [this.getServiceDetails(service)];
+					this.removeVersionSpecificDetailsFromService(service);
+					servicesMap.set(service.serviceid, service);
+				}
+			});
+
+			const response = {
+				totalServices: servicesMap.size,
 				nonFilteredServicesCount: await this.getTotalServices(),
-				services
+				services: [...servicesMap.values()]
 			};
 			logger.nonPhi.info('Returning the list of all services.');
 			return response;
@@ -451,7 +466,7 @@ export default class ServiceManager {
 		}
 	}
 
-	public async getNonInActiveServicesList(sortBy: string, sortOrder: string, offset: number, limit: number, searchKey: string): Promise<ServiceListResponse> {
+	public async getNonInActiveServicesList(sortBy: string, sortOrder: string, offset: number, limit: number, searchKey: string): Promise<{}> {
 		try {
 			let services = [];
 			if (searchKey !== EMPTY_STRING) {
@@ -461,10 +476,25 @@ export default class ServiceManager {
 				logger.nonPhi.info('Fetching all the non inactive services without search filter');
 				services = await this.getAllNonInActiveServicesWithoutFilter(sortBy, sortOrder, offset, limit);
 			}
-			const response: ServiceListResponse = {
-				totalServices: services.length,
+
+			const servicesMap = new Map<number, object>();
+
+			services.forEach((service) => {
+				if (servicesMap.has(service.serviceid)) {
+					const _service = JSON.parse(JSON.stringify(servicesMap.get(service.serviceid)));
+					_service.statuses.push(this.getServiceDetails(service));
+					this.removeVersionSpecificDetailsFromService(service);
+					servicesMap.set(_service.serviceid, _service);
+				} else {
+					service.statuses = [this.getServiceDetails(service)];
+					this.removeVersionSpecificDetailsFromService(service);
+					servicesMap.set(service.serviceid, service);
+				}
+			});
+			const response = {
+				totalServices: servicesMap.size,
 				nonFilteredServicesCount: await this.getTotalNonInActiveServices(),
-				services
+				services: [...servicesMap.values()]
 			};
 			logger.nonPhi.info('Returning all the non inactive services.');
 			return response;
@@ -510,5 +540,27 @@ export default class ServiceManager {
 			type: QueryTypes.SELECT,
 			replacements: { limit, offset }
 		});
+	}
+
+	private getServiceDetails(service) {
+		return {
+			status: service.status,
+			validFrom: service.validFrom,
+			validTill: service.validTill,
+			isPublished: service.isPublished,
+			serviceName: service.servicename,
+			serviceType: service.servicetype,
+			legacyTIPDetailID: service.legacytipdetailid,
+			globalServiceVersion: service.globalServiceVersion,
+			attributes: service.attributes
+		};
+	}
+
+	private removeVersionSpecificDetailsFromService(service) {
+		delete service.validFrom;
+		delete service.validTill;
+		delete service.isPublished;
+		delete service.globalServiceVersion;
+		delete service.status;
 	}
 }

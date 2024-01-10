@@ -380,7 +380,7 @@ ORDER BY "serviceID";`;
 
 export const QGetNonInActiveServicesWithSearch = (sortBy: any, sortOrder: any) =>
 	`SELECT * FROM 
-			( SELECT s."serviceID" as serviceid, s."serviceName" as servicename,st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid, s.status,
+			( SELECT s."serviceID" as serviceid, s."serviceName" as servicename,st."serviceType" as servicetype,s."globalServiceVersion", s."validFrom", s."validTill", s."isPublished", s."legacyTIPDetailID" as legacytipdetailid, s.status,
 				(SELECT json_agg("name") FROM "service"."AttributesDefinition" WHERE "attributesDefinitionID"
 					in ( SELECT unnest(string_to_array(TRIM('[]' FROM metadata::json->>'attributes'),',')::int[]))) as attributes
 	FROM service."Service"  s 
@@ -395,7 +395,7 @@ export const QGetNonInActiveServicesWithSearch = (sortBy: any, sortOrder: any) =
 
 export const QGetNonInActiveServices = (sortBy: any, sortOrder: any) =>
 	`SELECT * FROM 
-			( SELECT s."serviceID" as serviceid, s."serviceName" as servicename,st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid, s.status,
+			( SELECT s."serviceID" as serviceid, s."serviceName" as servicename,st."serviceType" as servicetype,s."validFrom", s."validTill", s."isPublished", s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid, s.status,
 				(SELECT json_agg("name") FROM "service"."AttributesDefinition" WHERE "attributesDefinitionID"
 					in ( SELECT unnest(string_to_array(TRIM('[]' FROM metadata::json->>'attributes'),',')::int[]))) as attributes
 	FROM service."Service"  s 
@@ -406,7 +406,7 @@ export const QGetNonInActiveServices = (sortBy: any, sortOrder: any) =>
 
 export const QGetAllServicesWithSearch = (sortBy: any, sortOrder: any) =>
 	`SELECT * FROM 
-			( SELECT s."serviceID" as serviceid, s."serviceName"  as servicename,st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid, s.status,
+			( SELECT s."serviceID" as serviceid, s."serviceName"  as servicename,s."validFrom", s."validTill", s."isPublished", st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid, s.status,
 				(SELECT json_agg("name") FROM "service"."AttributesDefinition" WHERE "attributesDefinitionID"
 					in ( SELECT unnest(string_to_array(TRIM('[]' FROM metadata::json->>'attributes'),',')::int[]))) as attributes
 	FROM service."Service"  s 
@@ -421,7 +421,7 @@ export const QGetAllServicesWithSearch = (sortBy: any, sortOrder: any) =>
 
 export const QGetAllServices = (sortBy: any, sortOrder: any) =>
 	`SELECT * FROM 
-			( SELECT s."serviceID" as serviceid, s."serviceName" as servicename,st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid, s.status,
+			( SELECT s."serviceID" as serviceid, s."serviceName" as servicename,s."validFrom", s."validTill", s."isPublished", st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid, s.status,
 				(SELECT json_agg("name") FROM "service"."AttributesDefinition" WHERE "attributesDefinitionID"
 					in ( SELECT unnest(string_to_array(TRIM('[]' FROM metadata::json->>'attributes'),',')::int[]))) as attributes
 	FROM service."Service"  s 
