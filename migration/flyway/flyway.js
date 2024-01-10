@@ -2,7 +2,7 @@ module.exports = function () {
 	return {
 		flywayArgs: {
 			
-			url: `jdbc:postgresql://cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com:5432/postgres?ssl=true&sslcert=./cert/us-east-1-bundle.crt`,
+			url: `jdbc:postgresql://cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com:5432/postgres?ssl=true&sslcert=./../../cert/us-east-1-bundle.crt`,
 			schemas: process.env.DB_SCHEMA,
 			locations: 'filesystem:migration/flyway',
 			user: process.env.DB_USERNAME_DDL,
