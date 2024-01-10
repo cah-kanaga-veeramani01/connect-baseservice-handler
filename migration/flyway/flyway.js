@@ -8,7 +8,13 @@ module.exports = function () {
 			user: process.env.DB_USERNAME_DDL,
 			password: process.env.DB_PASSWORD_DDL,
 			sqlMigrationSuffixes: '.sql',
-			baselineOnMigrate: true
+			baselineOnMigrate: true,
+			"ssl":true,
+			"dialectOptions":{
+				"ssl":{
+					"require":true
+				}
+			}
 		}
 	};
 };
