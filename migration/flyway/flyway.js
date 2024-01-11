@@ -7,7 +7,7 @@ module.exports = function () {
 	return {
 		flywayArgs: {
 			
-			url: `jdbc:postgresql://cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com:5432/postgres?ssl=true&sslmode=verify-ca&sslrootcert=./cert/us-east-1-bundle.pem`,
+			url: `jdbc:postgresql://cc-client-operations-program-configuration-dev.cluster-cukimq938igp.us-east-1.rds.amazonaws.com:5432/postgres?ssl=true&sslmode=require&sslrootcert=./cert/us-east-1-bundle.pem`,
 			"jdbcProperties.sslrootcert":"./../../cert/us-east-1-bundle.pem",
 			"jdbcProperties.sslcert":"./../../cert/us-east-1-bundle.crt",
 			schemas: process.env.DB_SCHEMA,
