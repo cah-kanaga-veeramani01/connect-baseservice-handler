@@ -444,6 +444,10 @@ export default class ServiceManager {
 				if (servicesMap.has(service.serviceid)) {
 					const _service = JSON.parse(JSON.stringify(servicesMap.get(service.serviceid)));
 					_service.statuses.push(this.getServiceDetails(service));
+					if (service.status === 'ACTIVE') {
+						_service.servicename = service.servicename;
+						_service.attributes = service.attributes;
+					}
 					this.removeVersionSpecificDetailsFromService(service);
 					servicesMap.set(_service.serviceid, _service);
 				} else {
@@ -483,6 +487,10 @@ export default class ServiceManager {
 				if (servicesMap.has(service.serviceid)) {
 					const _service = JSON.parse(JSON.stringify(servicesMap.get(service.serviceid)));
 					_service.statuses.push(this.getServiceDetails(service));
+					if (service.status === 'ACTIVE') {
+						_service.servicename = service.servicename;
+						_service.attributes = service.attributes;
+					}
 					this.removeVersionSpecificDetailsFromService(service);
 					servicesMap.set(_service.serviceid, _service);
 				} else {
@@ -561,6 +569,5 @@ export default class ServiceManager {
 		delete service.validTill;
 		delete service.isPublished;
 		delete service.globalServiceVersion;
-		delete service.status;
 	}
 }

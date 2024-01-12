@@ -22,3 +22,5 @@ GENERATED ALWAYS AS (CASE
 	 WHEN "validFrom" is not NULL and "validFrom" < "validTill" 
 	 and service.isPastDate("validTill")  THEN  'INACTIVE'::service."enum_Service_status" 
      END) STORED
+
+SELECT * FROM service."Service";     
