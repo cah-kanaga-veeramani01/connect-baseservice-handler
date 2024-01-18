@@ -26,7 +26,7 @@ AS
     COMMIT;
   END $$ LANGUAGE plpgsql;
 
--- Will discard drafts for the prvided ServiceIDs 
+-- Will discard the drafts for the provided ServiceIDs 
 -- CALL service.discard_service_draft(
 -- 	ARRAY[826,1237,1238,1239,737,1240,393,1001]::INT[]
 -- )
