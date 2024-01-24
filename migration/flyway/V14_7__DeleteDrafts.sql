@@ -8,10 +8,10 @@ AS
     LOOP
       RAISE notice 'serviceID %', i;
 	  
-	    draftVersion = (SELECT "globalServiceVersion"  FROM service."Service" WHERE "serviceID" = i AND "validFrom" IS NULL AND "validTill" IS NULL AND "isPublished" = 0);
+      draftVersion = (SELECT "globalServiceVersion"  FROM service."Service" WHERE "serviceID" = i AND "validFrom" IS NULL AND "validTill" IS NULL AND "isPublished" = 0);
       RAISE notice 'draftVersion %', draftVersion;
 	  
-	    DELETE
+      DELETE
       FROM   service."ServiceAttributes"
       WHERE  "serviceID" = i
       AND    "globalServiceVersion" = draftVersion;
