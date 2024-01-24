@@ -1,18 +1,32 @@
-CREATE OR REPLACE PROCEDURE service.delete_service_drafts(ServiceIDs INT[])
+CREATE OR replace PROCEDURE service.delete_service_drafts(ServiceIDs INT[])
 AS
   $$
-  DECLARE 
-  i INT;
+  DECLARE i INT;
+  DECLARE draftVersion INT;
   BEGIN
-    FOREACH i IN ARRAY ServiceIDs LOOP
-    RAISE NOTICE '[%]', i;
-	DELETE FROM service."ServiceAttributes" where "serviceID" = i AND "globalServiceVersion" = (SELECT "globalServiceVersion" FROM service."Service" where "serviceID" = i AND status = 'DRAFT');
-	
-    DELETE FROM service."ServiceModuleConfig" WHERE "serviceID" = i AND "moduleVersion" = (SELECT "globalServiceVersion" FROM service."Service" where "serviceID" = i AND status = 'DRAFT');
-
-    DELETE FROM service."Service" where "serviceID" = i AND status = 'DRAFT';
-
-    END LOOP; 
+	foreach i IN ARRAY ServiceIDs
+    LOOP
+      RAISE notice 'serviceID %', i;
+	  
+	  draftVersion = (SELECT "globalServiceVersion"  FROM service."Service" WHERE "serviceID" = i AND "validFrom" IS NULL AND "validTill" IS NULL AND "isPublished" = 0);
+      RAISE notice 'draftVersion %', draftVersion;
+	  
+	  DELETE
+      FROM   service."ServiceAttributes"
+      WHERE  "serviceID" = i
+      AND    "globalServiceVersion" = draftVersion;
+            
+      DELETE
+      FROM   service."ServiceModuleConfig"
+      WHERE  "serviceID" = i
+      AND    "moduleVersion" = draftVersion;
+      
+      DELETE
+      FROM   service."Service"
+      WHERE  "serviceID" = i
+      AND    "globalServiceVersion" = draftVersion;
+    
+    END LOOP;
     COMMIT;
   END $$ LANGUAGE plpgsql;
 
