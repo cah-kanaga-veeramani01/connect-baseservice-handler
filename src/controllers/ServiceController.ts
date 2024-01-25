@@ -29,9 +29,11 @@ export default class ServiceController {
 				limit = req.query.limit ? Number(req.query.limit) : serviceList.defaultLimit,
 				keyword = req.query.keyword ? String(req.query.keyword).replace(/_/g, '\\_') : EMPTY_STRING,
 				searchKey = keyword !== EMPTY_STRING ? serviceList.matchAll + keyword.trim() + serviceList.matchAll : EMPTY_STRING;
+			const showInactive = req.query.showInactive ? Number(req.query.showInactive) : 0;
 
 			logger.nonPhi.debug('Service list invoked with following parameters', { sortBy, sortOrder, from, limit, searchKey });
-
+			//res.send(await this.serviceManager.getServiceList(sortBy, sortOrder, from, limit, keyword, showInactive));
+		
 			if (Number(req.query.showInactive) === 1) {
 				res.send(await this.serviceManager.getAllServicesList(sortBy, sortOrder, from, limit, searchKey));
 			} else {
