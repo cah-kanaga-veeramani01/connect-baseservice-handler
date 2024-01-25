@@ -523,7 +523,8 @@ ORDER BY ${sortBy} ${sortOrder};`;
 export const QGetAllServiceIDsCount = () => `select COUNT(DISTINCT "serviceID") AS count from service."Service" 
 where "status" in ('ACTIVE','DRAFT','SCHEDULED')`;
 
-export const QAttributesDefinition = () => `select * FROM "service"."AttributesDefinition"`;
+export const QAttributesDefinition = () => `select * FROM 
+"service"."AttributesDefinition"`;
 
 export const QGetAllServiceIDsWithFilter = (sortBy: any, sortOrder: any) =>
 	`select DISTINCT z."serviceID",z."servicename" from (select X.* from (select s."serviceID",s."serviceName" as servicename,s."legacyTIPDetailID",s."status",  (SELECT json_agg(ad1."name") FROM "service"."AttributesDefinition" ad1 WHERE ad1."attributesDefinitionID" in (select unnest(string_to_array(TRIM('[]' FROM sa.metadata::json->>'attributes'),',')::int[])))::text as attributess       
