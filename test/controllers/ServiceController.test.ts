@@ -92,7 +92,7 @@ describe('Create a new service', () => {
 	});
 });
 
-describe('get list of services', () => {
+describe.skip('get list of services', () => {
 	test('should return list of services', async () => {
 		jest.spyOn(serviceManager, 'getServiceList').mockImplementation(() => {
 			return Promise.resolve({

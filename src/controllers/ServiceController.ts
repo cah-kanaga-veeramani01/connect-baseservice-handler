@@ -38,7 +38,6 @@ export default class ServiceController {
 			} else {
 				res.send(await this.serviceManager.getNonInActiveServicesList(sortBy, sortOrder, from, limit, searchKey));
 			}
-
 		} catch (error) {
 			throw new HandleError({ name: 'ServiceListFetchError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
 		}
