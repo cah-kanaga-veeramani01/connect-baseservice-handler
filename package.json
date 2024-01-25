@@ -1,30 +1,30 @@
 {
 	"name": "@service-config/connect-baseservice-handler",
-  "version": "1.8.8",
-  	"description": "Handler for Base Service Configuration",
+	"version": "1.8.8",
+	"description": "Handler for Base Service Configuration",
 	"main": "server.ts",
 	"publishConfig": {
-	  "registry": "https://artifacts.cahcommtech.com/repository/commtech-npmjs-internal/"
+		"registry": "https://artifacts.cahcommtech.com/repository/commtech-npmjs-internal/"
 	},
 	"scripts": {
-	  "build": "rm -rf dist && rm -rf build && tsc && mkdir dist && cp -rf build/ dist/ && cp -rf cert dist",
-	  "buildbk": "rimraf build && tsc",
-	  "build:server": "tsc && npm run copy-files",
-	  "copy-files": "copyfiles --all resources/* ./build",
-	  "preserve": "npm run build",
-	  "serve": "cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon -q build/server.js\"",
-	  "cache": "jest --clear-cache",
-	  "start": "node -r dotenv/config build/server.js",
-	  "start:dev": "nodemon -e ts -w ./ -x ts-node -r dotenv/config server.ts dotenv_config_path=./env/dev.env",
-	  "lint": "eslint . --ext .ts",
-	  "lint:fix": "eslint . --ext .ts --fix",
-	  "test": "node --max-old-space-size=1024 ./node_modules/.bin/jest --coverage --logHeapUsage --runInBand",
-	  "doc": "typedoc",
-	  "migrate": "NODE_TLS_REJECT_UNAUTHORIZED='0' flyway -c migration/flyway/flyway.js migrate",
-	  "info": "flyway -c migration/flyway/flyway.js info",
-	  "coverage": "node --max-old-space-size=1024 ./node_modules/.bin/jest --coverage --logHeapUsage --runInBand",
-	  "pact:verify:mock": "node -r dotenv/config build/pacts/verifier.pact.js",
-	  "test:pact:dev": "node -r dotenv/config build/pacts/verifier.pact.js dotenv_config_path=./env/dev.env"
+		"build": "rm -rf dist && rm -rf build && tsc && mkdir dist && cp -rf build/ dist/ && cp -rf cert dist",
+		"buildbk": "rimraf build && tsc",
+		"build:server": "tsc && npm run copy-files",
+		"copy-files": "copyfiles --all resources/* ./build",
+		"preserve": "npm run build",
+		"serve": "cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon -q build/server.js\"",
+		"cache": "jest --clear-cache",
+		"start": "node -r dotenv/config build/server.js",
+		"start:dev": "nodemon -e ts -w ./ -x ts-node -r dotenv/config server.ts dotenv_config_path=./env/dev.env",
+		"lint": "eslint . --ext .ts",
+		"lint:fix": "eslint . --ext .ts --fix",
+		"test": "node --max-old-space-size=1024 ./node_modules/.bin/jest --coverage --logHeapUsage --runInBand",
+		"doc": "typedoc",
+		"migrate": "NODE_TLS_REJECT_UNAUTHORIZED='0' flyway -c migration/flyway/flyway.js migrate",
+		"info": "flyway -c migration/flyway/flyway.js info",
+		"coverage": "node --max-old-space-size=1024 ./node_modules/.bin/jest --coverage --logHeapUsage --runInBand",
+		"pact:verify:mock": "node -r dotenv/config build/pacts/verifier.pact.js",
+		"test:pact:dev": "node -r dotenv/config build/pacts/verifier.pact.js dotenv_config_path=./env/dev.env"
 	},
 	"author": "",
 	"license": "ISC",
@@ -42,6 +42,7 @@
 		"cross-env": "^7.0.3",
 		"csurf": "^1.11.0",
 		"dotenv": "^10.0.0",
+		"elastic-apm-node": "^4.4.0",
 		"express": "^4.17.1",
 		"express-actuator": "^1.8.4",
 		"express-http-context": "^1.2.4",
@@ -64,8 +65,8 @@
 		"swagger-ui-express": "^4.6.0",
 		"ts-node": "^10.9.1",
 		"winston": "^3.6.0"
-	  },
-	  "devDependencies": {
+	},
+	"devDependencies": {
 		"@types/cookie-parser": "^1.4.2",
 		"@types/cors": "^2.8.12",
 		"@types/express-actuator": "^1.8.3",
@@ -93,9 +94,8 @@
 		"ts-jest": "^29.0.3",
 		"tsc-hooks": "1.1.0",
 		"typescript": "^4.5.5"
-	  },
+	},
 	"engines": {
-	  "node": "16.20.1"
+		"node": "16.20.1"
 	}
-  }
-  
+}
