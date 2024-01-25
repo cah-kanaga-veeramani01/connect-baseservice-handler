@@ -1,6 +1,6 @@
 {
 	"name": "@service-config/connect-baseservice-handler",
-	"version": "1.8.8",
+	"version": "2.0.2",
 	"description": "Handler for Base Service Configuration",
 	"main": "server.ts",
 	"publishConfig": {
