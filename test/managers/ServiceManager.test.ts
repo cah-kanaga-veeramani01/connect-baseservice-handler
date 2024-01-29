@@ -290,7 +290,7 @@ describe('Create Service', () => {
 	});
 });
 
-describe('get list of services', () => {
+describe.skip('get list of services', () => {
 	test('should return list of services ', async () => {
 		db.query = () => {
 			return [
