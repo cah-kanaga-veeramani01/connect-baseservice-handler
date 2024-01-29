@@ -613,7 +613,7 @@ from service."Service" ss
 LEFT JOIN service."ServiceAttributes" sa ON ss."serviceID" = sa."serviceID" AND ss."globalServiceVersion" = sa."globalServiceVersion"
 JOIN service."ServiceType" st ON ss."serviceTypeID" = st."serviceTypeID"
 where ss."status"='INACTIVE' and ss."serviceID" in (${idsTxt}) and ss."serviceID" not in (select sss."serviceID" from service."Service" sss
-where sss."status"='ACTIVE') order by "globalServiceVersion" desc limit 1)) X
+where sss."status"='ACTIVE' and sss."serviceID"=ss."serviceID") order by "globalServiceVersion" desc limit 1)) X
 ORDER BY X.${sortBy} ${sortOrder};`;
 
 export const QGetAllServiceIDsCountInactiveWithFilter = () =>
@@ -626,7 +626,8 @@ select s1."serviceID",s1."serviceName" as servicename,s1."legacyTIPDetailID",s1.
 (SELECT json_agg(ad2."name") FROM "service"."AttributesDefinition" ad2  
  WHERE ad2."attributesDefinitionID"    in (select unnest(string_to_array(TRIM('[]' FROM sa.metadata::json->>'attributes'),',')::int[])))::text as attributess  from service."Service" s1      
 LEFT JOIN service."ServiceAttributes" sa ON s1."serviceID" = sa."serviceID" AND s1."globalServiceVersion" = sa."globalServiceVersion"      
-where status='INACTIVE' and "status" NOT IN ('ACTIVE') ) X
+where s1."status"='INACTIVE' and s1."serviceID" not in (select sss."serviceID" from service."Service" sss
+where sss."status"='ACTIVE' and s1."serviceID"=sss."serviceID") ) X
 where (X."servicename" ILIKE :searchKey OR X."serviceID"::text LIKE :searchKey   OR X."legacyTIPDetailID"::text LIKE :searchKey OR (X."attributess"::text ilike :searchKey and (X."status"='ACTIVE' OR X."status"='INACTIVE') ))   
 ) z
 ORDER BY "servicename"  asc) b`;

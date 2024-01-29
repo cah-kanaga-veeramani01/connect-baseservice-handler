@@ -33,6 +33,7 @@ export default class ServiceController {
 			logger.debug('Service list invoked with following parameters', { sortBy, sortOrder, from, limit, keyword, showInactive });
 			//res.send(await this.serviceManager.getServiceList(sortBy, sortOrder, from, limit, keyword, showInactive));
 
+			//Show inactive =true
 			if (Number(req.query.showInactive) === 1) {
 				res.send(await this.serviceManager.getAllServicesList(sortBy, sortOrder, from, limit, searchKey));
 			} else {
