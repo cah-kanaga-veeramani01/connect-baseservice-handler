@@ -31,12 +31,11 @@ export default class ServiceController {
 				showInactive = req.query.showInactive ? Number(req.query.showInactive) : 0,
 				searchKey = keyword !== EMPTY_STRING ? serviceList.matchAll + keyword.trim() + serviceList.matchAll : EMPTY_STRING;
 			logger.debug('Service list invoked with following parameters', { sortBy, sortOrder, from, limit, keyword, showInactive });
-			//res.send(await this.serviceManager.getServiceList(sortBy, sortOrder, from, limit, keyword, showInactive));
-
-			//Show inactive =true
 			if (Number(req.query.showInactive) === 1) {
+				//Show inactive=true
 				res.send(await this.serviceManager.getAllServicesList(sortBy, sortOrder, from, limit, searchKey));
 			} else {
+				//Show inactive=false
 				res.send(await this.serviceManager.getNonInActiveServicesList(sortBy, sortOrder, from, limit, searchKey));
 			}
 		} catch (error) {

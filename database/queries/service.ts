@@ -1,265 +1,3 @@
-export const QServiceList = (sortBy, sortOrder) => {
-	return `select * from (select 
-
- case 
- when (vs.statuses->0->>'status')::text='ACTIVE' then (vs.statuses->0->>'serviceName')::text 
- when ((vs.statuses->0->>'status')::text='DRAFT' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'serviceName')::text 
- when (vs.statuses->0->>'status')::text='DRAFT' then (vs.statuses->0->>'serviceName')::text 
- when ((vs.statuses->0->>'status')::text='SCHEDULED' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'serviceName')::text 
- when (vs.statuses->0->>'status')::text='SCHEDULED' then (vs.statuses->0->>'serviceName')::text 
- else (vs.statuses->1->>'serviceName')::text end as servicename,
- case 
- when (vs.statuses->0->>'status')::text='ACTIVE' then (vs.statuses->0->>'serviceType')::text 
- when ((vs.statuses->0->>'status')::text='DRAFT' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'serviceType')::text 
- when (vs.statuses->0->>'status')::text='DRAFT' then (vs.statuses->0->>'serviceType')::text 
- when ((vs.statuses->0->>'status')::text='SCHEDULED' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'serviceType')::text 
- when (vs.statuses->0->>'status')::text='SCHEDULED' then (vs.statuses->0->>'serviceType')::text 
- else (vs.statuses->1->>'serviceType')::text end as serviceType,
- case 
- when (vs.statuses->0->>'status')::text='ACTIVE' then (vs.statuses->0->>'legacyTIPDetailID')::text 
- when ((vs.statuses->0->>'status')::text='DRAFT' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'legacyTIPDetailID')::text 
- when (vs.statuses->0->>'status')::text='DRAFT' then (vs.statuses->0->>'legacyTIPDetailID')::text 
- when ((vs.statuses->0->>'status')::text='SCHEDULED' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'legacyTIPDetailID')::text 
- when (vs.statuses->0->>'status')::text='SCHEDULED' then (vs.statuses->0->>'legacyTIPDetailID')::text 
- else (vs.statuses->1->>'serviceType')::text end as legacyTIPDetailID,
- vs."serviceID" as serviceID,
- vs."statuses" as statuses,
- (
-    select json_agg("name") from "service"."AttributesDefinition" where "attributesDefinitionID"
-	in (select unnest(string_to_array(TRIM('[]' FROM metadata::json->>'attributes'),',')::int[])  from "service"."ServiceAttributes"
-		where "serviceID"=vs."serviceID" and "globalServiceVersion"=(case 
-		when (vs.statuses->0->>'status')::text='ACTIVE' then (vs.statuses->0->>'globalServiceVersion')::int 
-		when ((vs.statuses->0->>'status')::text='DRAFT' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'globalServiceVersion')::int 
-		when (vs.statuses->0->>'status')::text='DRAFT' then (vs.statuses->0->>'globalServiceVersion')::int 
-		when ((vs.statuses->0->>'status')::text='SCHEDULED' AND (vs.statuses->1->>'status')::text='ACTIVE') then (vs.statuses->1->>'globalServiceVersion')::int 
-		when (vs.statuses->0->>'status')::text='SCHEDULED' then (vs.statuses->0->>'globalServiceVersion')::int 
-		else (vs.statuses->1->>'globalServiceVersion')::int end)
-	)
-) as "attributes"
-from (
-select s1."serviceID",
-JSONB_AGG(
-			(
-			  SELECT 
-				X 
-			  FROM 
-				(
-				  SELECT 
-                    s1."serviceName",
-					s1."globalServiceVersion", 
-					s1."validFrom", 
-					s1."validTill", 
-					s1."isPublished",
-					s1."legacyTIPDetailID",
-                    "ServiceType"."serviceType",
-					CASE 
-					WHEN ((s1."validFrom" < now() AND s1."validTill" >= now()) OR (s1."validFrom" < now() AND s1."validTill" IS NULL)  AND s1."isPublished" = 1) THEN 'ACTIVE' 
-					WHEN (s1."validFrom" IS NOT NULL AND s1."validFrom" > now() AND ((s1."validTill" IS NOT NULL AND s1."validFrom" < s1."validTill") OR (s1."validTill" IS NULL)) AND s1."isPublished" = 1 ) THEN 'SCHEDULED' 
-					WHEN (s1."isPublished" = 0 AND s1."validTill" IS NULL AND s1."validFrom" IS NULL) THEN 'DRAFT' 
-					WHEN (s1."validFrom" IS NOT NULL AND s1."validTill" IS NOT NULL AND s1."validFrom" < s1."validTill" AND s1."validTill" < now()) THEN 'INACTIVE' 
-					END AS "status"
-				) AS X
-                
-			) 
-		  ) AS "statuses"
-          
-from service."Service" s1
-    JOIN service."ServiceType" on s1."serviceTypeID" = "ServiceType"."serviceTypeID" 
-where (s1."validTill" IS NULL 
-		  OR s1."validTill" > NOW()) 
-
-      group by "serviceID" 
-        order by "serviceID" desc
-) vs
-) vvs
-where (servicename ILIKE :searchKey OR serviceid::text like :searchKey OR servicetype ILIKE :searchKey OR legacytipdetailid::text ILIKE :searchKey OR attributes::text ILIKE :searchKey)
-order by ${sortBy} ${sortOrder}
-    limit :limit offset :offset;`;
-};
-
-export const QExpiredServiceList = (sortBy, sortOrder) => {
-	return `select 
-	* 
-  from 
-	(
-	  select 
-		case when (vs.statuses -> 0 ->> 'status'):: text = 'ACTIVE' then (vs.statuses -> 0 ->> 'serviceName'):: text when (
-		  (vs.statuses -> 0 ->> 'status'):: text = 'DRAFT' 
-		  AND (vs.statuses -> 1 ->> 'status'):: text = 'ACTIVE'
-		) then (vs.statuses -> 1 ->> 'serviceName'):: text when (vs.statuses -> 0 ->> 'status'):: text = 'DRAFT' then (vs.statuses -> 0 ->> 'serviceName'):: text when (
-		  (vs.statuses -> 0 ->> 'status'):: text = 'SCHEDULED' 
-		  AND (vs.statuses -> 1 ->> 'status'):: text = 'ACTIVE'
-		) then (vs.statuses -> 1 ->> 'serviceName'):: text when (vs.statuses -> 0 ->> 'status'):: text = 'SCHEDULED' then (vs.statuses -> 0 ->> 'serviceName'):: text when (vs.statuses -> 0 ->> 'status'):: text = 'INACTIVE' then (vs.statuses -> 0 ->> 'serviceName'):: text else (vs.statuses -> 1 ->> 'serviceName'):: text end as servicename, 
-		case when (vs.statuses -> 0 ->> 'status'):: text = 'ACTIVE' then (vs.statuses -> 0 ->> 'serviceType'):: text when (
-		  (vs.statuses -> 0 ->> 'status'):: text = 'DRAFT' 
-		  AND (vs.statuses -> 1 ->> 'status'):: text = 'ACTIVE'
-		) then (vs.statuses -> 1 ->> 'serviceType'):: text when (vs.statuses -> 0 ->> 'status'):: text = 'DRAFT' then (vs.statuses -> 0 ->> 'serviceType'):: text when (
-		  (vs.statuses -> 0 ->> 'status'):: text = 'SCHEDULED' 
-		  AND (vs.statuses -> 1 ->> 'status'):: text = 'ACTIVE'
-		) then (vs.statuses -> 1 ->> 'serviceType'):: text when (vs.statuses -> 0 ->> 'status'):: text = 'SCHEDULED' then (vs.statuses -> 0 ->> 'serviceType'):: text when (vs.statuses -> 0 ->> 'status'):: text = 'INACTIVE' then (vs.statuses -> 0 ->> 'serviceType'):: text else (vs.statuses -> 1 ->> 'serviceType'):: text end as serviceType, 
-		case when (vs.statuses -> 0 ->> 'status'):: text = 'ACTIVE' then (
-		  vs.statuses -> 0 ->> 'legacyTIPDetailID'
-		):: text when (
-		  (vs.statuses -> 0 ->> 'status'):: text = 'DRAFT' 
-		  AND (vs.statuses -> 1 ->> 'status'):: text = 'ACTIVE'
-		) then (
-		  vs.statuses -> 1 ->> 'legacyTIPDetailID'
-		):: text when (vs.statuses -> 0 ->> 'status'):: text = 'DRAFT' then (
-		  vs.statuses -> 0 ->> 'legacyTIPDetailID'
-		):: text when (
-		  (vs.statuses -> 0 ->> 'status'):: text = 'SCHEDULED' 
-		  AND (vs.statuses -> 1 ->> 'status'):: text = 'ACTIVE'
-		) then (
-		  vs.statuses -> 1 ->> 'legacyTIPDetailID'
-		):: text when (vs.statuses -> 0 ->> 'status'):: text = 'SCHEDULED' then (
-		  vs.statuses -> 0 ->> 'legacyTIPDetailID'
-		):: text when (vs.statuses -> 0 ->> 'status'):: text = 'INACTIVE' then (
-		  vs.statuses -> 0 ->> 'legacyTIPDetailID'
-		):: text else (
-		  vs.statuses -> 1 ->> 'legacyTIPDetailID'
-		):: text end as legacyTIPDetailID, 
-		vs."serviceID" as serviceID, 
-		vs."statuses" as statuses, 
-		(
-		  select 
-			json_agg("name") 
-		  from 
-			"service"."AttributesDefinition" 
-		  where 
-			"attributesDefinitionID" in (
-			  select 
-				unnest(
-				  string_to_array(
-					TRIM(
-					  '[]' 
-					  FROM 
-						metadata :: json ->> 'attributes'
-					), 
-					','
-				  ):: int[]
-				) 
-			  from 
-				"service"."ServiceAttributes" 
-			  where 
-				"serviceID" = vs."serviceID" 
-				and "globalServiceVersion" =(
-				  case when (vs.statuses -> 0 ->> 'status'):: text = 'ACTIVE' then (
-					vs.statuses -> 0 ->> 'globalServiceVersion'
-				  ):: int when (
-					(vs.statuses -> 0 ->> 'status'):: text = 'DRAFT' 
-					AND (vs.statuses -> 1 ->> 'status'):: text = 'ACTIVE'
-				  ) then (
-					vs.statuses -> 1 ->> 'globalServiceVersion'
-				  ):: int when (vs.statuses -> 0 ->> 'status'):: text = 'DRAFT' then (
-					vs.statuses -> 0 ->> 'globalServiceVersion'
-				  ):: int when (
-					(vs.statuses -> 0 ->> 'status'):: text = 'SCHEDULED' 
-					AND (vs.statuses -> 1 ->> 'status'):: text = 'ACTIVE'
-				  ) then (
-					vs.statuses -> 1 ->> 'globalServiceVersion'
-				  ):: int when (vs.statuses -> 0 ->> 'status'):: text = 'SCHEDULED' then (
-					vs.statuses -> 0 ->> 'globalServiceVersion'
-				  ):: int when (vs.statuses -> 0 ->> 'status'):: text = 'INACTIVE' then (
-					vs.statuses -> 0 ->> 'globalServiceVersion'
-				  ):: int else (
-					vs.statuses -> 1 ->> 'globalServiceVersion'
-				  ):: int end
-				)
-			)
-		) as "attributes" 
-	  from 
-		(
-		  select 
-			s1."serviceID", 
-			JSONB_AGG(
-			  (
-				SELECT 
-				  X 
-				FROM 
-				  (
-					SELECT 
-					  s1."serviceName", 
-					  s1."globalServiceVersion", 
-					  s1."validFrom", 
-					  s1."validTill", 
-					  s1."isPublished", 
-					  s1."legacyTIPDetailID", 
-					  "ServiceType"."serviceType", 
-					  CASE 
-					  WHEN ((s1."validFrom" < now() AND s1."validTill" >= now()) OR (s1."validFrom" < now() AND s1."validTill" IS NULL) AND s1."isPublished" = 1) THEN 'ACTIVE' 
-					  WHEN (s1."validFrom" IS NOT NULL AND s1."validFrom" > now() AND ((s1."validTill" IS NOT NULL AND s1."validFrom" < s1."validTill") OR (s1."validTill" IS NULL)) AND s1."isPublished" = 1) THEN 'SCHEDULED' 
-					  WHEN (s1."isPublished" = 0 AND s1."validFrom" IS NULL AND s1."validTill" IS NULL ) THEN 'DRAFT' 
-					  WHEN (
-						s1."globalServiceVersion" = (
-						  SELECT 
-							MAX(s2."globalServiceVersion") 
-						  FROM 
-							service."Service" s2 
-						  where 
-							s2."serviceID" = s1."serviceID" 
-							AND s2."validTill" < NOW() 
-							AND s1."validFrom" IS NOT NULL AND s1."validTill" IS NOT NULL
-						)
-					  ) THEN 'INACTIVE' ELSE 'EXPIRED' END AS "status"
-				  ) AS X 
-				where 
-				  X."status" != 'EXPIRED'
-			  )
-			) AS "statuses" 
-		  from 
-			service."Service" s1 
-			JOIN service."ServiceType" on s1."serviceTypeID" = "ServiceType"."serviceTypeID" 
-		  WHERE 
-			(
-			  ((s1."validFrom" < now() AND s1."validTill" >= now()) OR (s1."validFrom" < now() AND s1."validTill" IS NULL) AND s1."isPublished" = 1) 
-			  OR 
-			  (s1."validFrom" IS NOT NULL AND s1."validFrom" > now() AND ((s1."validTill" IS NOT NULL AND s1."validFrom" < s1."validTill") OR (s1."validTill" IS NULL)) AND s1."isPublished" = 1) 
-			  OR 
-			  ((s1."isPublished" = 0 AND s1."validFrom" IS NULL AND s1."validTill" IS NULL )) 
-			  OR 
-			  (
-				s1."globalServiceVersion" = (
-				  SELECT 
-					MAX(s3."globalServiceVersion") 
-				  FROM 
-					service."Service" s3 
-				  where 
-					s3."serviceID" = s1."serviceID" 
-					AND s3."validTill" < NOW() 
-					AND s3."serviceID" NOT IN (
-					  select 
-						s4."serviceID" 
-					  from 
-						service."Service" s4 
-					  where 
-						(
-						  ( s4."validFrom" < now()  AND s4."validTill" >= now() )  OR ( s4."validFrom" < now() AND s4."validTill" IS NULL )  AND s4."isPublished" = 1
-						)
-					)
-				)
-			  )
-			) 
-		  group by 
-			"serviceID" 
-		  order by 
-			"serviceID" desc
-		) vs
-	) vvs 
-  where 
-	(
-	  servicename ILIKE :searchKey 
-	  OR serviceid :: text like :searchKey 
-	  OR servicetype ILIKE :searchKey 
-	  OR legacytipdetailid :: text ILIKE :searchKey 
-	  OR attributes :: text ILIKE :searchKey
-	) 
-  order by 
-	${sortBy} ${sortOrder} 
-  limit :limit 
-  offset :offset;
-  `;
-};
-
 export const QServiceDetails = ` SELECT 
 s2."globalServiceVersion" AS "activeVersion", 
 s2."serviceName" AS "activeServiceName",
@@ -457,63 +195,12 @@ LEFT JOIN service."ServiceType" as stypes on stypes."serviceTypeID"=s."serviceTy
 WHERE s."isPublished" = 1 AND (s."validTill" IS NULL OR s."validTill" >= NOW()) AND s."validFrom" <= NOW()
 ORDER BY "serviceID";`;
 
-export const QGetNonInActiveServicesWithSearch = (sortBy: any, sortOrder: any) =>
-	`SELECT * FROM 
-			( SELECT s."serviceID" as serviceid, s."serviceName" as servicename,st."serviceType" as servicetype,s."globalServiceVersion", s."validFrom", s."validTill", s."isPublished", s."legacyTIPDetailID" as legacytipdetailid, s.status,
-				(SELECT json_agg("name") FROM "service"."AttributesDefinition" WHERE "attributesDefinitionID"
-					in ( SELECT unnest(string_to_array(TRIM('[]' FROM metadata::json->>'attributes'),',')::int[]))) as attributes
-	FROM service."Service"  s 
-	LEFT JOIN service."ServiceAttributes" sa ON s."serviceID" = sa."serviceID" AND s."globalServiceVersion" = sa."globalServiceVersion"
-	JOIN service."ServiceType" st ON s."serviceTypeID" = st."serviceTypeID" )  services
-	WHERE (services.servicename ILIKE :searchKey
-		   OR services.serviceid::text LIKE :searchKey
-		   OR services.servicetype ILIKE :searchKey
-		   OR services.legacytipdetailid::text ILIKE :searchKey
-		   OR services.attributes::text ILIKE :searchKey) AND services.status != 'INACTIVE'
-    ORDER BY ${sortBy} ${sortOrder} LIMIT :limit OFFSET :offset;`;
-
-export const QGetNonInActiveServices = (sortBy: any, sortOrder: any) =>
-	`SELECT * FROM 
-			( SELECT s."serviceID" as serviceid, s."serviceName" as servicename,st."serviceType" as servicetype,s."validFrom", s."validTill", s."isPublished", s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid, s.status,
-				(SELECT json_agg("name") FROM "service"."AttributesDefinition" WHERE "attributesDefinitionID"
-					in ( SELECT unnest(string_to_array(TRIM('[]' FROM metadata::json->>'attributes'),',')::int[]))) as attributes
-	FROM service."Service"  s 
-	LEFT JOIN service."ServiceAttributes" sa ON s."serviceID" = sa."serviceID" AND s."globalServiceVersion" = sa."globalServiceVersion"
-	JOIN service."ServiceType" st ON s."serviceTypeID" = st."serviceTypeID" )  services
-	WHERE services.status != 'INACTIVE'
-    ORDER BY ${sortBy} ${sortOrder} LIMIT :limit OFFSET :offset;`;
-
-export const QGetAllServicesWithSearch = (sortBy: any, sortOrder: any) =>
-	`SELECT * FROM 
-			( SELECT s."serviceID" as serviceid, s."serviceName"  as servicename,s."validFrom", s."validTill", s."isPublished", st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid, s.status,
-				(SELECT json_agg("name") FROM "service"."AttributesDefinition" WHERE "attributesDefinitionID"
-					in ( SELECT unnest(string_to_array(TRIM('[]' FROM metadata::json->>'attributes'),',')::int[]))) as attributes
-	FROM service."Service"  s 
-	LEFT JOIN service."ServiceAttributes" sa ON s."serviceID" = sa."serviceID" AND s."globalServiceVersion" = sa."globalServiceVersion"
-	JOIN service."ServiceType" st ON s."serviceTypeID" = st."serviceTypeID" )  services
-	WHERE (services.servicename ILIKE :searchKey
-		   OR services.serviceid::text LIKE :searchKey
-		   OR services.servicetype ILIKE :searchKey
-		   OR services.legacytipdetailid::text ILIKE :searchKey
-		   OR services.attributes::text ILIKE :searchKey)
-    ORDER BY ${sortBy} ${sortOrder} LIMIT :limit OFFSET :offset;`;
-
-export const QGetAllServices = (sortBy: any, sortOrder: any) =>
-	`SELECT * FROM 
-			( SELECT s."serviceID" as serviceid, s."serviceName" as servicename,s."validFrom", s."validTill", s."isPublished", st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid, s.status,
-				(SELECT json_agg("name") FROM "service"."AttributesDefinition" WHERE "attributesDefinitionID"
-					in ( SELECT unnest(string_to_array(TRIM('[]' FROM metadata::json->>'attributes'),',')::int[]))) as attributes
-	FROM service."Service"  s 
-	LEFT JOIN service."ServiceAttributes" sa ON s."serviceID" = sa."serviceID" AND s."globalServiceVersion" = sa."globalServiceVersion"
-	JOIN service."ServiceType" st ON s."serviceTypeID" = st."serviceTypeID" )  services
-    ORDER BY ${sortBy} ${sortOrder} LIMIT :limit OFFSET :offset;`;
-
 export const QGetAllServiceIDs = (sortBy: any, sortOrder: any) =>
-	`select DISTINCT "serviceID" as serviceid,"serviceName"  from service."Service" where "status" in ('ACTIVE','DRAFT','SCHEDULED')  
-	ORDER BY ${sortBy} ${sortOrder} LIMIT :limit OFFSET :offset;`;
+	`select DISTINCT "serviceID","serviceName"  from service."Service" where "status" in ('ACTIVE','DRAFT','SCHEDULED')  
+	ORDER BY "${sortBy}" ${sortOrder} LIMIT :limit OFFSET :offset;`;
 
 export const QGetAllServicesFromServiceID = (sortBy: any, sortOrder: any, idsTxt: any) =>
-	`select s."serviceID" as serviceid, s."serviceName" as servicename,s."validFrom", s."validTill", s."isPublished", st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid, s.status, sa.metadata
+	`select s."serviceID", s."serviceName" as servicename,s."validFrom", s."validTill", s."isPublished", st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid, s.status, sa.metadata
 from service."Service" s 
 LEFT JOIN service."ServiceAttributes" sa ON s."serviceID" = sa."serviceID" AND s."globalServiceVersion" = sa."globalServiceVersion"
 JOIN service."ServiceType" st ON s."serviceTypeID" = st."serviceTypeID"
@@ -527,23 +214,23 @@ export const QAttributesDefinition = () => `select * FROM
 "service"."AttributesDefinition"`;
 
 export const QGetAllServiceIDsWithFilter = (sortBy: any, sortOrder: any) =>
-	`select DISTINCT z."serviceID",z."servicename" from (select X.* from (select s."serviceID",s."serviceName" as servicename,s."legacyTIPDetailID",s."status",  (SELECT json_agg(ad1."name") FROM "service"."AttributesDefinition" ad1 WHERE ad1."attributesDefinitionID" in (select unnest(string_to_array(TRIM('[]' FROM sa.metadata::json->>'attributes'),',')::int[])))::text as attributess       
+	`select DISTINCT z."serviceID",z."serviceName" from (select X.* from (select s."serviceID",s."serviceName",s."legacyTIPDetailID",s."status",  (SELECT json_agg(ad1."name") FROM "service"."AttributesDefinition" ad1 WHERE ad1."attributesDefinitionID" in (select unnest(string_to_array(TRIM('[]' FROM sa.metadata::json->>'attributes'),',')::int[])))::text as attributess       
 from service."Service" s  
 LEFT JOIN service."ServiceAttributes" sa ON s."serviceID" = sa."serviceID" AND s."globalServiceVersion" = sa."globalServiceVersion"  
 where "status" in ('ACTIVE','DRAFT','SCHEDULED') 
  ) X
-where (X."servicename" ILIKE :searchKey OR X."serviceID"::text LIKE :searchKey   OR X."legacyTIPDetailID"::text LIKE :searchKey OR (X."attributess"::text ilike :searchKey and (X."status"='ACTIVE') ))   
+where (X."serviceName" ILIKE :searchKey OR X."serviceID"::text LIKE :searchKey OR X."legacyTIPDetailID"::text LIKE :searchKey OR (X."attributess"::text ilike :searchKey and (X."status"='ACTIVE') ))   
 ) z
-ORDER BY ${sortBy} ${sortOrder}
+ORDER BY "${sortBy}" ${sortOrder}
 LIMIT :limit OFFSET :offset;`;
 
 export const QGetAllServicesFromServiceIDWithFilter = (sortBy: any, sortOrder: any, idsTxt: any) =>
-	`select s."serviceID" as serviceid, s."serviceName" as servicename,s."validFrom", s."validTill", s."isPublished", st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid, s.status, sa.metadata
+	`select s."serviceID", s."serviceName",s."validFrom", s."validTill", s."isPublished", st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid, s.status, sa.metadata
 	from service."Service" s 
 	LEFT JOIN service."ServiceAttributes" sa ON s."serviceID" = sa."serviceID" AND s."globalServiceVersion" = sa."globalServiceVersion"
 	JOIN service."ServiceType" st ON s."serviceTypeID" = st."serviceTypeID"
 	where s."status" in ('ACTIVE','DRAFT','SCHEDULED') and s."serviceID" in (${idsTxt})
-	ORDER BY ${sortBy} ${sortOrder};`;
+	ORDER BY "${sortBy}" ${sortOrder};`;
 
 export const QGetAllServiceIDsCountWithFilter = () =>
 	`select count(b.*) as count from (select DISTINCT z."serviceID" from (select X.* from (select s."serviceID",s."serviceName" as servicename,s."legacyTIPDetailID",s."status",  (SELECT json_agg(ad1."name") FROM "service"."AttributesDefinition" ad1 WHERE ad1."attributesDefinitionID" in (select unnest(string_to_array(TRIM('[]' FROM sa.metadata::json->>'attributes'),',')::int[])))::text as attributess       
@@ -554,19 +241,19 @@ export const QGetAllServiceIDsCountWithFilter = () =>
 	where (X."servicename" ILIKE :searchKey OR X."serviceID"::text LIKE :searchKey  OR X."legacyTIPDetailID"::text LIKE :searchKey OR (X."attributess"::text ilike :searchKey and (X."status"='ACTIVE') ))   
 	) z ) b`;
 
-export const QGetAllServiceIDsWithInactive = (sortBy: any, sortOrder: any) =>
-	`select * from (select DISTINCT on (x."serviceid") "serviceid" , x."servicename" from (select "serviceID" as serviceid,"serviceName" as servicename  from service."Service" 
-	where "status" in ('ACTIVE','DRAFT','SCHEDULED','INACTIVE') ) x order by x."serviceid",x."servicename" ${sortOrder}) p2 order by ${sortBy} ${sortOrder} LIMIT :limit OFFSET :offset;`;
+export const QGetAllServiceIDsWithInactive = (sortByNumber: any, sortOrder: any) =>
+	`select * from (select DISTINCT on (x."serviceID") "serviceID" , x."serviceName" from (select "serviceID","serviceName" from service."Service" 
+	where "status" in ('ACTIVE','DRAFT','SCHEDULED','INACTIVE') ) x order by x."serviceID",x."serviceName" ${sortOrder}) p2 order by ${sortByNumber} ${sortOrder} LIMIT :limit OFFSET :offset;`;
 
 export const QGetAllServicesFromServiceIDWithInactive = (sortBy: any, sortOrder: any, idsTxt: any) =>
-	`select s."serviceID" as serviceid, s."serviceName" as servicename,s."validFrom", s."validTill", s."isPublished", st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid,
+	`select s."serviceID", s."serviceName",s."validFrom", s."validTill", s."isPublished", st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid,
 s."status", sa."metadata"::text
 from service."Service" s 
 LEFT JOIN service."ServiceAttributes" sa ON s."serviceID" = sa."serviceID" AND s."globalServiceVersion" = sa."globalServiceVersion"
 JOIN service."ServiceType" st ON s."serviceTypeID" = st."serviceTypeID"
 where s."status" in ('ACTIVE','DRAFT','SCHEDULED') and s."serviceID" in (${idsTxt})
 UNION 
-(select ss."serviceID" as serviceid, ss."serviceName" as servicename,ss."validFrom", 
+(select ss."serviceID", ss."serviceName",ss."validFrom", 
 ss."validTill", ss."isPublished", st."serviceType" as servicetype,ss."globalServiceVersion", 
 ss."legacyTIPDetailID" as legacytipdetailid,
 ss."status", sa."metadata"::text from (select max("globalServiceVersion") as versions ,"serviceID" from service."Service"
@@ -577,44 +264,44 @@ where "serviceID" in (${idsTxt}) and ("status"='INACTIVE' and
 join service."Service" ss on ss."serviceID"=t1."serviceID" and ss."globalServiceVersion"=t1."versions"
 LEFT JOIN service."ServiceAttributes" sa ON ss."serviceID" = sa."serviceID" AND ss."globalServiceVersion" = sa."globalServiceVersion"
 JOIN service."ServiceType" st ON ss."serviceTypeID" = st."serviceTypeID")
-ORDER BY ${sortBy} ${sortOrder};`;
+ORDER BY "${sortBy}" ${sortOrder};`;
 
 export const QGetAllServiceIDsCountWithInactive = () => `select COUNT(DISTINCT "serviceID") AS count from service."Service" 
 where "status" in ('ACTIVE','DRAFT','SCHEDULED','INACTIVE');`;
 
 export const QGetAllServiceIDsWithInactiveFilter = (sortBy: any, sortOrder: any) =>
-	`select DISTINCT z."serviceID",z."servicename" from (select X.* from (select s."serviceID",s."serviceName" as servicename,s."legacyTIPDetailID",s."status",  (SELECT json_agg(ad1."name") FROM "service"."AttributesDefinition" ad1 WHERE ad1."attributesDefinitionID" in (select unnest(string_to_array(TRIM('[]' FROM sa.metadata::json->>'attributes'),',')::int[])))::text as attributess       
+	`select DISTINCT z."serviceID",z."serviceName" from (select X.* from (select s."serviceID",s."serviceName",s."legacyTIPDetailID",s."status",  (SELECT json_agg(ad1."name") FROM "service"."AttributesDefinition" ad1 WHERE ad1."attributesDefinitionID" in (select unnest(string_to_array(TRIM('[]' FROM sa.metadata::json->>'attributes'),',')::int[])))::text as attributess       
 from service."Service" s  
 LEFT JOIN service."ServiceAttributes" sa ON s."serviceID" = sa."serviceID" AND s."globalServiceVersion" = sa."globalServiceVersion"  
 where "status" in ('ACTIVE','DRAFT','SCHEDULED') 
 UNION
-select s1."serviceID",s1."serviceName" as servicename,s1."legacyTIPDetailID",s1."status",          
+select s1."serviceID",s1."serviceName",s1."legacyTIPDetailID",s1."status",          
 (SELECT json_agg(ad2."name") FROM "service"."AttributesDefinition" ad2  
  WHERE ad2."attributesDefinitionID"    in (select unnest(string_to_array(TRIM('[]' FROM sa.metadata::json->>'attributes'),',')::int[])))::text as attributess  from service."Service" s1      
 LEFT JOIN service."ServiceAttributes" sa ON s1."serviceID" = sa."serviceID" AND s1."globalServiceVersion" = sa."globalServiceVersion"      
 where status='INACTIVE' and s1."serviceID" not in (select "serviceID" from service."Service" where "status"='ACTIVE' 
 and "serviceID"=s1."serviceID" ) ) X
-where (X."servicename" ILIKE :searchKey OR X."serviceID"::text LIKE :searchKey   OR X."legacyTIPDetailID"::text LIKE :searchKey OR (X."attributess"::text ilike :searchKey and (X."status"='ACTIVE' OR X."status"='INACTIVE') ))   
+where (X."serviceName" ILIKE :searchKey OR X."serviceID"::text LIKE :searchKey   OR X."legacyTIPDetailID"::text LIKE :searchKey OR (X."attributess"::text ilike :searchKey and (X."status"='ACTIVE' OR X."status"='INACTIVE') ))   
 ) z
-ORDER BY ${sortBy} ${sortOrder}
+ORDER BY "${sortBy}" ${sortOrder}
 LIMIT :limit OFFSET :offset;`;
 
 export const QGetAllServicesFromServiceIDWithInactiveFilter = (sortBy: any, sortOrder: any, idsTxt: any) =>
-	`select X.* from (select s."serviceID" as serviceid, s."serviceName" as servicename,s."validFrom", s."validTill", s."isPublished", st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid,
+	`select X.* from (select s."serviceID", s."serviceName",s."validFrom", s."validTill", s."isPublished", st."serviceType" as servicetype,s."globalServiceVersion", s."legacyTIPDetailID" as legacytipdetailid,
 s."status", sa."metadata"::text
 from service."Service" s 
 LEFT JOIN service."ServiceAttributes" sa ON s."serviceID" = sa."serviceID" AND s."globalServiceVersion" = sa."globalServiceVersion"
 JOIN service."ServiceType" st ON s."serviceTypeID" = st."serviceTypeID"
 where s."status" in ('ACTIVE','DRAFT','SCHEDULED') and s."serviceID" in (${idsTxt})
 UNION 
-(select ss."serviceID" as serviceid, ss."serviceName" as servicename,ss."validFrom", ss."validTill", ss."isPublished", st."serviceType" as servicetype,ss."globalServiceVersion", ss."legacyTIPDetailID" as legacytipdetailid,
+(select ss."serviceID", ss."serviceName",ss."validFrom", ss."validTill", ss."isPublished", st."serviceType" as servicetype,ss."globalServiceVersion", ss."legacyTIPDetailID" as legacytipdetailid,
 ss."status", sa."metadata"::text
 from service."Service" ss 
 LEFT JOIN service."ServiceAttributes" sa ON ss."serviceID" = sa."serviceID" AND ss."globalServiceVersion" = sa."globalServiceVersion"
 JOIN service."ServiceType" st ON ss."serviceTypeID" = st."serviceTypeID"
 where ss."status"='INACTIVE' and ss."serviceID" in (${idsTxt}) and ss."serviceID" not in (select sss."serviceID" from service."Service" sss
 where sss."status"='ACTIVE' and sss."serviceID"=ss."serviceID") order by "globalServiceVersion" desc limit 1)) X
-ORDER BY X.${sortBy} ${sortOrder};`;
+ORDER BY X."${sortBy}" ${sortOrder};`;
 
 export const QGetAllServiceIDsCountInactiveWithFilter = () =>
 	`select count(b.*) as count from (select DISTINCT z."serviceID",z."servicename" from (select X.* from (select s."serviceID",s."serviceName" as servicename,s."legacyTIPDetailID",s."status",  (SELECT json_agg(ad1."name") FROM "service"."AttributesDefinition" ad1 WHERE ad1."attributesDefinitionID" in (select unnest(string_to_array(TRIM('[]' FROM sa.metadata::json->>'attributes'),',')::int[])))::text as attributess       
