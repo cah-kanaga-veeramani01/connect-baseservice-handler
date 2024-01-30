@@ -93,8 +93,100 @@ describe('Create a new service', () => {
 });
 
 describe('get list of services', () => {
-	test('should return list of services', async () => {
-		jest.spyOn(serviceManager, 'getServiceList').mockImplementation(() => {
+	test('should return list of services without inactive', async () => {
+		jest.spyOn(serviceManager, 'getNonInActiveServicesList').mockImplementation(() => {
+			return Promise.resolve({
+				totalServices: 3,
+				nonFilteredServicesCount: 3,
+				services: [
+					{
+						serviceID: 1,
+						serviceName: 'Automation Service 0001',
+						serviceType: 'TIP',
+						status: 'Active'
+					},
+					{
+						serviceID: 2,
+						serviceName: 'Automation Service 0002',
+						serviceType: 'TIP',
+						status: 'Inactive'
+					},
+					{
+						serviceID: 3,
+						serviceName: 'Automation Service 0003',
+						serviceType: 'CMR',
+						status: 'Inactive'
+					}
+				]
+			});
+		});
+		const req = mocks.createRequest({
+				method: 'GET',
+				url: '/list',
+				query: {
+					sortBy: 'serviceName',
+					sortOrder: 'asc',
+					from: 0,
+					limit: 1,
+					statusFilter: 'All',
+					keyword: '',
+					showInactive: 0
+				}
+			}),
+			res = mocks.createResponse(),
+			next = jest.fn();
+		await serviceController.getServiceList(req, res);
+		expect(res._getData()).toMatchObject({
+			totalServices: 3,
+			nonFilteredServicesCount: 3,
+			services: [
+				{
+					serviceID: 1,
+					serviceName: 'Automation Service 0001',
+					serviceType: 'TIP',
+					status: 'Active'
+				},
+				{
+					serviceID: 2,
+					serviceName: 'Automation Service 0002',
+					serviceType: 'TIP',
+					status: 'Inactive'
+				},
+				{
+					serviceID: 3,
+					serviceName: 'Automation Service 0003',
+					serviceType: 'CMR',
+					status: 'Inactive'
+				}
+			]
+		});
+	});
+	test('should return error without inactive', async () => {
+		jest.spyOn(serviceManager, 'getNonInActiveServicesList').mockImplementation(() => {
+			return Promise.reject(new Error());
+		});
+		const req = mocks.createRequest({
+				method: 'GET',
+				url: '/list',
+				query: {
+					sortBy: 'serviceName',
+					sortOrder: 'asc',
+					from: '10',
+					limit: 1
+				}
+			}),
+			res = mocks.createResponse(),
+			next = jest.fn();
+		try {
+			await serviceController.getServiceList(req, res);
+		} catch (error) {
+			expect(error.code).toBe('SCE011');
+			expect(error.name).toBe('ServiceListFetchError');
+		}
+	});
+
+	test('should return list of services with inactive', async () => {
+		jest.spyOn(serviceManager, 'getAllServicesList').mockImplementation(() => {
 			return Promise.resolve({
 				totalServices: 3,
 				nonFilteredServicesCount: 3,
@@ -161,35 +253,8 @@ describe('get list of services', () => {
 			]
 		});
 	});
-	test('should return empty result', async () => {
-		jest.spyOn(serviceManager, 'getServiceList').mockImplementation(() => {
-			return Promise.resolve({
-				totalServices: 0,
-				nonFilteredServicesCount: 0,
-				services: []
-			});
-		});
-		const req = mocks.createRequest({
-				method: 'GET',
-				url: '/list',
-				query: {
-					from: 12,
-					keyword: 'test'
-				}
-			}),
-			res = mocks.createResponse(),
-			next = jest.fn();
-		try {
-			await serviceController.getServiceList(req, res);
-		} catch (error) {}
-		expect(res._getData()).toMatchObject({
-			totalServices: 0,
-			nonFilteredServicesCount: 0,
-			services: []
-		});
-	});
-	test('should return error', async () => {
-		jest.spyOn(serviceManager, 'getServiceList').mockImplementation(() => {
+	test('should return error with inactive', async () => {
+		jest.spyOn(serviceManager, 'getAllServicesList').mockImplementation(() => {
 			return Promise.reject(new Error());
 		});
 		const req = mocks.createRequest({

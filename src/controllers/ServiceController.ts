@@ -30,13 +30,12 @@ export default class ServiceController {
 				keyword = req.query.keyword ? String(req.query.keyword).replace(/_/g, '\\_') : EMPTY_STRING,
 				searchKey = keyword !== EMPTY_STRING ? serviceList.matchAll + keyword.trim() + serviceList.matchAll : EMPTY_STRING;
 			const showInactive = req.query.showInactive ? Number(req.query.showInactive) : 0;
-
-			logger.nonPhi.debug('Service list invoked with following parameters', { sortBy, sortOrder, from, limit, searchKey });
-			//res.send(await this.serviceManager.getServiceList(sortBy, sortOrder, from, limit, keyword, showInactive));
-		
+			logger.nonPhi.debug('Service list invoked with following parameters', { sortBy, sortOrder, from, limit, keyword, showInactive });
 			if (Number(req.query.showInactive) === 1) {
+				//Show inactive=true
 				res.send(await this.serviceManager.getAllServicesList(sortBy, sortOrder, from, limit, searchKey));
 			} else {
+				//Show inactive=false
 				res.send(await this.serviceManager.getNonInActiveServicesList(sortBy, sortOrder, from, limit, searchKey));
 			}
 		} catch (error) {

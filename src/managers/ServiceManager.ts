@@ -10,15 +10,9 @@ import {
 	QServiceActiveOrInActive,
 	QServiceActiveVersion,
 	QgetActiveServices,
-	QGetNonInActiveServicesWithSearch,
-	QGetNonInActiveServices,
-	QGetAllServices,
-	QGetAllServicesWithSearch,
 	QGetAllServiceIDs,
 	QGetAllServicesFromServiceID,
 	QGetAllServiceIDsCount,
-	QExpiredServiceList,
-	QServiceList,
 	QAttributesDefinition,
 	QGetAllServiceIDsWithFilter,
 	QGetAllServicesFromServiceIDWithFilter,
@@ -30,16 +24,15 @@ import {
 	QGetAllServicesFromServiceIDWithInactiveFilter,
 	QGetAllServiceIDsCountInactiveWithFilter
 } from '../../database/queries/service';
-import { QueryTypes, Op } from 'sequelize';
+import { QueryTypes } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
-import { IService, ServiceListResponse } from '../interfaces/IServices';
+import { IService } from '../interfaces/IServices';
 import db from '../../database/DBManager';
 import httpContext from 'express-http-context';
 import { ServiceType } from '../../database/models/ServiceType';
 import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
 import { endDateWithClientTZ, startDateWithClientTZ, utcToClientTZ } from '../../utils/tzFormatter';
 import moment from 'moment';
-import { serviceList } from '../../utils/constants';
 
 export default class ServiceManager {
 	constructor(public serviceRepository: Repository<Service>, public serviceTypeRepository: Repository<ServiceType>, public ServiceModuleConfigRepository: Repository<ServiceModuleConfig>) {}
@@ -456,18 +449,18 @@ export default class ServiceManager {
 			}
 			const attributesDefinition = await this.getAttributesDefinition(),
 				servicesMap = new Map<number, object>();
-
 			services.forEach((service) => {
+				service = { ...service, serviceid: service.serviceID, servicename: service.serviceName };
 				let attributesForListRow = [],
 					serviceAttributeArr = [];
-				if (service.metadata != null) {
-					service['metadata'] = JSON.parse(service.metadata);
-					serviceAttributeArr = Object.values(service.metadata['attributes']).map((attributeID: any) => attributeID);
+				if (service.metadata !== null) {
+					service.metadata = JSON.parse(service.metadata);
+					serviceAttributeArr = Object.values(service.metadata.attributes).map((attributeID: any) => attributeID);
 					attributesForListRow = this.getServiceAttributesDefinition(attributesDefinition, serviceAttributeArr);
 				}
 				if (servicesMap.has(service.serviceid)) {
-					let existingService = { ...service };
-					existingService['attributes'] = this.getServiceAttributesDefinition(attributesDefinition, serviceAttributeArr);
+					const existingService = { ...service };
+					existingService.attributes = this.getServiceAttributesDefinition(attributesDefinition, serviceAttributeArr);
 
 					const _service = JSON.parse(JSON.stringify(servicesMap.get(service.serviceid)));
 					_service.statuses.push(this.getServiceDetails(existingService));
@@ -479,12 +472,12 @@ export default class ServiceManager {
 					this.removeVersionSpecificDetailsFromService(service);
 					servicesMap.set(_service.serviceid, _service);
 				} else {
-					let existingService = { ...service };
-					existingService['attributes'] = this.getServiceAttributesDefinition(attributesDefinition, serviceAttributeArr);
+					const existingService = { ...service };
+					existingService.attributes = this.getServiceAttributesDefinition(attributesDefinition, serviceAttributeArr);
 					service.statuses = [this.getServiceDetails(existingService)];
 					this.removeVersionSpecificDetailsFromService(existingService);
 					if (service.status === 'ACTIVE' || service.status === 'INACTIVE') {
-						service['attributes'] = attributesForListRow;
+						service.attributes = attributesForListRow;
 					}
 					servicesMap.set(service.serviceid, service);
 				}
@@ -521,17 +514,17 @@ export default class ServiceManager {
 
 			const attributesDefinition = await this.getAttributesDefinition(),
 				servicesMap = new Map<number, object>();
-
 			services.forEach((service) => {
-				let attributesForListRow = [];
-				let serviceAttributeArr = [];
-				if (service.metadata != null) {
-					let serviceAttributeArr = Object.values(service.metadata['attributes']).map((attributeID: any) => attributeID);
+				service = { ...service, serviceid: service.serviceID };
+				let attributesForListRow = [],
+					serviceAttributeArr = [];
+				if (service.metadata !== null) {
+					serviceAttributeArr = Object.values(service.metadata.attributes).map((attributeID: any) => attributeID);
 					attributesForListRow = this.getServiceAttributesDefinition(attributesDefinition, serviceAttributeArr);
 				}
 				if (servicesMap.has(service.serviceid)) {
-					let existingService = { ...service };
-					existingService['attributes'] = this.getServiceAttributesDefinition(attributesDefinition, serviceAttributeArr);
+					const existingService = { ...service };
+					existingService.attributes = this.getServiceAttributesDefinition(attributesDefinition, serviceAttributeArr);
 					const _service = JSON.parse(JSON.stringify(servicesMap.get(service.serviceid)));
 					_service.statuses.push(this.getServiceDetails(existingService));
 					if (service.status === 'ACTIVE') {
@@ -541,23 +534,23 @@ export default class ServiceManager {
 					this.removeVersionSpecificDetailsFromService(service);
 					servicesMap.set(_service.serviceid, _service);
 				} else {
-					let existingService = { ...service };
-					existingService['attributes'] = this.getServiceAttributesDefinition(attributesDefinition, serviceAttributeArr);
+					const existingService = { ...service };
+					existingService.attributes = this.getServiceAttributesDefinition(attributesDefinition, serviceAttributeArr);
 					service.statuses = [this.getServiceDetails(existingService)];
 					this.removeVersionSpecificDetailsFromService(existingService);
 					if (service.status === 'ACTIVE') {
-						service['attributes'] = attributesForListRow;
+						service.attributes = attributesForListRow;
 					}
 					servicesMap.set(service.serviceid, service);
 				}
 			});
 			const count = await this.getTotalNonInActiveServices();
-			let filtedCount = count;
+			let filteredCount = count;
 			if (searchKey !== EMPTY_STRING) {
-				filtedCount = await this.getTotalNonInActiveServicesFiltered(searchKey);
+				filteredCount = await this.getTotalNonInActiveServicesFiltered(searchKey);
 			}
 			const response = {
-				totalServices: filtedCount,
+				totalServices: filteredCount,
 				nonFilteredServicesCount: count,
 				services: [...servicesMap.values()]
 			};
@@ -571,101 +564,75 @@ export default class ServiceManager {
 
 	private async getTotalServices(): Promise<number> {
 		logger.nonPhi.info('Returning the count of all services including inactive services.');
-		let data = await db.query(QGetAllServiceIDsCountWithInactive(), {
+		const data = await db.query(QGetAllServiceIDsCountWithInactive(), {
 			type: QueryTypes.SELECT,
 			replacements: {}
 		});
 		return Number(data[0].count);
-
-		//
-		// return this.serviceRepository.count({ distinct: true, col: 'serviceID' });
 	}
 	private async getTotalServicesFiltered(searchKey): Promise<number> {
-		logger.nonPhi.info('Returning the count of total number of non inactive services.');
-		let data = await db.query(QGetAllServiceIDsCountInactiveWithFilter(), {
+		logger.nonPhi.info('Returning the count of total number of inactive services with filter');
+		const data = await db.query(QGetAllServiceIDsCountInactiveWithFilter(), {
 			type: QueryTypes.SELECT,
 			replacements: { searchKey }
 		});
-		console.log('ww', data);
 		return Number(data[0].count);
 	}
 
 	private async getNonInActiveServicesWithSearchFilter(sortBy: string, sortOrder: string, offset: number, limit: number, searchKey: string): Promise<[]> {
-		let sortByAppendedQuots = '"serviceName"';
-		if (sortBy === 'serviceName') {
-			sortByAppendedQuots = '"servicename"';
-		} else if (sortBy === 'serviceID') {
-			sortByAppendedQuots = '"serviceID"';
-		}
-		const ids = await db.query(QGetAllServiceIDsWithFilter(sortByAppendedQuots, sortOrder), {
+		const ids = await db.query(QGetAllServiceIDsWithFilter(sortBy, sortOrder), {
 			type: QueryTypes.SELECT,
 			replacements: { limit, offset, searchKey }
 		});
 		const idsArr = Object.values(ids).map((obj: any) => obj.serviceID);
-		if (idsArr.length == 0) return [];
-		return await db.query(QGetAllServicesFromServiceIDWithFilter(sortByAppendedQuots, sortOrder, idsArr.join(',')), {
+		if (idsArr.length === 0) return [];
+		return await db.query(QGetAllServicesFromServiceIDWithFilter(sortBy, sortOrder, idsArr.join(',')), {
 			type: QueryTypes.SELECT,
 			replacements: { limit, offset, searchKey }
 		});
 	}
 
 	private async getAllNonInActiveServicesWithoutFilter(sortBy: string, sortOrder: string, offset: number, limit: number): Promise<[]> {
-		let sortByAppendedQuots = '"serviceName"';
-		if (sortBy === 'serviceName') {
-			sortByAppendedQuots = '"serviceName"';
-		} else if (sortBy === 'serviceID') {
-			sortByAppendedQuots = '"serviceid"';
-		}
-		const ids = await db.query(QGetAllServiceIDs(sortByAppendedQuots, sortOrder), {
+		const ids = await db.query(QGetAllServiceIDs(sortBy, sortOrder), {
 			type: QueryTypes.SELECT,
 			replacements: { limit, offset }
 		});
-		const idsArr = Object.values(ids).map((obj: any) => obj.serviceid);
-		if (idsArr.length == 0) {
+		const idsArr = Object.values(ids).map((obj: any) => obj.serviceID);
+		logger.nonPhi.debug('ServiceIDs', { idsArr });
+		if (idsArr.length === 0) {
 			return [];
 		}
-		return await db.query(QGetAllServicesFromServiceID(sortByAppendedQuots, sortOrder, idsArr.join(',')), {
+		return await db.query(QGetAllServicesFromServiceID(sortBy, sortOrder, idsArr.join(',')), {
 			type: QueryTypes.SELECT,
 			replacements: { limit, offset }
 		});
 	}
 
 	private async getAllServicesWithSearchFilter(sortBy: string, sortOrder: string, offset: number, limit: number, searchKey: string): Promise<[]> {
-		let sortByAppendedQuots = '"servicename"';
-		if (sortBy === 'serviceName') {
-			sortByAppendedQuots = '"servicename"';
-		} else if (sortBy === 'serviceID') {
-			sortByAppendedQuots = '"serviceID"';
-		}
-		const ids = await db.query(QGetAllServiceIDsWithInactiveFilter(sortByAppendedQuots, sortOrder), {
+		const ids = await db.query(QGetAllServiceIDsWithInactiveFilter(sortBy, sortOrder), {
 				type: QueryTypes.SELECT,
 				replacements: { limit, offset, searchKey }
 			}),
-			idsArr = Object.values(ids).map((obj: any) => obj.serviceid);
-		if (idsArr.length == 0) return [];
-		return await db.query(QGetAllServicesFromServiceIDWithInactiveFilter(sortByAppendedQuots, sortOrder, idsArr.join(',')), {
+			idsArr = Object.values(ids).map((obj: any) => obj.serviceID);
+		logger.nonPhi.debug('ServiceIDs', { idsArr });
+		if (idsArr.length === 0) return [];
+		return await db.query(QGetAllServicesFromServiceIDWithInactiveFilter(sortBy, sortOrder, idsArr.join(',')), {
 			type: QueryTypes.SELECT,
 			replacements: { limit, offset }
 		});
 	}
 
 	private async getAllServicesWithoutFilter(sortBy: string, sortOrder: string, offset: number, limit: number): Promise<[]> {
-		let sortByAppendedQuots = '"servicename"',
-			sortByNumber = 2;
-		if (sortBy === 'servicename') {
-			sortByAppendedQuots = '"servicename"';
-			sortByNumber = 2;
-		} else if (sortBy === 'serviceID') {
-			sortByAppendedQuots = '"serviceid"';
-			sortByNumber = 1;
-		}
+		let sortByNumber = 2;
+		if (sortBy === 'serviceID') sortByNumber = 1;
 		const ids = await db.query(QGetAllServiceIDsWithInactive(sortByNumber, sortOrder), {
 				type: QueryTypes.SELECT,
 				replacements: { limit, offset }
 			}),
-			idsArr = Object.values(ids).map((obj: any) => obj.serviceid);
-		if (idsArr.length == 0) return [];
-		return await db.query(QGetAllServicesFromServiceIDWithInactive(sortByAppendedQuots, sortOrder, idsArr.join(',')), {
+			idsArr = Object.values(ids).map((obj: any) => obj.serviceID);
+		logger.nonPhi.debug('ServiceIDs', { idsArr });
+		if (idsArr.length === 0) return [];
+		return await db.query(QGetAllServicesFromServiceIDWithInactive(sortBy, sortOrder, idsArr.join(',')), {
 			type: QueryTypes.SELECT,
 			replacements: { limit, offset }
 		});
@@ -694,15 +661,15 @@ export default class ServiceManager {
 
 	private async getTotalNonInActiveServices(): Promise<number> {
 		logger.nonPhi.info('Returning the count of total number of non inactive services.');
-		let data = await db.query(QGetAllServiceIDsCount(), {
+		const data = await db.query(QGetAllServiceIDsCount(), {
 			type: QueryTypes.SELECT,
 			replacements: {}
 		});
 		return Number(data[0].count);
 	}
 	private async getTotalNonInActiveServicesFiltered(searchKey): Promise<number> {
-		logger.nonPhi.info('Returning the count of total number of non inactive services.');
-		let data = await db.query(QGetAllServiceIDsCountWithFilter(), {
+		logger.nonPhi.info('Returning the count of total number of non inactive services with filter.');
+		const data = await db.query(QGetAllServiceIDsCountWithFilter(), {
 			type: QueryTypes.SELECT,
 			replacements: { searchKey }
 		});
@@ -716,65 +683,12 @@ export default class ServiceManager {
 	}
 
 	private getServiceAttributesDefinition(attributesDefinition, ids) {
-		let arr = [];
+		const arr = [];
 		attributesDefinition.forEach((obj) => {
 			if (ids.includes(obj.attributesDefinitionID)) {
 				arr.push(obj.name);
 			}
 		});
 		return arr;
-	}
-
-	public async getServiceList(sortBy: string, sortOrder: string, offset: number, limit: number, keyword: string, showInactive: number): Promise<ServiceListResponse> {
-		try {
-			let totalServices = [];
-			let services = [];
-			let nonFilteredServices = [];
-			const searchKey = keyword !== EMPTY_STRING ? serviceList.matchAll + keyword.trim() + serviceList.matchAll : serviceList.matchAll;
-			if (showInactive === 1) {
-				// query to get total count of services filtered by status & search key
-				totalServices = await db.query(QExpiredServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
-					type: QueryTypes.SELECT,
-					replacements: { searchKey, limit: null, offset: null }
-				});
-				//query to fetch all services matching all criteria
-				services = await db.query(QExpiredServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
-					type: QueryTypes.SELECT,
-					replacements: { searchKey, limit, offset }
-				});
-				//query to get total count of services with no filter
-				nonFilteredServices = await db.query(QExpiredServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
-					type: QueryTypes.SELECT,
-					replacements: { searchKey: serviceList.matchAll, limit: null, offset: null }
-				});
-				await Promise.all([totalServices, services, nonFilteredServices]);
-			} else {
-				// query to get total count of services filtered by status & search key
-				totalServices = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
-					type: QueryTypes.SELECT,
-					replacements: { searchKey, limit: null, offset: null }
-				});
-				//query to fetch all services matching all criteria
-				services = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
-					type: QueryTypes.SELECT,
-					replacements: { searchKey, limit, offset }
-				});
-				//query to get total count of services with no filter
-				nonFilteredServices = await db.query(QServiceList(sortBy ?? serviceList.defaultSortBy, sortOrder), {
-					type: QueryTypes.SELECT,
-					replacements: { searchKey: serviceList.matchAll, limit: null, offset: null }
-				});
-				await Promise.all([totalServices, services, nonFilteredServices]);
-			}
-
-			const response: ServiceListResponse = {
-				totalServices: totalServices.length,
-				nonFilteredServicesCount: nonFilteredServices.length,
-				services: services
-			};
-			return response;
-		} catch (error) {
-			throw new HandleError({ name: 'ServiceListFetchError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
-		}
 	}
 }

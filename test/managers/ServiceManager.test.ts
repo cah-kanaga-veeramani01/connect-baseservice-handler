@@ -291,126 +291,679 @@ describe('Create Service', () => {
 });
 
 describe('get list of services', () => {
-	test('should return list of services ', async () => {
-		db.query = () => {
-			return [
-				{
-					servicename: '(UHC) High Risk Medication- Non-BZD Hypnotic',
-					servicetype: 'TIP',
-					legacytipdetailid: '311',
-					serviceid: 1457,
-					statuses: [
-						{
-							status: 'ACTIVE',
-							validFrom: '2014-01-02T20:38:08.053+00:00',
-							validTill: null,
-							isPublished: 1,
-							serviceName: '(UHC) High Risk Medication- Non-BZD Hypnotic',
-							serviceType: 'TIP',
-							legacyTIPDetailID: 311,
-							globalServiceVersion: 1
-						}
-					],
-					attributes: ['TECHELIGIBLE']
-				}
-			];
-		};
-		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, '', 0)).toMatchObject({
-			totalServices: 1,
-			nonFilteredServicesCount: 1,
+	test('should return list of services without inactive and filter', async () => {
+		db.query = jest
+			.fn()
+			.mockImplementationOnce(() => {
+				return [
+					{
+						serviceID: 1149,
+						serviceName: '(Star Task) Needs Drug Therapy - Statin (Diabetes)'
+					},
+					{
+						serviceID: 1140,
+						serviceName: '(Star Task) Needs Refill - Biguanide'
+					}
+				];
+			})
+			.mockImplementationOnce(() => {
+				return [
+					{
+						serviceID: 1149,
+						servicename: '(Star Task) Needs Drug Therapy - Statin (Diabetes)',
+						validFrom: '2024-01-01T05:00:00.000Z',
+						validTill: null,
+						isPublished: 1,
+						servicetype: 'TIP',
+						globalServiceVersion: 2,
+						legacytipdetailid: 2907,
+						status: 'ACTIVE',
+						metadata: { attributes: [Array] }
+					},
+					{
+						serviceID: 1140,
+						servicename: '(Star Task) Needs Refill - Biguanide',
+						validFrom: '2024-01-01T05:00:00.000Z',
+						validTill: null,
+						isPublished: 1,
+						servicetype: 'TIP',
+						globalServiceVersion: 2,
+						legacytipdetailid: 2898,
+						status: 'ACTIVE',
+						metadata: { attributes: [1] }
+					},
+					{
+						serviceID: 1140,
+						servicename: '(Star Task) Needs Refill - Biguanide',
+						validFrom: null,
+						validTill: null,
+						isPublished: 0,
+						servicetype: 'TIP',
+						globalServiceVersion: 3,
+						legacytipdetailid: 2898,
+						status: 'DRAFT',
+						metadata: null
+					}
+				];
+			})
+			.mockImplementationOnce(() => {
+				return [
+					{
+						attributesDefinitionID: 1,
+						name: 'DIABETES (ALL CLASS) ADHERENCE',
+						description: 'Diabetes program support',
+						createdAt: '2023-11-13T07:17:20.194Z',
+						updatedAt: null,
+						categoryName: 'Quality Measures'
+					},
+					{
+						attributesDefinitionID: 93,
+						name: 'HYPERTENSION (RASA) ADHERENCE',
+						description: 'Hypertension program support',
+						createdAt: '2023-11-13T07:17:20.194Z',
+						updatedAt: null,
+						categoryName: 'Quality Measures'
+					},
+					{
+						attributesDefinitionID: 94,
+						name: 'STATIN USE IN DIABETES (SUPD)',
+						description: 'Statin in Diabetes program support',
+						createdAt: '2023-11-13T07:17:20.194Z',
+						updatedAt: null,
+						categoryName: 'Quality Measures'
+					}
+				];
+			})
+			.mockImplementationOnce(() => {
+				return [{ count: '1233' }];
+			});
+		expect(await serviceManager.getNonInActiveServicesList('serviceName', 'asc', 0, 1, '')).toMatchObject({
+			totalServices: 1233,
+			nonFilteredServicesCount: 1233,
 			services: [
 				{
-					servicename: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+					serviceID: 1149,
+					servicename: '(Star Task) Needs Drug Therapy - Statin (Diabetes)',
+					validFrom: '2024-01-01T05:00:00.000Z',
+					validTill: null,
+					isPublished: 1,
 					servicetype: 'TIP',
-					legacytipdetailid: '311',
-					serviceid: 1457,
+					globalServiceVersion: 2,
+					legacytipdetailid: 2907,
+					status: 'ACTIVE',
+					metadata: {
+						attributes: [Array]
+					},
+					serviceid: 1149,
 					statuses: [
 						{
 							status: 'ACTIVE',
-							validFrom: '2014-01-02T20:38:08.053+00:00',
+							validFrom: '2024-01-01T05:00:00.000Z',
 							validTill: null,
 							isPublished: 1,
-							serviceName: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+							serviceName: '(Star Task) Needs Drug Therapy - Statin (Diabetes)',
 							serviceType: 'TIP',
-							legacyTIPDetailID: 311,
-							globalServiceVersion: 1
+							legacyTIPDetailID: 2907,
+							globalServiceVersion: 2,
+							attributes: []
 						}
 					],
-					attributes: ['TECHELIGIBLE']
+					attributes: []
+				},
+				{
+					serviceID: 1140,
+					servicename: '(Star Task) Needs Refill - Biguanide',
+					validFrom: '2024-01-01T05:00:00.000Z',
+					validTill: null,
+					isPublished: 1,
+					servicetype: 'TIP',
+					globalServiceVersion: 2,
+					legacytipdetailid: 2898,
+					status: 'ACTIVE',
+					metadata: {
+						attributes: [1]
+					},
+					serviceid: 1140,
+					statuses: [
+						{
+							status: 'ACTIVE',
+							validFrom: '2024-01-01T05:00:00.000Z',
+							validTill: null,
+							isPublished: 1,
+							serviceName: '(Star Task) Needs Refill - Biguanide',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 2898,
+							globalServiceVersion: 2,
+							attributes: ['DIABETES (ALL CLASS) ADHERENCE']
+						},
+						{
+							status: 'DRAFT',
+							validFrom: null,
+							validTill: null,
+							isPublished: 0,
+							serviceName: '(Star Task) Needs Refill - Biguanide',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 2898,
+							globalServiceVersion: 3,
+							attributes: []
+						}
+					],
+					attributes: ['DIABETES (ALL CLASS) ADHERENCE']
 				}
 			]
 		});
 	});
-	test('should return list of services matching the search key - search by attribute', async () => {
-		db.query = () => {
-			return [
-				{
-					servicename: '(UHC) High Risk Medication- Non-BZD Hypnotic',
-					servicetype: 'TIP',
-					legacytipdetailid: '311',
-					serviceid: 1457,
-					statuses: [
-						{
-							status: 'ACTIVE',
-							validFrom: '2014-01-02T20:38:08.053+00:00',
-							validTill: null,
-							isPublished: 1,
-							serviceName: '(UHC) High Risk Medication- Non-BZD Hypnotic',
-							serviceType: 'TIP',
-							legacyTIPDetailID: 311,
-							globalServiceVersion: 1
-						}
-					],
-					attributes: ['AMP']
-				}
-			];
-		};
-		expect(await serviceManager.getServiceList('serviceName', 'asc', 0, 1, 'AMP', 0)).toMatchObject({
-			totalServices: 1,
-			nonFilteredServicesCount: 1,
+	test('should return list of services without inactive and  with filter', async () => {
+		db.query = jest
+			.fn()
+			.mockImplementationOnce(() => {
+				return [
+					{
+						serviceID: 1149,
+						serviceName: '(Star Task) Needs Drug Therapy - Statin (Diabetes)'
+					},
+					{
+						serviceID: 1140,
+						serviceName: '(Star Task) Needs Refill - Biguanide'
+					}
+				];
+			})
+			.mockImplementationOnce(() => {
+				return [
+					{
+						serviceID: 1149,
+						servicename: '(Star Task) Needs Drug Therapy - Statin (Diabetes)',
+						validFrom: '2024-01-01T05:00:00.000Z',
+						validTill: null,
+						isPublished: 1,
+						servicetype: 'TIP',
+						globalServiceVersion: 2,
+						legacytipdetailid: 2907,
+						status: 'ACTIVE',
+						metadata: { attributes: [Array] }
+					},
+					{
+						serviceID: 1140,
+						servicename: '(Star Task) Needs Refill - Biguanide',
+						validFrom: '2024-01-01T05:00:00.000Z',
+						validTill: null,
+						isPublished: 1,
+						servicetype: 'TIP',
+						globalServiceVersion: 2,
+						legacytipdetailid: 2898,
+						status: 'ACTIVE',
+						metadata: { attributes: [1] }
+					},
+					{
+						serviceID: 1140,
+						servicename: '(Star Task) Needs Refill - Biguanide',
+						validFrom: null,
+						validTill: null,
+						isPublished: 0,
+						servicetype: 'TIP',
+						globalServiceVersion: 3,
+						legacytipdetailid: 2898,
+						status: 'DRAFT',
+						metadata: null
+					}
+				];
+			})
+			.mockImplementationOnce(() => {
+				return [
+					{
+						attributesDefinitionID: 1,
+						name: 'DIABETES (ALL CLASS) ADHERENCE',
+						description: 'Diabetes program support',
+						createdAt: '2023-11-13T07:17:20.194Z',
+						updatedAt: null,
+						categoryName: 'Quality Measures'
+					},
+					{
+						attributesDefinitionID: 93,
+						name: 'HYPERTENSION (RASA) ADHERENCE',
+						description: 'Hypertension program support',
+						createdAt: '2023-11-13T07:17:20.194Z',
+						updatedAt: null,
+						categoryName: 'Quality Measures'
+					},
+					{
+						attributesDefinitionID: 94,
+						name: 'STATIN USE IN DIABETES (SUPD)',
+						description: 'Statin in Diabetes program support',
+						createdAt: '2023-11-13T07:17:20.194Z',
+						updatedAt: null,
+						categoryName: 'Quality Measures'
+					}
+				];
+			})
+			.mockImplementationOnce(() => {
+				return [{ count: '1233' }];
+			}).mockImplementationOnce(() => {
+				return [{ count: '2' }];
+			});
+		expect(await serviceManager.getNonInActiveServicesList('serviceName', 'asc', 0, 1, 'dru')).toMatchObject({
+			totalServices: 2,
+			nonFilteredServicesCount: 1233,
 			services: [
 				{
-					servicename: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+					serviceID: 1149,
+					servicename: '(Star Task) Needs Drug Therapy - Statin (Diabetes)',
+					validFrom: '2024-01-01T05:00:00.000Z',
+					validTill: null,
+					isPublished: 1,
 					servicetype: 'TIP',
-					legacytipdetailid: '311',
-					serviceid: 1457,
+					globalServiceVersion: 2,
+					legacytipdetailid: 2907,
+					status: 'ACTIVE',
+					metadata: {
+						attributes: [Array]
+					},
+					serviceid: 1149,
 					statuses: [
 						{
 							status: 'ACTIVE',
-							validFrom: '2014-01-02T20:38:08.053+00:00',
+							validFrom: '2024-01-01T05:00:00.000Z',
 							validTill: null,
 							isPublished: 1,
-							serviceName: '(UHC) High Risk Medication- Non-BZD Hypnotic',
+							serviceName: '(Star Task) Needs Drug Therapy - Statin (Diabetes)',
 							serviceType: 'TIP',
-							legacyTIPDetailID: 311,
-							globalServiceVersion: 1
+							legacyTIPDetailID: 2907,
+							globalServiceVersion: 2,
+							attributes: []
 						}
 					],
-					attributes: ['AMP']
+					attributes: []
+				},
+				{
+					serviceID: 1140,
+					servicename: '(Star Task) Needs Refill - Biguanide',
+					validFrom: '2024-01-01T05:00:00.000Z',
+					validTill: null,
+					isPublished: 1,
+					servicetype: 'TIP',
+					globalServiceVersion: 2,
+					legacytipdetailid: 2898,
+					status: 'ACTIVE',
+					metadata: {
+						attributes: [1]
+					},
+					serviceid: 1140,
+					statuses: [
+						{
+							status: 'ACTIVE',
+							validFrom: '2024-01-01T05:00:00.000Z',
+							validTill: null,
+							isPublished: 1,
+							serviceName: '(Star Task) Needs Refill - Biguanide',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 2898,
+							globalServiceVersion: 2,
+							attributes: ['DIABETES (ALL CLASS) ADHERENCE']
+						},
+						{
+							status: 'DRAFT',
+							validFrom: null,
+							validTill: null,
+							isPublished: 0,
+							serviceName: '(Star Task) Needs Refill - Biguanide',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 2898,
+							globalServiceVersion: 3,
+							attributes: []
+						}
+					],
+					attributes: ['DIABETES (ALL CLASS) ADHERENCE']
 				}
 			]
 		});
 	});
-	test('should return empty result', async () => {
-		db.query = () => {
-			return [];
-		};
-		expect(await serviceManager.getServiceList('serviceName', 'desc', 12, 1, 'All', 0)).toMatchObject({
-			totalServices: 0,
-			nonFilteredServicesCount: 0,
-			services: []
+	test('should return list of services with inactive and without filter', async () => {
+		db.query = jest
+			.fn()
+			.mockImplementationOnce(() => {
+				return [
+					{
+						serviceID: 1149,
+						serviceName: '(Star Task) Needs Drug Therapy - Statin (Diabetes)'
+					},
+					{
+						serviceID: 1140,
+						serviceName: '(Star Task) Needs Refill - Biguanide'
+					}
+				];
+			})
+			.mockImplementationOnce(() => {
+				return [
+					{
+						serviceID: 1149,
+						serviceName: '(Star Task) Needs Drug Therapy - Statin (Diabetes)',
+						validFrom: '2024-01-01T05:00:00.000Z',
+						validTill: null,
+						isPublished: 1,
+						servicetype: 'TIP',
+						globalServiceVersion: 2,
+						legacytipdetailid: 2907,
+						status: 'ACTIVE',
+						metadata: '{"attributes":[56,31,41,62]}'
+					},
+					{
+						serviceID: 1140,
+						serviceName: '(Star Task) Needs Refill - Biguanide',
+						validFrom: '2024-01-01T05:00:00.000Z',
+						validTill: null,
+						isPublished: 1,
+						servicetype: 'TIP',
+						globalServiceVersion: 2,
+						legacytipdetailid: 2898,
+						status: 'ACTIVE',
+						metadata: '{"attributes":[56,59,1,31,62]}'
+					},
+					{
+						serviceID: 1140,
+						serviceName: '(Star Task) Needs Refill - Biguanide',
+						validFrom: null,
+						validTill: null,
+						isPublished: 0,
+						servicetype: 'TIP',
+						globalServiceVersion: 3,
+						legacytipdetailid: 2898,
+						status: 'DRAFT',
+						metadata: null
+					}
+				];
+			})
+			.mockImplementationOnce(() => {
+				return [
+					{
+						attributesDefinitionID: 1,
+						name: 'DIABETES (ALL CLASS) ADHERENCE',
+						description: 'Diabetes program support',
+						createdAt: '2023-11-13T07:17:20.194Z',
+						updatedAt: null,
+						categoryName: 'Quality Measures'
+					},
+					{
+						attributesDefinitionID: 93,
+						name: 'HYPERTENSION (RASA) ADHERENCE',
+						description: 'Hypertension program support',
+						createdAt: '2023-11-13T07:17:20.194Z',
+						updatedAt: null,
+						categoryName: 'Quality Measures'
+					},
+					{
+						attributesDefinitionID: 94,
+						name: 'STATIN USE IN DIABETES (SUPD)',
+						description: 'Statin in Diabetes program support',
+						createdAt: '2023-11-13T07:17:20.194Z',
+						updatedAt: null,
+						categoryName: 'Quality Measures'
+					}
+				];
+			})
+			.mockImplementationOnce(() => {
+				return [{ count: '1233' }];
+			});
+		expect(await serviceManager.getAllServicesList('serviceName', 'asc', 0, 1, '')).toMatchObject({
+			totalServices: 1233,
+			nonFilteredServicesCount: 1233,
+			services: [
+				{
+					serviceID: 1149,
+					servicename: '(Star Task) Needs Drug Therapy - Statin (Diabetes)',
+					validFrom: '2024-01-01T05:00:00.000Z',
+					validTill: null,
+					isPublished: 1,
+					servicetype: 'TIP',
+					globalServiceVersion: 2,
+					legacytipdetailid: 2907,
+					status: 'ACTIVE',
+					metadata: {
+						"attributes": [56,31,41,62 ],
+					},
+					serviceid: 1149,
+					statuses: [
+						{
+							status: 'ACTIVE',
+							validFrom: '2024-01-01T05:00:00.000Z',
+							validTill: null,
+							isPublished: 1,
+							serviceName: '(Star Task) Needs Drug Therapy - Statin (Diabetes)',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 2907,
+							globalServiceVersion: 2,
+							attributes: []
+						}
+					],
+					attributes: []
+				},
+				{
+					serviceID: 1140,
+					servicename: '(Star Task) Needs Refill - Biguanide',
+					validFrom: '2024-01-01T05:00:00.000Z',
+					validTill: null,
+					isPublished: 1,
+					servicetype: 'TIP',
+					globalServiceVersion: 2,
+					legacytipdetailid: 2898,
+					status: 'ACTIVE',
+					metadata: {
+						"attributes": [56,59,1,31,62 ],
+					},
+					serviceid: 1140,
+					statuses: [
+						{
+							status: 'ACTIVE',
+							validFrom: '2024-01-01T05:00:00.000Z',
+							validTill: null,
+							isPublished: 1,
+							serviceName: '(Star Task) Needs Refill - Biguanide',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 2898,
+							globalServiceVersion: 2,
+							attributes: ['DIABETES (ALL CLASS) ADHERENCE']
+						},
+						{
+							status: 'DRAFT',
+							validFrom: null,
+							validTill: null,
+							isPublished: 0,
+							serviceName: '(Star Task) Needs Refill - Biguanide',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 2898,
+							globalServiceVersion: 3,
+							attributes: []
+						}
+					],
+					attributes: ['DIABETES (ALL CLASS) ADHERENCE']
+				}
+			]
 		});
 	});
-
-	test('should throw error', async () => {
+	test('should return list of services with inactive and with filter', async () => {
+		db.query = jest
+			.fn()
+			.mockImplementationOnce(() => {
+				return [
+					{
+						serviceID: 1149,
+						serviceName: '(Star Task) Needs Drug Therapy - Statin (Diabetes)'
+					},
+					{
+						serviceID: 1140,
+						serviceName: '(Star Task) Needs Refill - Biguanide'
+					}
+				];
+			})
+			.mockImplementationOnce(() => {
+				return [
+					{
+						serviceID: 1149,
+						serviceName: '(Star Task) Needs Drug Therapy - Statin (Diabetes)',
+						validFrom: '2024-01-01T05:00:00.000Z',
+						validTill: null,
+						isPublished: 1,
+						servicetype: 'TIP',
+						globalServiceVersion: 2,
+						legacytipdetailid: 2907,
+						status: 'ACTIVE',
+						metadata: '{"attributes":[56,31,41,62]}'
+					},
+					{
+						serviceID: 1140,
+						serviceName: '(Star Task) Needs Refill - Biguanide',
+						validFrom: '2024-01-01T05:00:00.000Z',
+						validTill: null,
+						isPublished: 1,
+						servicetype: 'TIP',
+						globalServiceVersion: 2,
+						legacytipdetailid: 2898,
+						status: 'ACTIVE',
+						metadata: '{"attributes":[56,59,1,31,62]}'
+					},
+					{
+						serviceID: 1140,
+						serviceName: '(Star Task) Needs Refill - Biguanide',
+						validFrom: null,
+						validTill: null,
+						isPublished: 0,
+						servicetype: 'TIP',
+						globalServiceVersion: 3,
+						legacytipdetailid: 2898,
+						status: 'DRAFT',
+						metadata: null
+					}
+				];
+			})
+			.mockImplementationOnce(() => {
+				return [
+					{
+						attributesDefinitionID: 1,
+						name: 'DIABETES (ALL CLASS) ADHERENCE',
+						description: 'Diabetes program support',
+						createdAt: '2023-11-13T07:17:20.194Z',
+						updatedAt: null,
+						categoryName: 'Quality Measures'
+					},
+					{
+						attributesDefinitionID: 93,
+						name: 'HYPERTENSION (RASA) ADHERENCE',
+						description: 'Hypertension program support',
+						createdAt: '2023-11-13T07:17:20.194Z',
+						updatedAt: null,
+						categoryName: 'Quality Measures'
+					},
+					{
+						attributesDefinitionID: 94,
+						name: 'STATIN USE IN DIABETES (SUPD)',
+						description: 'Statin in Diabetes program support',
+						createdAt: '2023-11-13T07:17:20.194Z',
+						updatedAt: null,
+						categoryName: 'Quality Measures'
+					}
+				];
+			})
+			.mockImplementationOnce(() => {
+				return [{ count: '1233' }];
+			})
+			.mockImplementationOnce(() => {
+				return [{ count: '2' }];
+			});
+		expect(await serviceManager.getAllServicesList('serviceName', 'asc', 0, 1, 'dru')).toMatchObject({
+			totalServices: 2,
+			nonFilteredServicesCount: 1233,
+			services: [
+				{
+					serviceID: 1149,
+					servicename: '(Star Task) Needs Drug Therapy - Statin (Diabetes)',
+					validFrom: '2024-01-01T05:00:00.000Z',
+					validTill: null,
+					isPublished: 1,
+					servicetype: 'TIP',
+					globalServiceVersion: 2,
+					legacytipdetailid: 2907,
+					status: 'ACTIVE',
+					metadata: {
+						"attributes": [56,31,41,62 ],
+					},
+					serviceid: 1149,
+					statuses: [
+						{
+							status: 'ACTIVE',
+							validFrom: '2024-01-01T05:00:00.000Z',
+							validTill: null,
+							isPublished: 1,
+							serviceName: '(Star Task) Needs Drug Therapy - Statin (Diabetes)',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 2907,
+							globalServiceVersion: 2,
+							attributes: []
+						}
+					],
+					attributes: []
+				},
+				{
+					serviceID: 1140,
+					servicename: '(Star Task) Needs Refill - Biguanide',
+					validFrom: '2024-01-01T05:00:00.000Z',
+					validTill: null,
+					isPublished: 1,
+					servicetype: 'TIP',
+					globalServiceVersion: 2,
+					legacytipdetailid: 2898,
+					status: 'ACTIVE',
+					metadata: {
+						"attributes": [56,59,1,31,62 ],
+					},
+					serviceid: 1140,
+					statuses: [
+						{
+							status: 'ACTIVE',
+							validFrom: '2024-01-01T05:00:00.000Z',
+							validTill: null,
+							isPublished: 1,
+							serviceName: '(Star Task) Needs Refill - Biguanide',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 2898,
+							globalServiceVersion: 2,
+							attributes: ['DIABETES (ALL CLASS) ADHERENCE']
+						},
+						{
+							status: 'DRAFT',
+							validFrom: null,
+							validTill: null,
+							isPublished: 0,
+							serviceName: '(Star Task) Needs Refill - Biguanide',
+							serviceType: 'TIP',
+							legacyTIPDetailID: 2898,
+							globalServiceVersion: 3,
+							attributes: []
+						}
+					],
+					attributes: ['DIABETES (ALL CLASS) ADHERENCE']
+				}
+			]
+		});
+	});
+	test('should throw error with inactive', async () => {
 		db.query = () => {
 			throw new Error();
 		};
 		try {
-			await serviceManager.getServiceList('serviceName', 'asc', 12, 1, 'All', 0);
+			await serviceManager.getAllServicesList('serviceName', 'asc', 12, 1, '');
 		} catch (error) {
 			expect(error.code).toBe('SCE011');
 			expect(error.name).toBe('ServiceListFetchError');
+		}
+	});
+	test('should throw error without inactive', async () => {
+		db.query = () => {
+			throw new Error();
+		};
+		try {
+			await serviceManager.getNonInActiveServicesList('serviceName', 'asc', 12, 1, '');
+		} catch (error) {
+			expect(error.code).toBe('SCE026');
+			expect(error.name).toBe('NonInActiveServicesListFetchError');
 		}
 	});
 });
