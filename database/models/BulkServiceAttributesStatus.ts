@@ -26,7 +26,7 @@ export class BulkServiceAttributesStatus extends Model<BulkServiceAttributesStat
 	@Column(DataType.STRING)
 	filelocation: string;
 
-	@Column(DataType.STRING)
+	@Column(DataType.ENUM('INPROGRESS', 'COMPLETED', 'FAILED'))
 	status: string;
 
 	@Default(Sequelize.fn('now')) @Column(DataType.DATE) createdAt: Date;

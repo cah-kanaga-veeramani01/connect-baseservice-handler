@@ -1,3 +1,5 @@
+CREATE TYPE service."enum_BulkServiceAttributes_status" AS ENUM ('INPROGRESS','COMPLETED', 'FAILED');
+
 CREATE SEQUENCE IF NOT EXISTS service."Service_bulkServiceAttributesStatusID_seq"
     INCREMENT 1
     START 1
@@ -25,7 +27,7 @@ CREATE TABLE IF NOT EXISTS service."BulkServiceAttributesStatus"
     "totalFailedRecords" integer,
     "errorReason" jsonb,
     "filelocation" character varying(500),
-    "status" character varying(20) NOT NULL,
+    "status" service."enum_BulkServiceAttributes_status",
     "createdAt" timestamp with time zone DEFAULT now(),
     "createdBy" character varying(255) COLLATE pg_catalog."default",
     "updatedAt" timestamp with time zone DEFAULT now(),
