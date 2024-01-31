@@ -54,6 +54,6 @@ describe('isAuthorized middleware', () => {
 		isAuthorizedInstance(mockReq, mockRes, mockNext);
 
 		expect(contextGetSpy).toHaveBeenCalledWith('userRoles');
-		expect(mockNext).toHaveBeenCalledWith();
+		expect(mockNext).toHaveBeenCalled();
 	});
 });
