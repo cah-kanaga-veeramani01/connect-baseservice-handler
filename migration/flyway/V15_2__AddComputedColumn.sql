@@ -23,4 +23,7 @@ GENERATED ALWAYS AS (CASE
 	 and service.isPastDate("validTill")  THEN  'INACTIVE'::service."enum_Service_status" ELSE NULL
      END) STORED
 
-SELECT * FROM service."Service";     
+CREATE INDEX "Service_serviceID_serviceName_legacyTIPDetailID" ON service."Service"
+(
+    "serviceID","serviceName","legacyTIPDetailID"
+);
