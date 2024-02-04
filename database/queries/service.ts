@@ -318,3 +318,5 @@ where sss."status"='ACTIVE' and s1."serviceID"=sss."serviceID") ) X
 where (X."servicename" ILIKE :searchKey OR X."serviceID"::text LIKE :searchKey   OR X."legacyTIPDetailID"::text LIKE :searchKey OR (X."attributess"::text ilike :searchKey and (X."status"='ACTIVE' OR X."status"='INACTIVE') ))   
 ) z
 ORDER BY "servicename"  asc) b`;
+
+export const QCheckAttributesDefinition = () => 'select "attributesDefinitionID" from service."AttributesDefinition" where name = :name and "categoryName" = :category';

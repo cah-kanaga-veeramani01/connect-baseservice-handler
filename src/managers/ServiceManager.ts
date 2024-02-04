@@ -1,6 +1,6 @@
 import { Repository } from 'sequelize-typescript';
 import { Service } from '../../database/models/Service';
-import { EMPTY_STRING, CLIENT_TZ } from '../../utils/constants';
+import { EMPTY_STRING, CLIENT_TZ, SERVICE_CHANGE_EVENT, SERVICE_SCHEDULE_EVENT } from '../../utils/constants';
 import {
 	QServiceDetails,
 	QAddModuleConfig,
@@ -22,9 +22,10 @@ import {
 	QGetAllServiceIDsCountWithInactive,
 	QGetAllServiceIDsWithInactiveFilter,
 	QGetAllServicesFromServiceIDWithInactiveFilter,
-	QGetAllServiceIDsCountInactiveWithFilter
+	QGetAllServiceIDsCountInactiveWithFilter,
+	QCheckAttributesDefinition
 } from '../../database/queries/service';
-import { QueryTypes } from 'sequelize';
+import { QueryTypes, Sequelize, Op } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
 import { IService } from '../interfaces/IServices';
 import db from '../../database/DBManager';
@@ -33,9 +34,19 @@ import { ServiceType } from '../../database/models/ServiceType';
 import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
 import { endDateWithClientTZ, startDateWithClientTZ, utcToClientTZ } from '../../utils/tzFormatter';
 import moment from 'moment';
-
+import { BulkServiceAttributesStatus } from '../../database/models/BulkServiceAttributesStatus';
+import XLSX from 'xlsx';
+import { ServiceAttributes } from '../../database/models/ServiceAttributes';
+import SNSServiceManager from './SNSServiceManager';
 export default class ServiceManager {
-	constructor(public serviceRepository: Repository<Service>, public serviceTypeRepository: Repository<ServiceType>, public ServiceModuleConfigRepository: Repository<ServiceModuleConfig>) {}
+	constructor(
+		public serviceRepository: Repository<Service>,
+		public serviceTypeRepository: Repository<ServiceType>,
+		public ServiceModuleConfigRepository: Repository<ServiceModuleConfig>,
+		public bulkServiceAttributesRepository: Repository<BulkServiceAttributesStatus>,
+		public serviceAttributesRepository: Repository<ServiceAttributes>,
+		public snsServiceManager: SNSServiceManager
+	) {}
 
 	public async createService(servicePayload: IService) {
 		try {
@@ -690,5 +701,228 @@ export default class ServiceManager {
 			}
 		});
 		return arr;
+	}
+
+	public async processBulkAttributesRequest(file: Express.Multer.File, reqHeaders: any) {
+		try {
+			const dataFromXL = await this.parseInputExcel(file);
+			const errorRecords = [];
+			await this.validateUserInput(dataFromXL, errorRecords, reqHeaders);
+			//await this.bulkCreateServiceAttributes(dataFromXL);
+			return { message: 'success' };
+		} catch (error) {
+			throw error;
+		}
+	}
+
+	private async parseInputExcel(file: Express.Multer.File): Promise<any> {
+		try {
+			const workbook = XLSX.read(file.buffer),
+				first_worksheet = workbook.Sheets[workbook.SheetNames[0]],
+				dataFromXL = XLSX.utils.sheet_to_json(first_worksheet, { header: 1 });
+			return dataFromXL;
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'BulkAttributesExcelParsingError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+
+	private async validateUserInput(userInput: any, errorRecords: any, reqHeaders: any): Promise<any> {
+		try {
+			var totalFailedServices = 0;
+			var attributesToBeAdded,
+				attributesToBeRemoved = new Map();
+			for (var row = 1; row < userInput.length; row++) {
+				const legacyTIPDetailID = Number(userInput[row][1]),
+					serviceName = String(userInput[row][2]).trim(),
+					existingServices = await this.serviceRepository.findAll({
+						where: { legacyTIPDetailID, [Op.and]: [Sequelize.where(Sequelize.fn('lower', Sequelize.col('serviceName')), serviceName.toLowerCase())] }
+					});
+				if (await this.checkExistingServicesHasOnlyActiveVersion(userInput, existingServices, errorRecords, row)) {
+					if (userInput[row][3] !== undefined) attributesToBeAdded = await this.prepareCategoryAttributesList(userInput[row][3]);
+					if (userInput[row][4] !== undefined) attributesToBeRemoved = await this.prepareCategoryAttributesList(userInput[row][4]);
+
+					await this.validateAndCreateServiceAttributes(existingServices[0], attributesToBeAdded, attributesToBeRemoved, errorRecords, row);
+					await this.schedule(existingServices[0].serviceID, existingServices[0].globalServiceVersion, userInput[row][5], userInput[row][6]);
+					const startDate = userInput[row][5],
+						endDate = userInput[row][6];
+					const validTill = endDate ? endDateWithClientTZ(endDate) : null;
+					this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
+						existingServices[0].serviceID,
+						existingServices[0].legacyTIPDetailID,
+						existingServices[0].globalServiceVersion,
+						startDateWithClientTZ(startDate),
+						validTill,
+						existingServices[0].isPublished,
+						reqHeaders,
+						SERVICE_SCHEDULE_EVENT
+					);
+					const activeService = JSON.parse(JSON.stringify(await this.getActiveService(existingServices[0].serviceID)));
+					if (activeService !== null) {
+						const endDate = activeService.validTill ? activeService.validTill : endDateWithClientTZ(moment(startDate).subtract(1, 'days').format('YYYY-MM-DD'));
+						this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
+							existingServices[0].serviceID,
+							existingServices[0].legacyTIPDetailID,
+							activeService.globalServiceVersion,
+							activeService.validFrom,
+							endDate,
+							activeService.isPublished,
+							reqHeaders,
+							SERVICE_CHANGE_EVENT
+						);
+					}
+				} else totalFailedServices += 1;
+				console.log('ERROR RECORDS ==> ' + JSON.stringify(errorRecords));
+			}
+			return {
+				totalRowCount: userInput.length,
+				totalSuccessfullServices: userInput.length - totalFailedServices,
+				totalFailedServices: totalFailedServices,
+				failedServiceAttributesList: errorRecords
+			};
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'BulkAttributesValidationError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+
+	private async validateAndCreateServiceAttributes(activeService: Service, attributesToBeAdded: Map<any, any>, attributesToBeRemoved: Map<any, any>, errorRecords: any, row: any) {
+		try {
+			var attributesDefinitionIDs_toAdd = [];
+			var attributesDefinitionIDs_toDelete = [];
+			attributesToBeAdded.forEach(async (element) => {
+				const attributesDefinitionID = await db.query(QCheckAttributesDefinition, {
+					replacements: { category: element.key, name: element.values },
+					type: QueryTypes.SELECT
+				});
+				if (attributesDefinitionID) {
+					attributesDefinitionIDs_toAdd.push(attributesDefinitionID);
+				} else {
+					errorRecords.push({
+						tipID: activeService.legacyTIPDetailID,
+						serviceID: activeService.serviceID,
+						serviceName: activeService.serviceName,
+						failureReason: element.key + ':' + element.values + ' cannot be added to the service because it does not exist in the system.',
+						row: row + 1
+					});
+				}
+			});
+
+			const existingServiceAttributes = await this.serviceAttributesRepository.findOne({
+				where: { serviceID: activeService.serviceID, globalServiceVersion: activeService.globalServiceVersion }
+			});
+			if (existingServiceAttributes !== undefined) {
+				attributesToBeRemoved.forEach(async (element) => {
+					const attributesDefinitionID = await db.query(QCheckAttributesDefinition, {
+						replacements: { category: element.key, name: element.values },
+						type: QueryTypes.SELECT
+					});
+					if (attributesDefinitionID) {
+						attributesDefinitionIDs_toDelete.push(attributesDefinitionID);
+					} else {
+						errorRecords.push({
+							tipID: activeService.legacyTIPDetailID,
+							serviceID: activeService.serviceID,
+							serviceName: activeService.serviceName,
+							failureReason: element.key + ':' + element.values + ' cannot be removed from the service because it does not exist in the system.',
+							row: row + 1
+						});
+					}
+				});
+				let existingMetadata = existingServiceAttributes.metadata.attributes.push(attributesDefinitionIDs_toAdd);
+				existingMetadata = existingServiceAttributes.metadata.attributes.slice(attributesDefinitionIDs_toDelete);
+				await this.serviceAttributesRepository.update(
+					{ metadata: { attributes: existingMetadata } },
+					{ where: { serviceID: activeService.serviceID, globalServiceVersion: activeService.globalServiceVersion } }
+				);
+			} else {
+				await this.serviceAttributesRepository.create({
+					metadata: { attributes: attributesDefinitionIDs_toAdd, serviceID: activeService.serviceID, globalServiceVersion: activeService.globalServiceVersion }
+				});
+			}
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'BulkAttributesDBInsertionError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+	private async prepareCategoryAttributesList(categoryAttributes: String): Promise<any> {
+		const cat_attr_map = new Map();
+		categoryAttributes.split(',').forEach((cat_attribute) => {
+			const category_attr_name = cat_attribute.split(':');
+			const attributes = [];
+			attributes.push(String(category_attr_name[1]).trim());
+			if (cat_attr_map.has(String(category_attr_name[0]).trim())) {
+				const attrs = cat_attr_map.get(String(category_attr_name[0]).trim());
+				attrs.push(String(category_attr_name[1]).trim());
+			} else cat_attr_map.set(String(category_attr_name[0]).trim(), attributes);
+		});
+		return cat_attr_map;
+	}
+	public async persistIncomingRequestForBulkAttributes(fileName: string, status: string, userID: string) {
+		try {
+			await this.bulkServiceAttributesRepository.create({ fileName, status, createdBy: userID });
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'BulkAttributesRequestInsertionError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+
+	public async checkExistingServicesHasOnlyActiveVersion(userInput: any, existingServices: any, errorRecords: any, row: any): Promise<boolean> {
+		if (existingServices.length === 0) {
+			errorRecords.push({
+				tipID: userInput[row][1],
+				serviceID: userInput[row][0],
+				serviceName: userInput[row][2],
+				failureReason: 'Given TIP ID and Service Name combination does not exist in the system.',
+				row: row + 1
+			});
+			return false;
+		}
+		if (existingServices.length > 1 && existingServices.filter((service) => service.status.includes('SCHEDULED') || service.status.includes('DRAFT')).length > 0) {
+			errorRecords.push({
+				tipID: userInput[row][1],
+				serviceID: userInput[row][0],
+				serviceName: userInput[row][2],
+				failureReason: 'Given TIP ID and Service Name combination has additional versions along with active version in the system.(scheduled or draft version)',
+				row: row + 1
+			});
+			return false;
+		}
+
+		if (existingServices.length === 1 && existingServices[0].status !== 'ACTIVE') {
+			errorRecords.push({
+				tipID: userInput[row][1],
+				serviceID: userInput[row][0],
+				serviceName: userInput[row][2],
+				failureReason: 'Given TIP ID and Service Name combination has no active version in the system.',
+				row: row + 1
+			});
+			return false;
+		}
+		return true;
+	}
+
+	public async updateMetricsAndStatusForBulkAttributesRequest(bulkAttributesRequest: any, response: any) {
+		try {
+			const status = response.totalSuccessfullServices >= 1 ? 'COMPLETED' : 'FAILED';
+			await this.bulkServiceAttributesRepository.update(
+				{
+					totalRecords: response.totalRowCount,
+					successfullyProcessedRecords: response.totalSuccessfullServices,
+					totalFailedRecords: response.totalFailedRecords,
+					errorReason: response.failureReason,
+					status
+				},
+				{ where: { bulkServiceAttributesStatusID: bulkAttributesRequest.bulkServiceAttributesStatusID } }
+			);
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'BulkAttributesRequestUpdationError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
 	}
 }

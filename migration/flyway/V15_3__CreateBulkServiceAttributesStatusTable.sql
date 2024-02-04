@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS service."BulkServiceAttributesStatus"
 (
     "bulkServiceAttributesStatusID" integer NOT NULL DEFAULT nextval('service."Service_bulkServiceAttributesStatusID_seq"'::regclass),
     "fileName" character varying(255) NOT NULL,
-    "totalRecords" integer NOT NULL,
+    "totalRecords" integer,
     "successfullyProcessedRecords" integer,
     "totalFailedRecords" integer,
     "errorReason" jsonb,

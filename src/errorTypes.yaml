@@ -104,3 +104,8 @@ NonInActiveServicesListFetchError:
   code: 'SCE026'
   EN:
     message: 'Error while fetching all non inactive services list.'
+
+BulkAttributesRequestPersistenceError:
+  code: 'SCE027'
+  EN:
+    message: 'Error while persisting the request for bulk service attributes association.'
