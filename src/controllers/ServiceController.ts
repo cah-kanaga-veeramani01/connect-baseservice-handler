@@ -188,7 +188,7 @@ export default class ServiceController {
 			const response = await this.serviceManager.processBulkAttributesRequest(req.file, req.headers);
 
 			await this.serviceManager.updateMetricsAndStatusForBulkAttributesRequest(bulkAttributesRequest, response);
-			res.json('success');
+			res.json(response);
 		} catch (error) {
 			logger.nonPhi.error(error.message, { _error: error });
 			res.status(400).json(error);

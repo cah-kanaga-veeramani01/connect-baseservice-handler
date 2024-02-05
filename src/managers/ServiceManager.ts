@@ -706,10 +706,10 @@ export default class ServiceManager {
 	public async processBulkAttributesRequest(file: Express.Multer.File, reqHeaders: any) {
 		try {
 			const dataFromXL = await this.parseInputExcel(file);
-			const errorRecords = [];
-			await this.validateUserInput(dataFromXL, errorRecords, reqHeaders);
+			const errorRecords = [],
+				response = await this.validateUserInput(dataFromXL, errorRecords, reqHeaders);
 			//await this.bulkCreateServiceAttributes(dataFromXL);
-			return { message: 'success' };
+			return response;
 		} catch (error) {
 			throw error;
 		}
@@ -776,8 +776,8 @@ export default class ServiceManager {
 				console.log('ERROR RECORDS ==> ' + JSON.stringify(errorRecords));
 			}
 			return {
-				totalRowCount: userInput.length,
-				totalSuccessfullServices: userInput.length - totalFailedServices,
+				totalRowCount: userInput.length - 1,
+				totalSuccessfullServices: userInput.length - 1 - totalFailedServices,
 				totalFailedServices: totalFailedServices,
 				failedServiceAttributesList: errorRecords
 			};
@@ -863,7 +863,7 @@ export default class ServiceManager {
 	}
 	public async persistIncomingRequestForBulkAttributes(fileName: string, status: string, userID: string) {
 		try {
-			await this.bulkServiceAttributesRepository.create({ fileName, status, createdBy: userID });
+			return await this.bulkServiceAttributesRepository.create({ fileName, status, createdBy: userID });
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
