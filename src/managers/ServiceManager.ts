@@ -573,8 +573,8 @@ export default class ServiceManager {
 				servicesMap = new Map<number, object>();
 			services.forEach((service) => {
 				service = { ...service, serviceid: service.serviceID };
-				if(service.servicename===undefined){
-					service.servicename=service.serviceName;
+				if (service.servicename === undefined) {
+					service.servicename = service.serviceName;
 				}
 				let attributesForListRow = [],
 					serviceAttributeArr = [];
