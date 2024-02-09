@@ -75,7 +75,7 @@ ServicDetailsNotFound:
   EN:
     message: "Service details not found."
 
-ServicVersionNotFound:
+ServiceVersionNotFound:
   code: "SCE021"
   EN:
     message: "Service version is incorrect."

@@ -1,6 +1,19 @@
 import { Repository } from 'sequelize-typescript';
 import { Service } from '../../database/models/Service';
-import { EMPTY_STRING, CLIENT_TZ, SERVICE_CHANGE_EVENT, SERVICE_SCHEDULE_EVENT } from '../../utils/constants';
+import {
+	EMPTY_STRING,
+	CLIENT_TZ,
+	SERVICE_CHANGE_EVENT,
+	SERVICE_SCHEDULE_EVENT,
+	ERROR_MSG_REMOVE_ATTRIBUTES,
+	ERROR_MSG_ADD_ATTRIBUTES,
+	DATE_FORMAT,
+	SCHEDULED,
+	DRAFT,
+	ACTIVE,
+	REQUEST_COMPLETED,
+	REQUEST_FAILED
+} from '../../utils/constants';
 import {
 	QServiceDetails,
 	QAddModuleConfig,
@@ -115,9 +128,8 @@ export default class ServiceManager {
 					},
 					raw: true
 				});
-
 				if (!scheduledService) {
-					throw new HandleError({ name: 'ServicVersionNotFound', message: 'Service version is incorrect', stack: 'Service version not found', errorStatus: HTTP_STATUS_CODES.badRequest });
+					throw new HandleError({ name: 'ServiceVersionNotFound', message: 'Service version is incorrect', stack: 'Service version not found', errorStatus: HTTP_STATUS_CODES.badRequest });
 				}
 				await this.serviceRepository.update(
 					{
@@ -170,16 +182,25 @@ export default class ServiceManager {
 				},
 				raw: true
 			});
-
 			if (!activeService) {
-				throw new HandleError({ name: 'ServicVersionNotFound', message: 'Service version is incorrect', stack: 'Service version not found', errorStatus: HTTP_STATUS_CODES.badRequest });
+				throw new HandleError({ name: 'ServiceVersionNotFound', message: 'Service version is incorrect', stack: 'Service version not found', errorStatus: HTTP_STATUS_CODES.badRequest });
 			}
-			activeService.isPublished = 0;
-			activeService.validFrom = null;
-			activeService.validTill = null;
+
 			activeService.globalServiceVersion += 1;
 
-			const newDraftVersion: any = await this.serviceRepository.create(activeService);
+			const newDraftVersion: any = await this.serviceRepository.create({
+				serviceID: activeService.serviceID,
+				globalServiceVersion: activeService.globalServiceVersion,
+				serviceName: activeService.serviceName,
+				serviceDisplayName: activeService.serviceDisplayName,
+				validFrom: null,
+				validTill: null,
+				isPublished: 0,
+				serviceTypeID: activeService.serviceTypeID,
+				legacyTIPDetailID: activeService.legacyTIPDetailID,
+				serviceType: activeService.serviceType
+			});
+
 			const draftServiceName = newDraftVersion.serviceName;
 			return {
 				...newDraftVersion.dataValues,
@@ -288,7 +309,7 @@ export default class ServiceManager {
 	 */
 	async schedule(serviceID: number, globalServiceVersion: number, startDate: string, endDate: string | null): Promise<object> {
 		try {
-			const today: any = moment.tz(moment(), CLIENT_TZ).format('YYYY-MM-DD');
+			const today: any = moment.tz(moment(), CLIENT_TZ).format(DATE_FORMAT);
 			if (startDate <= today) {
 				throw new HandleError({
 					name: 'InvalidStartDate',
@@ -338,7 +359,7 @@ export default class ServiceManager {
 
 			if (globalServiceVersion > 1 && result.length > 0 && result[0].globalServiceVersion < globalServiceVersion) {
 				const activeVersion = result[0].globalServiceVersion;
-				const computedEndDate = moment(startDate).subtract(1, 'days').format('YYYY-MM-DD');
+				const computedEndDate = moment(startDate).subtract(1, 'days').format(DATE_FORMAT);
 				await this.serviceRepository.update({ validTill: endDateWithClientTZ(computedEndDate) }, { where: { serviceID, globalServiceVersion: activeVersion } });
 			}
 
@@ -703,15 +724,16 @@ export default class ServiceManager {
 		return arr;
 	}
 
-	public async processBulkAttributesRequest(file: Express.Multer.File, reqHeaders: any) {
+	public async processBulkAttributesRequest(file: Express.Multer.File, reqHeaders: any): Promise<object> {
 		try {
+			logger.nonPhi.info('Parsing the input excel file begins.');
 			const dataFromXL = await this.parseInputExcel(file);
-			const errorRecords = [],
-				response = await this.validateUserInput(dataFromXL, errorRecords, reqHeaders);
-			//await this.bulkCreateServiceAttributes(dataFromXL);
-			return response;
+
+			logger.nonPhi.info('Data validation for the user input begins.');
+			return await this.validateUserInput(dataFromXL, reqHeaders);
 		} catch (error) {
-			throw error;
+			logger.nonPhi.error(error.message, { _err: error });
+			throw new HandleError({ name: 'BulkAttributesProcessingError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
 
@@ -720,39 +742,48 @@ export default class ServiceManager {
 			const workbook = XLSX.read(file.buffer),
 				first_worksheet = workbook.Sheets[workbook.SheetNames[0]],
 				dataFromXL = XLSX.utils.sheet_to_json(first_worksheet, { header: 1 });
+			logger.nonPhi.info('Successfully parsed and returning the excel content in json format.');
 			return dataFromXL;
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
-			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'BulkAttributesExcelParsingError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
 
-	private async validateUserInput(userInput: any, errorRecords: any, reqHeaders: any): Promise<any> {
+	private async validateUserInput(userInput: any, reqHeaders: any): Promise<any> {
 		try {
+			const errorRecords = [];
 			var totalFailedServices = 0;
-			var attributesToBeAdded,
-				attributesToBeRemoved = new Map();
 			for (var row = 1; row < userInput.length; row++) {
 				const legacyTIPDetailID = Number(userInput[row][1]),
-					serviceName = String(userInput[row][2]).trim(),
-					existingServices = await this.serviceRepository.findAll({
-						where: { legacyTIPDetailID, [Op.and]: [Sequelize.where(Sequelize.fn('lower', Sequelize.col('serviceName')), serviceName.toLowerCase())] }
-					});
-				if (await this.checkExistingServicesHasOnlyActiveVersion(userInput, existingServices, errorRecords, row)) {
-					if (userInput[row][3] !== undefined) attributesToBeAdded = await this.prepareCategoryAttributesList(userInput[row][3]);
-					if (userInput[row][4] !== undefined) attributesToBeRemoved = await this.prepareCategoryAttributesList(userInput[row][4]);
+					serviceName = String(userInput[row][2]).trim();
 
-					await this.validateAndCreateServiceAttributes(existingServices[0], attributesToBeAdded, attributesToBeRemoved, errorRecords, row);
-					await this.schedule(existingServices[0].serviceID, existingServices[0].globalServiceVersion, userInput[row][5], userInput[row][6]);
-					const startDate = userInput[row][5],
-						endDate = userInput[row][6];
-					const validTill = endDate ? endDateWithClientTZ(endDate) : null;
-					this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
+				logger.nonPhi.debug('Getting the matching services from database for given TIP ID and Service name ', { legacyTIPDetailID, serviceName });
+				const existingServices = await this.serviceRepository.findAll({
+					where: { legacyTIPDetailID, [Op.and]: [Sequelize.where(Sequelize.fn('lower', Sequelize.col('serviceName')), serviceName.toLowerCase())] }
+				});
+				logger.nonPhi.info('Checking the given service name and TIP ID has only active version.');
+				if (
+					(await this.checkExistingServicesHasOnlyActiveVersion(userInput, existingServices, errorRecords, row)) &&
+					(await this.validScheduledDates(userInput, userInput[row][5], userInput[row][6], errorRecords, row))
+				) {
+					await this.validateAndCreateServiceAttributes(existingServices[0], userInput[row][3], userInput[row][4], errorRecords, row);
+
+					logger.nonPhi.debug('After successful validation and association of service attributes, creating a draft version for the active service.');
+					const draft_service = await this.createDraft(existingServices[0].serviceID);
+
+					const validFrom = userInput[row][5] ? moment(userInput[row][5]).format(DATE_FORMAT) : null;
+					const validTill = userInput[row][6] ? moment(userInput[row][6]).format(DATE_FORMAT) : null;
+
+					logger.nonPhi.debug('Scheduling the service with following data. ', (existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill));
+					await this.schedule(existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill);
+
+					logger.nonPhi.debug('Publishing a schedule event to the SNS topic.');
+					await this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
 						existingServices[0].serviceID,
 						existingServices[0].legacyTIPDetailID,
 						existingServices[0].globalServiceVersion,
-						startDateWithClientTZ(startDate),
+						startDateWithClientTZ(validFrom),
 						validTill,
 						existingServices[0].isPublished,
 						reqHeaders,
@@ -760,8 +791,9 @@ export default class ServiceManager {
 					);
 					const activeService = JSON.parse(JSON.stringify(await this.getActiveService(existingServices[0].serviceID)));
 					if (activeService !== null) {
-						const endDate = activeService.validTill ? activeService.validTill : endDateWithClientTZ(moment(startDate).subtract(1, 'days').format('YYYY-MM-DD'));
-						this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
+						const endDate = activeService.validTill ? activeService.validTill : endDateWithClientTZ(moment(validFrom).subtract(1, 'days').format(DATE_FORMAT));
+						logger.nonPhi.debug('Publishing a change event to the SNS topic to update end date for the active version of the service.');
+						await this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
 							existingServices[0].serviceID,
 							existingServices[0].legacyTIPDetailID,
 							activeService.globalServiceVersion,
@@ -773,8 +805,8 @@ export default class ServiceManager {
 						);
 					}
 				} else totalFailedServices += 1;
-				console.log('ERROR RECORDS ==> ' + JSON.stringify(errorRecords));
 			}
+			logger.nonPhi.info('Successfully validated all the rows and generating the response.');
 			return {
 				totalRowCount: userInput.length - 1,
 				totalSuccessfullServices: userInput.length - 1 - totalFailedServices,
@@ -788,56 +820,90 @@ export default class ServiceManager {
 		}
 	}
 
-	private async validateAndCreateServiceAttributes(activeService: Service, attributesToBeAdded: Map<any, any>, attributesToBeRemoved: Map<any, any>, errorRecords: any, row: any) {
-		try {
-			var attributesDefinitionIDs_toAdd = [];
-			var attributesDefinitionIDs_toDelete = [];
-			attributesToBeAdded.forEach(async (element) => {
-				const attributesDefinitionID = await db.query(QCheckAttributesDefinition, {
-					replacements: { category: element.key, name: element.values },
-					type: QueryTypes.SELECT
-				});
-				if (attributesDefinitionID) {
-					attributesDefinitionIDs_toAdd.push(attributesDefinitionID);
-				} else {
-					errorRecords.push({
-						tipID: activeService.legacyTIPDetailID,
-						serviceID: activeService.serviceID,
-						serviceName: activeService.serviceName,
-						failureReason: element.key + ':' + element.values + ' cannot be added to the service because it does not exist in the system.',
-						row: row + 1
-					});
-				}
+	private async validScheduledDates(userInput: any, startDate: any, endDate: any, errorRecords: any, row: number): Promise<boolean> {
+		const validFrom = startDate ? moment(startDate).format(DATE_FORMAT) : null;
+		const validTill = endDate ? moment(endDate).format(DATE_FORMAT) : null;
+		console.log('validTill ==> ', validTill);
+		const today: any = moment.tz(moment(), CLIENT_TZ).format(DATE_FORMAT);
+
+		if (!validFrom) {
+			logger.nonPhi.error('Start Date is not provided.');
+			errorRecords.push({
+				tipID: userInput[row][1],
+				serviceID: userInput[row][0],
+				serviceName: userInput[row][2],
+				failureReason: 'Start Date is not provided.',
+				row: row + 1
 			});
+			return false;
+		}
+		if (validFrom < today) {
+			logger.nonPhi.error('Invalid start date is provided. Start Date is lesser than current date.');
+			errorRecords.push({
+				tipID: userInput[row][1],
+				serviceID: userInput[row][0],
+				serviceName: userInput[row][2],
+				failureReason: 'Invalid start date is provided. Start Date is lesser than current date.',
+				row: row + 1
+			});
+			return false;
+		}
+		if (validTill && validTill < today) {
+			logger.nonPhi.error('Invalid end date is provided. End Date is lesser than current date.');
+			errorRecords.push({
+				tipID: userInput[row][1],
+				serviceID: userInput[row][0],
+				serviceName: userInput[row][2],
+				failureReason: 'Invalid end date is provided. End Date is lesser than current date.',
+				row: row + 1
+			});
+			return false;
+		}
+
+		if (validTill && validFrom > validTill) {
+			logger.nonPhi.error('Invalid start date is provided. Start Date is greater than end date.');
+			errorRecords.push({
+				tipID: userInput[row][1],
+				serviceID: userInput[row][0],
+				serviceName: userInput[row][2],
+				failureReason: 'Invalid start date is provided. Start Date is greater than end date.',
+				row: row + 1
+			});
+			return false;
+		}
+		return true;
+	}
+
+	private async validateAndCreateServiceAttributes(activeService: Service, attributesToBeAdded: any, attributesToBeRemoved: any, errorRecords: any, row: any) {
+		try {
+			logger.nonPhi.debug('Fetching attributes definition IDs for the attributes to be added ', attributesToBeAdded);
+			var attributesDefinitionIDs_toAdd = await this.getAttributesDefinitionIDs(attributesToBeAdded, activeService, errorRecords, ERROR_MSG_ADD_ATTRIBUTES, row);
 
 			const existingServiceAttributes = await this.serviceAttributesRepository.findOne({
 				where: { serviceID: activeService.serviceID, globalServiceVersion: activeService.globalServiceVersion }
 			});
-			if (existingServiceAttributes !== undefined) {
-				attributesToBeRemoved.forEach(async (element) => {
-					const attributesDefinitionID = await db.query(QCheckAttributesDefinition, {
-						replacements: { category: element.key, name: element.values },
-						type: QueryTypes.SELECT
-					});
-					if (attributesDefinitionID) {
-						attributesDefinitionIDs_toDelete.push(attributesDefinitionID);
-					} else {
-						errorRecords.push({
-							tipID: activeService.legacyTIPDetailID,
-							serviceID: activeService.serviceID,
-							serviceName: activeService.serviceName,
-							failureReason: element.key + ':' + element.values + ' cannot be removed from the service because it does not exist in the system.',
-							row: row + 1
-						});
+			if (existingServiceAttributes !== null) {
+				logger.nonPhi.debug('Fetching attributes definition IDs for the attributes to be removed ', attributesToBeRemoved);
+				var attributesDefinitionIDs_toDelete = await this.getAttributesDefinitionIDs(attributesToBeRemoved, activeService, errorRecords, ERROR_MSG_REMOVE_ATTRIBUTES, row);
+				var existingMetadata = existingServiceAttributes.metadata.attributes;
+
+				attributesDefinitionIDs_toAdd.forEach((attrDefID: any) => {
+					if (!existingMetadata.includes(attrDefID)) existingMetadata.push(attrDefID);
+				});
+
+				attributesDefinitionIDs_toDelete.forEach((attrDefID: any) => {
+					var index = existingMetadata.findIndex(attrDefID);
+					if (index !== -1) {
+						existingMetadata.splice(index, 1);
 					}
 				});
-				let existingMetadata = existingServiceAttributes.metadata.attributes.push(attributesDefinitionIDs_toAdd);
-				existingMetadata = existingServiceAttributes.metadata.attributes.slice(attributesDefinitionIDs_toDelete);
+				logger.nonPhi.debug('Updating existing service attributes metadata with new attributes ', { existingMetadata });
 				await this.serviceAttributesRepository.update(
 					{ metadata: { attributes: existingMetadata } },
 					{ where: { serviceID: activeService.serviceID, globalServiceVersion: activeService.globalServiceVersion } }
 				);
 			} else {
+				logger.nonPhi.debug('creating new service attributes metadata ', { attributesDefinitionIDs_toAdd });
 				await this.serviceAttributesRepository.create({
 					metadata: { attributes: attributesDefinitionIDs_toAdd, serviceID: activeService.serviceID, globalServiceVersion: activeService.globalServiceVersion }
 				});
@@ -848,31 +914,49 @@ export default class ServiceManager {
 			throw new HandleError({ name: 'BulkAttributesDBInsertionError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
-	private async prepareCategoryAttributesList(categoryAttributes: String): Promise<any> {
-		const cat_attr_map = new Map();
-		categoryAttributes.split(',').forEach((cat_attribute) => {
-			const category_attr_name = cat_attribute.split(':');
-			const attributes = [];
-			attributes.push(String(category_attr_name[1]).trim());
-			if (cat_attr_map.has(String(category_attr_name[0]).trim())) {
-				const attrs = cat_attr_map.get(String(category_attr_name[0]).trim());
-				attrs.push(String(category_attr_name[1]).trim());
-			} else cat_attr_map.set(String(category_attr_name[0]).trim(), attributes);
-		});
-		return cat_attr_map;
+
+	private async getAttributesDefinitionIDs(categoryAttributesCollection: any, activeService: Service, errorRecords: any, errorMessage: string, row: number): Promise<any> {
+		try {
+			const attributesDefinitionIDs = [];
+			await categoryAttributesCollection.split(',').forEach(async (cat_attribute: any) => {
+				const category_attr_name = cat_attribute.trim().split(':');
+				logger.nonPhi.debug('Fetching attributesDefinitionID for category = ' + category_attr_name[0].trim() + ' and attributeName = ' + category_attr_name[1].trim());
+
+				const attributesDefinition = await db.query(QCheckAttributesDefinition, {
+					replacements: { category: category_attr_name[0].trim(), name: category_attr_name[1].trim() },
+					type: QueryTypes.SELECT
+				});
+				if (attributesDefinition[0]?.attributesDefinitionID) {
+					attributesDefinitionIDs.push(attributesDefinition[0].attributesDefinitionID);
+				} else {
+					errorRecords.push({
+						tipID: activeService.legacyTIPDetailID,
+						serviceID: activeService.serviceID,
+						serviceName: activeService.serviceName,
+						failureReason: category_attr_name[0] + ':' + category_attr_name[1] + errorMessage,
+						row: row + 1
+					});
+				}
+			});
+			return attributesDefinitionIDs;
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			throw new HandleError({ name: 'AttributeDefinitionFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
 	}
 	public async persistIncomingRequestForBulkAttributes(fileName: string, status: string, userID: string) {
 		try {
+			logger.nonPhi.debug('Creating a request entry in BulkAttributesStatus table with following values ', { fileName, status, userID });
 			return await this.bulkServiceAttributesRepository.create({ fileName, status, createdBy: userID });
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
-			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'BulkAttributesRequestInsertionError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
 
 	public async checkExistingServicesHasOnlyActiveVersion(userInput: any, existingServices: any, errorRecords: any, row: any): Promise<boolean> {
 		if (existingServices.length === 0) {
+			logger.nonPhi.debug('Given TIP ID and Service Name combination does not exist in the system.');
 			errorRecords.push({
 				tipID: userInput[row][1],
 				serviceID: userInput[row][0],
@@ -882,33 +966,24 @@ export default class ServiceManager {
 			});
 			return false;
 		}
-		if (existingServices.length > 1 && existingServices.filter((service) => service.status.includes('SCHEDULED') || service.status.includes('DRAFT')).length > 0) {
+		if (existingServices.filter((service: any) => service.status.includes(SCHEDULED) || service.status.includes(DRAFT)).length > 0) {
+			logger.nonPhi.debug('Given TIP ID and Service Name combination has non-active version in the system (scheduled or draft version).');
 			errorRecords.push({
 				tipID: userInput[row][1],
 				serviceID: userInput[row][0],
 				serviceName: userInput[row][2],
-				failureReason: 'Given TIP ID and Service Name combination has additional versions along with active version in the system.(scheduled or draft version)',
+				failureReason: 'Given TIP ID and Service Name combination has non-active version in the system (scheduled or draft version).',
 				row: row + 1
 			});
 			return false;
 		}
-
-		if (existingServices.length === 1 && existingServices[0].status !== 'ACTIVE') {
-			errorRecords.push({
-				tipID: userInput[row][1],
-				serviceID: userInput[row][0],
-				serviceName: userInput[row][2],
-				failureReason: 'Given TIP ID and Service Name combination has no active version in the system.',
-				row: row + 1
-			});
-			return false;
-		}
+		existingServices = existingServices.find((service: any) => service.status === ACTIVE);
 		return true;
 	}
 
 	public async updateMetricsAndStatusForBulkAttributesRequest(bulkAttributesRequest: any, response: any) {
 		try {
-			const status = response.totalSuccessfullServices >= 1 ? 'COMPLETED' : 'FAILED';
+			const status = response.totalSuccessfullServices >= 1 ? REQUEST_COMPLETED : REQUEST_FAILED;
 			await this.bulkServiceAttributesRepository.update(
 				{
 					totalRecords: response.totalRowCount,
