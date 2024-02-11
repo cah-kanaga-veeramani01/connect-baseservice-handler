@@ -7,9 +7,31 @@ import db from '../../database/DBManager';
 import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
 import { count } from 'console';
 import { describe, expect, jest, test } from '@jest/globals';
+import { ServiceAttributes } from '../../database/models/ServiceAttributes';
+import { BulkServiceAttributesStatus } from '../../database/models/BulkServiceAttributesStatus';
+import SNSServiceManager from '../../src/managers/SNSServiceManager';
 
-const serviceManager = new ServiceManager(db.getRepository(Service), db.getRepository(ServiceType), db.getRepository(ServiceModuleConfig));
+const mockBulkServiceAttributesStatusRepository: Repository<BulkServiceAttributesStatus> = {
+	create: jest.fn().mockImplementation(() => {
+		return [];
+	})
+};
 
+const mockServiceAttributesRepository: Repository<ServiceAttributes> = {
+	create: jest.fn().mockImplementation(() => {
+		return [];
+	})
+};
+
+const snsServiceObj = new SNSServiceManager(),
+	serviceManager = new ServiceManager(
+		db.getRepository(Service),
+		db.getRepository(ServiceType),
+		db.getRepository(ServiceModuleConfig),
+		db.getRepository(BulkServiceAttributesStatus),
+		db.getRepository(ServiceAttributes),
+		snsServiceObj
+	);
 const mockServiceTypeRepository: Repository<ServiceType> = {
 	findOne: jest.fn().mockImplementation(() => {
 		return Promise.resolve({ serviceTypeID: 1 });
@@ -270,7 +292,14 @@ describe('Create Service', () => {
 	// });
 
 	test('should fail to create a service ', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		const serviceManager: ServiceManager = new ServiceManager(
+			mockServiceRepository_error,
+			mockServiceTypeRepository,
+			mockServiceModuleConfigRepo,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		try {
 			await serviceManager.createService(servicePayload);
 		} catch (error) {
@@ -280,7 +309,14 @@ describe('Create Service', () => {
 	});
 
 	test('should fail to create a duplicate service ', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockService_duplicate_error_repo, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		const serviceManager: ServiceManager = new ServiceManager(
+			mockService_duplicate_error_repo,
+			mockServiceTypeRepository,
+			mockServiceModuleConfigRepo,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		try {
 			await serviceManager.createService(servicePayload);
 		} catch (error) {
@@ -538,7 +574,8 @@ describe('get list of services', () => {
 			})
 			.mockImplementationOnce(() => {
 				return [{ count: '1233' }];
-			}).mockImplementationOnce(() => {
+			})
+			.mockImplementationOnce(() => {
 				return [{ count: '2' }];
 			});
 		expect(await serviceManager.getNonInActiveServicesList('serviceName', 'asc', 0, 1, 'dru')).toMatchObject({
@@ -718,7 +755,7 @@ describe('get list of services', () => {
 					legacytipdetailid: 2907,
 					status: 'ACTIVE',
 					metadata: {
-						"attributes": [56,31,41,62 ],
+						attributes: [56, 31, 41, 62]
 					},
 					serviceid: 1149,
 					statuses: [
@@ -747,7 +784,7 @@ describe('get list of services', () => {
 					legacytipdetailid: 2898,
 					status: 'ACTIVE',
 					metadata: {
-						"attributes": [56,59,1,31,62 ],
+						attributes: [56, 59, 1, 31, 62]
 					},
 					serviceid: 1140,
 					statuses: [
@@ -883,7 +920,7 @@ describe('get list of services', () => {
 					legacytipdetailid: 2907,
 					status: 'ACTIVE',
 					metadata: {
-						"attributes": [56,31,41,62 ],
+						attributes: [56, 31, 41, 62]
 					},
 					serviceid: 1149,
 					statuses: [
@@ -912,7 +949,7 @@ describe('get list of services', () => {
 					legacytipdetailid: 2898,
 					status: 'ACTIVE',
 					metadata: {
-						"attributes": [56,59,1,31,62 ],
+						attributes: [56, 59, 1, 31, 62]
 					},
 					serviceid: 1140,
 					statuses: [
@@ -970,19 +1007,33 @@ describe('get list of services', () => {
 
 describe('Create draft', () => {
 	test('service version does not exist for schedule', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockGetNoServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		const serviceManager: ServiceManager = new ServiceManager(
+			mockGetNoServiceRepository,
+			mockServiceTypeRepository,
+			mockServiceModuleConfigRepo,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		try {
 			jest.spyOn(serviceManager, 'getDetails').mockImplementation(() => {
 				return Promise.resolve({ activeVersion: 1, scheduledVersion: 2, draftVersion: null, isExpired: false });
 			});
 			await serviceManager.createDraft(1);
 		} catch (error: any) {
-			expect(error.name).toBe('ServicVersionNotFound');
+			expect(error.name).toBe('ServiceVersionNotFound');
 		}
 	});
 
 	test('draft already exists', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNewDraft, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		const serviceManager: ServiceManager = new ServiceManager(
+			mockServiceRepositoryNewDraft,
+			mockServiceTypeRepository,
+			mockServiceModuleConfigRepo,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		try {
 			db.query = () => {
 				return [
@@ -1004,7 +1055,14 @@ describe('Create draft', () => {
 	});
 
 	test('return the service details - draft details', async () => {
-		const baseService: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		const baseService: ServiceManager = new ServiceManager(
+			mockServiceRepository,
+			mockServiceTypeRepository,
+			mockServiceModuleConfigRepo,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		try {
 			jest.spyOn(baseService, 'getDetails').mockImplementation(() => {
 				return Promise.resolve({ activeVersion: 1, scheduledVersion: 2, draftVersion: null, isExpired: false });
@@ -1014,19 +1072,33 @@ describe('Create draft', () => {
 	});
 
 	test('Select service details', async () => {
-		const baseService: ServiceManager = new ServiceManager(mockGetNoServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		const baseService: ServiceManager = new ServiceManager(
+			mockGetNoServiceRepository,
+			mockServiceTypeRepository,
+			mockServiceModuleConfigRepo,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		try {
 			jest.spyOn(baseService, 'getDetails').mockImplementation(() => {
 				return Promise.resolve({ activeVersion: 1, scheduledVersion: null, draftVersion: null, isExpired: false });
 			});
 			await baseService.createDraft(1);
 		} catch (error: any) {
-			expect(error.name).toBe('ServicVersionNotFound');
+			expect(error.name).toBe('ServiceVersionNotFound');
 		}
 	});
 
 	test('create draft version', async () => {
-		const baseService: ServiceManager = new ServiceManager(mockServiceRepository, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		const baseService: ServiceManager = new ServiceManager(
+			mockServiceRepository,
+			mockServiceTypeRepository,
+			mockServiceModuleConfigRepo,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		try {
 			jest.spyOn(baseService, 'getDetails').mockImplementation(() => {
 				return Promise.resolve({ activeVersion: 1, scheduledVersion: null, draftVersion: null, isExpired: false });
@@ -1036,7 +1108,14 @@ describe('Create draft', () => {
 	});
 
 	test('throw error', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepository_error, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		const serviceManager: ServiceManager = new ServiceManager(
+			mockServiceRepository_error,
+			mockServiceTypeRepository,
+			mockServiceModuleConfigRepo,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		db.query = () => {
 			{
 				throw new Error();
@@ -1052,7 +1131,14 @@ describe('Create draft', () => {
 
 describe('Update module Version', () => {
 	test('service does not exist error', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNoService, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		const serviceManager: ServiceManager = new ServiceManager(
+			mockServiceRepositoryNoService,
+			mockServiceTypeRepository,
+			mockServiceModuleConfigRepo,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		try {
 			await serviceManager.addModuleConfig(1, 1, 1);
 		} catch (error: any) {
@@ -1062,7 +1148,14 @@ describe('Update module Version', () => {
 
 	test('Update module version', async () => {
 		const updateSpy = jest.spyOn(mockServiceModuleConfigRepo, 'update');
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNewDraft, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		const serviceManager: ServiceManager = new ServiceManager(
+			mockServiceRepositoryNewDraft,
+			mockServiceTypeRepository,
+			mockServiceModuleConfigRepo,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		db.query = () => {
 			return [{ count: '1' }];
 		};
@@ -1072,7 +1165,14 @@ describe('Update module Version', () => {
 
 	test('Create module version', async () => {
 		const updateSpy = jest.spyOn(mockServiceModuleConfigRepoForInsert, 'create');
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNewDraft, mockServiceTypeRepository, mockServiceModuleConfigRepoForInsert);
+		const serviceManager: ServiceManager = new ServiceManager(
+			mockServiceRepositoryNewDraft,
+			mockServiceTypeRepository,
+			mockServiceModuleConfigRepoForInsert,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		db.query = () => {
 			return [{ count: '0' }];
 		};
@@ -1083,7 +1183,14 @@ describe('Update module Version', () => {
 
 describe('Get module entries', () => {
 	test('service does not exist error', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNoService, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		const serviceManager: ServiceManager = new ServiceManager(
+			mockServiceRepositoryNoService,
+			mockServiceTypeRepository,
+			mockServiceModuleConfigRepo,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		try {
 			await serviceManager.getMissingModules(1, 1);
 		} catch (error: any) {
@@ -1121,7 +1228,14 @@ describe('Get module entries', () => {
 	});
 
 	test('Program module update error', async () => {
-		let obj = new ServiceManager(mockServiceRepositoryNewDraft, mockServiceTypeRepository, mockServiceModuleConfigRepoForInsert);
+		let obj = new ServiceManager(
+			mockServiceRepositoryNewDraft,
+			mockServiceTypeRepository,
+			mockServiceModuleConfigRepoForInsert,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		db.query = () => {
 			{
 				throw new Error();
@@ -1138,7 +1252,14 @@ describe('Get module entries', () => {
 
 describe('Schedule service', () => {
 	test('service does not exist error', async () => {
-		const serviceObj: ServiceManager = new ServiceManager(mockGetNoServiceRepository, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+		const serviceObj: ServiceManager = new ServiceManager(
+			mockGetNoServiceRepository,
+			mockGetServiceTypeRepository,
+			mockGetServiceModuleConfigRepository,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		try {
 			await serviceObj.schedule(1, 1, '2025-01-01', null);
 		} catch (error: any) {
@@ -1147,7 +1268,14 @@ describe('Schedule service', () => {
 	});
 
 	test('service schedule error', async () => {
-		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepositoryForUpdate, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+		const serviceObj: ServiceManager = new ServiceManager(
+			mockGetServiceRepositoryForUpdate,
+			mockGetServiceTypeRepository,
+			mockGetServiceModuleConfigRepository,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		try {
 			await serviceObj.schedule(1, 1, '2025-01-01', null);
 		} catch (error: any) {
@@ -1156,7 +1284,14 @@ describe('Schedule service', () => {
 	});
 
 	test('Invalid start date provided', async () => {
-		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepository, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+		const serviceObj: ServiceManager = new ServiceManager(
+			mockGetServiceRepository,
+			mockGetServiceTypeRepository,
+			mockGetServiceModuleConfigRepository,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 
 		try {
 			await serviceObj.schedule(1, 1, '2020-01-01', null);
@@ -1166,7 +1301,14 @@ describe('Schedule service', () => {
 	});
 
 	test('Invalid end date provided', async () => {
-		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepository, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+		const serviceObj: ServiceManager = new ServiceManager(
+			mockGetServiceRepository,
+			mockGetServiceTypeRepository,
+			mockGetServiceModuleConfigRepository,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 
 		try {
 			await serviceObj.schedule(1, 1, '2025-01-01', '2020-01-01');
@@ -1176,7 +1318,14 @@ describe('Schedule service', () => {
 	});
 
 	test('service cannot be scheduled - active service without end date', async () => {
-		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepositoryWithoutEndDate, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+		const serviceObj: ServiceManager = new ServiceManager(
+			mockGetServiceRepositoryWithoutEndDate,
+			mockGetServiceTypeRepository,
+			mockGetServiceModuleConfigRepository,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 
 		try {
 			await serviceObj.schedule(1, 1, '2025-01-01', null);
@@ -1186,7 +1335,14 @@ describe('Schedule service', () => {
 	});
 
 	test('service cannot be scheduled - active service with end date', async () => {
-		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepositoryActiveServiceWithEndDate, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+		const serviceObj: ServiceManager = new ServiceManager(
+			mockGetServiceRepositoryActiveServiceWithEndDate,
+			mockGetServiceTypeRepository,
+			mockGetServiceModuleConfigRepository,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 
 		try {
 			await serviceObj.schedule(1, 1, '2025-01-01', null);
@@ -1196,7 +1352,14 @@ describe('Schedule service', () => {
 	});
 
 	test('service cannot be scheduled - expired service', async () => {
-		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepositoryExpiredService, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+		const serviceObj: ServiceManager = new ServiceManager(
+			mockGetServiceRepositoryExpiredService,
+			mockGetServiceTypeRepository,
+			mockGetServiceModuleConfigRepository,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 
 		try {
 			await serviceObj.schedule(1, 1, '2025-01-01', null);
@@ -1206,7 +1369,14 @@ describe('Schedule service', () => {
 	});
 
 	test('service scheduled - draft service with version 1', async () => {
-		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepositoryDraftService, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+		const serviceObj: ServiceManager = new ServiceManager(
+			mockGetServiceRepositoryDraftService,
+			mockGetServiceTypeRepository,
+			mockGetServiceModuleConfigRepository,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		db.query = () => {
 			return null;
 		};
@@ -1225,7 +1395,14 @@ describe('Schedule service', () => {
 	});
 
 	test('service scheduled on top of active service', async () => {
-		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepositoryDraftServiceOnTopOfActive, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository);
+		const serviceObj: ServiceManager = new ServiceManager(
+			mockGetServiceRepositoryDraftServiceOnTopOfActive,
+			mockGetServiceTypeRepository,
+			mockGetServiceModuleConfigRepository,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		db.query = () => {
 			return [
 				{
@@ -1250,7 +1427,14 @@ describe('Schedule service', () => {
 
 describe('Get service details', () => {
 	test('service does not exist error', async () => {
-		const serviceManager: ServiceManager = new ServiceManager(mockServiceRepositoryNoService, mockServiceTypeRepository, mockServiceModuleConfigRepo);
+		const serviceManager: ServiceManager = new ServiceManager(
+			mockServiceRepositoryNoService,
+			mockServiceTypeRepository,
+			mockServiceModuleConfigRepo,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
 		try {
 			await serviceManager.getDetails(1);
 		} catch (error: any) {

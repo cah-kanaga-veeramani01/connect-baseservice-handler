@@ -9,6 +9,8 @@ import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
 import SNSServiceManager from '../../src/managers/SNSServiceManager';
 import { Repository } from 'sequelize-mock';
 import { describe, expect, jest, test } from '@jest/globals';
+import { BulkServiceAttributesStatus } from '../../database/models/BulkServiceAttributesStatus';
+import { ServiceAttributes } from '../../database/models/ServiceAttributes';
 
 const mockGetServiceRepository: Repository<Service> = {
 		count: jest.fn().mockReturnValue(1),
@@ -61,8 +63,28 @@ const mockGetServiceRepository: Repository<Service> = {
 		count: jest.fn().mockReturnValue(1)
 	};
 
-const serviceManager = new ServiceManager(db.getRepository(Service), db.getRepository(ServiceType), db.getRepository(ServiceModuleConfig)),
-	snsServiceObj = new SNSServiceManager();
+const mockBulkServiceAttributesStatusRepository: Repository<BulkServiceAttributesStatus> = {
+	create: jest.fn().mockImplementation(() => {
+		return [];
+	})
+};
+
+const mockServiceAttributesRepository: Repository<ServiceAttributes> = {
+	create: jest.fn().mockImplementation(() => {
+		return [];
+	})
+};
+
+const snsServiceObj = new SNSServiceManager(),
+	serviceManager = new ServiceManager(
+		db.getRepository(Service),
+		db.getRepository(ServiceType),
+		db.getRepository(ServiceModuleConfig),
+		db.getRepository(BulkServiceAttributesStatus),
+		db.getRepository(ServiceAttributes),
+		snsServiceObj
+	);
+
 const serviceController = new ServiceController(serviceManager, snsServiceObj);
 
 describe('Create a new service', () => {
@@ -461,7 +483,14 @@ describe('Get module entries', () => {
 
 describe('Schedule Service', () => {
 	test('return the scheduled Service', async () => {
-		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepository, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository),
+		const serviceObj: ServiceManager = new ServiceManager(
+				mockGetServiceRepository,
+				mockGetServiceTypeRepository,
+				mockGetServiceModuleConfigRepository,
+				mockBulkServiceAttributesStatusRepository,
+				mockServiceAttributesRepository,
+				snsServiceObj
+			),
 			serviceSNSObj: SNSServiceManager = new SNSServiceManager();
 		jest.spyOn(serviceObj, 'schedule').mockImplementation(() => {
 			return Promise.resolve({
@@ -530,7 +559,14 @@ describe('Schedule Service', () => {
 	});
 
 	test('throws error', async () => {
-		const serviceObj: ServiceManager = new ServiceManager(mockGetServiceRepositoryNoService, mockGetServiceTypeRepository, mockGetServiceModuleConfigRepository),
+		const serviceObj: ServiceManager = new ServiceManager(
+				mockGetServiceRepositoryNoService,
+				mockGetServiceTypeRepository,
+				mockGetServiceModuleConfigRepository,
+				mockBulkServiceAttributesStatusRepository,
+				mockServiceAttributesRepository,
+				snsServiceObj
+			),
 			serviceSNSObj: SNSServiceManager = new SNSServiceManager();
 		const serviceControllerObj = new ServiceController(serviceObj, serviceSNSObj);
 		jest.spyOn(serviceObj, 'schedule').mockRejectedValue(new Error('error'));
@@ -662,5 +698,86 @@ describe('active service list', () => {
 
 		await serviceController.getDetails(req, res, next);
 		expect(next).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('create bulk service attributes', () => {
+	test('associate bulk service attributes', async () => {
+		jest.spyOn(serviceManager, 'persistIncomingRequestForBulkAttributes').mockImplementation(() => {
+			return Promise.resolve([
+				{
+					bulkServiceAttributesStatusID: 1,
+					fileName: 'test.xlsx',
+					totalRecords: 10,
+					successfullyProcessedRecords: 0,
+					totalFailedRecords: 0,
+					errorReason: [],
+					filelocation: '',
+					status: 'INPROGRESS'
+				}
+			]);
+		});
+
+		jest.spyOn(serviceManager, 'processBulkAttributesRequest').mockImplementation(() => {
+			return Promise.resolve([
+				{
+					totalRowCount: 25,
+					totalSuccessfullServices: 25,
+					totalFailedServices: 0,
+					failedServiceAttributesList: []
+				}
+			]);
+		});
+
+		jest.spyOn(serviceManager, 'updateMetricsAndStatusForBulkAttributesRequest').mockImplementation(() => {
+			return Promise.resolve([
+				{
+					bulkServiceAttributesStatusID: 1,
+					fileName: 'test.xlsx',
+					totalRecords: 10,
+					successfullyProcessedRecords: 10,
+					totalFailedRecords: 0,
+					errorReason: [],
+					filelocation: '',
+					status: 'COMPLETED'
+				}
+			]);
+		});
+
+		const req = mocks.createRequest({
+				method: 'POST',
+				url: '/service/internal/associateBulkServiceAttributes',
+				file: {
+					bulkServiceAttributesDoc: 'BulkAttributes.xlsx'
+				}
+			}),
+			res = mocks.createResponse(),
+			next = jest.fn();
+		await serviceController.createBulkServiceAttributes(req, res);
+		expect(res._getData()).toMatchObject([
+			{
+				totalRowCount: 25,
+				totalSuccessfullServices: 25,
+				totalFailedServices: 0,
+				failedServiceAttributesList: []
+			}
+		]);
+	});
+	test('throws error', async () => {
+		jest.spyOn(serviceManager, 'persistIncomingRequestForBulkAttributes').mockRejectedValue(new Error('error'));
+		const req = mocks.createRequest({
+				method: 'POST',
+				url: '/service/internal/associateBulkServiceAttributes',
+				file: {
+					bulkServiceAttributesDoc: 'BulkAttributes.xlsx'
+				}
+			}),
+			res = mocks.createResponse(),
+			next = jest.fn();
+		try {
+			await serviceController.createBulkServiceAttributes(req, res);
+		} catch (error: any) {
+			expect(error.code).toBe(400);
+		}
 	});
 });

@@ -823,7 +823,6 @@ export default class ServiceManager {
 	private async validScheduledDates(userInput: any, startDate: any, endDate: any, errorRecords: any, row: number): Promise<boolean> {
 		const validFrom = startDate ? moment(startDate).format(DATE_FORMAT) : null;
 		const validTill = endDate ? moment(endDate).format(DATE_FORMAT) : null;
-		console.log('validTill ==> ', validTill);
 		const today: any = moment.tz(moment(), CLIENT_TZ).format(DATE_FORMAT);
 
 		if (!validFrom) {
@@ -905,7 +904,9 @@ export default class ServiceManager {
 			} else {
 				logger.nonPhi.debug('creating new service attributes metadata ', { attributesDefinitionIDs_toAdd });
 				await this.serviceAttributesRepository.create({
-					metadata: { attributes: attributesDefinitionIDs_toAdd, serviceID: activeService.serviceID, globalServiceVersion: activeService.globalServiceVersion }
+					metadata: { attributes: attributesDefinitionIDs_toAdd },
+					serviceID: activeService.serviceID,
+					globalServiceVersion: activeService.globalServiceVersion
 				});
 			}
 		} catch (error: any) {
@@ -944,7 +945,7 @@ export default class ServiceManager {
 			throw new HandleError({ name: 'AttributeDefinitionFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
-	public async persistIncomingRequestForBulkAttributes(fileName: string, status: string, userID: string) {
+	public async persistIncomingRequestForBulkAttributes(fileName: string, status: string, userID: string): Promise<any> {
 		try {
 			logger.nonPhi.debug('Creating a request entry in BulkAttributesStatus table with following values ', { fileName, status, userID });
 			return await this.bulkServiceAttributesRepository.create({ fileName, status, createdBy: userID });
@@ -981,7 +982,7 @@ export default class ServiceManager {
 		return true;
 	}
 
-	public async updateMetricsAndStatusForBulkAttributesRequest(bulkAttributesRequest: any, response: any) {
+	public async updateMetricsAndStatusForBulkAttributesRequest(bulkAttributesRequest: any, response: any): Promise<any> {
 		try {
 			const status = response.totalSuccessfullServices >= 1 ? REQUEST_COMPLETED : REQUEST_FAILED;
 			await this.bulkServiceAttributesRepository.update(
