@@ -10,16 +10,36 @@ import { describe, expect, jest, test } from '@jest/globals';
 import { ServiceAttributes } from '../../database/models/ServiceAttributes';
 import { BulkServiceAttributesStatus } from '../../database/models/BulkServiceAttributesStatus';
 import SNSServiceManager from '../../src/managers/SNSServiceManager';
-
+const XLSX = require('xlsx');
 const mockBulkServiceAttributesStatusRepository: Repository<BulkServiceAttributesStatus> = {
 	create: jest.fn().mockImplementation(() => {
-		return [];
+		return [
+			{
+				bulkServiceAttributesStatusID: 1,
+				status: 'INPROGRESS'
+			}
+		];
+	}),
+	update: jest.fn().mockImplementation(() => {
+		return [
+			{
+				bulkServiceAttributesStatusID: 1,
+				status: 'COMPLETED'
+			}
+		];
 	})
 };
 
 const mockServiceAttributesRepository: Repository<ServiceAttributes> = {
 	create: jest.fn().mockImplementation(() => {
-		return [];
+		return [
+			{
+				serviceAttributesID: 1,
+				metadata: { attributes: [1, 2, 3] },
+				serviceID: 1,
+				globalServiceVersion: 1
+			}
+		];
 	})
 };
 
@@ -1501,5 +1521,64 @@ describe('Active service block', () => {
 		} catch (error) {
 			expect(error.name).toBe('ServiceDetailFetchError');
 		}
+	});
+});
+
+describe('associate bulk service attributes', () => {
+	it('should validate the user input and add service attributes for given set of records', async () => {
+		const file = { path: 'something' } as Express.Multer.File;
+		const serviceManager: ServiceManager = new ServiceManager(
+			mockGetServiceRepository,
+			mockServiceTypeRepository,
+			mockServiceModuleConfigRepo,
+			mockBulkServiceAttributesStatusRepository,
+			mockServiceAttributesRepository,
+			snsServiceObj
+		);
+
+		const userId = 'user123';
+		const dataFromXL = [
+			{
+				serviceID: 1,
+				TIPID: 1,
+				serviceName: 'Service A',
+				AttributesToBeAssociated: 'Role:TECHELIGIBLE,GROUP:MEDREC',
+				AttributesToBeRemoved: 'Group:MediClaim',
+				startDate: '10-20-2024',
+				endDate: '11-11-2030'
+			}
+		];
+
+		jest.spyOn(XLSX, 'readFile').mockResolvedValue({
+			SheetNames: ['BulkServiceAttributes'],
+			Sheets: {
+				BulkServiceAttributes: {
+					'!ref': 'A1:J6',
+					A1: { t: 's', v: 'Service ID' },
+					B1: { t: 's', v: 'TIP ID' },
+					C1: { t: 's', v: 'Service Name' },
+					D1: { t: 's', v: 'Attributes to be associated' },
+					E1: { t: 's', v: 'Attributes to be removed' },
+					F1: { t: 's', v: 'Start Date' },
+					G1: { t: 's', v: 'End Date' },
+					'!margins': [Object]
+				}
+			}
+		});
+
+		jest.spyOn(serviceManager, 'processBulkAttributesRequest').mockImplementation(() => {
+			return Promise.resolve({
+				totalRowCount: 25,
+				totalSuccessfullServices: 25,
+				totalFailedServices: 0,
+				failedServiceAttributesList: []
+			});
+		});
+		expect(await serviceManager.processBulkAttributesRequest(file, userId)).toStrictEqual({
+			totalRowCount: 25,
+			totalSuccessfullServices: 25,
+			totalFailedServices: 0,
+			failedServiceAttributesList: []
+		});
 	});
 });
