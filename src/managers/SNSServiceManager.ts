@@ -10,16 +10,22 @@ export default class SNSServiceManager {
 		const data = JSON.stringify({
 				message: {
 					type: eventType,
-					result: {
-						globalServiceVersion,
-						legacyTipID,
-						serviceID,
-						isPublished,
-						startDate,
-						endDate
-					}
+					result: [
+						{
+							globalServiceVersion,
+							legacyTipID,
+							serviceID,
+							isPublished,
+							startDate,
+							endDate
+						}
+					]
 				},
-				topic: process.env.SNS_TOPIC
+				topic: process.env.SNS_TOPIC,
+				metadata: {
+					eventType,
+					ackSystem: 'ALL'
+				}
 			}),
 			config = {
 				method: 'post',

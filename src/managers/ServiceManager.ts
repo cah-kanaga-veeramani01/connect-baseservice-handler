@@ -754,6 +754,7 @@ export default class ServiceManager {
 		try {
 			const errorRecords = [];
 			var totalFailedServices = 0;
+
 			for (var row = 1; row < userInput.length; row++) {
 				const legacyTIPDetailID = Number(userInput[row][1]),
 					serviceName = String(userInput[row][2]).trim();
@@ -769,7 +770,7 @@ export default class ServiceManager {
 				) {
 					await this.validateAndCreateServiceAttributes(existingServices[0], userInput[row][3], userInput[row][4], errorRecords, row);
 
-					logger.nonPhi.debug('After successful validation and association of service attributes, creating a draft version for the active service.');
+					logger.nonPhi.debug('After successfull validation and association of service attributes, creating a draft version for the active service.');
 					const draft_service = await this.createDraft(existingServices[0].serviceID);
 
 					const validFrom = userInput[row][5] ? moment(userInput[row][5]).format(DATE_FORMAT) : null;

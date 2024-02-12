@@ -43,12 +43,12 @@ ServicesInternalRouter.route('/unmappedModules').get(
 ServicesInternalRouter.route('/schedule').put(isAuthorized(UserAction.update, Subject.service), validateRequest(scheduleService), serviceController.schedule.bind(serviceController));
 ServicesInternalRouter.route('/details').get(isAuthorized(UserAction.read, Subject.service), validateRequest(getServiceDetails), serviceController.getDetails.bind(serviceController));
 ServicesInternalRouter.route('/activeServices').get(isAuthorized(UserAction.read, Subject.service), serviceController.getActiveServices.bind(serviceController));
-ServicesInternalRouter.route('/bulkServiceAttributes').post(
-	//isAuthorized(UserAction.create, Subject.service),
+ServicesInternalRouter.route('/associateBulkServiceAttributes').post(
+	isAuthorized(UserAction.create, Subject.service),
 	(req: Request, res: Response, next: NextFunction) => {
 		req.params.userId = httpContext.get('userId');
 		next();
 	},
-	multerUpload.single('serviceAttributes'),
+	multerUpload.single('bulkServiceAttributesDoc'),
 	serviceController.createBulkServiceAttributes.bind(serviceController)
 );
