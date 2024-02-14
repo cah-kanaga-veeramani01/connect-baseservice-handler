@@ -61,6 +61,11 @@ AND s5."globalServiceVersion" IN (
 WHERE 
 s1."serviceID" = :serviceID FETCH first row only`;
 
+export const QAllServicesByStatus = `select  
+"globalServiceVersion", "serviceName", "status",
+"validFrom" from service."Service"
+where "serviceID" = :serviceID`;
+
 export const QCheckConfigCount = `SELECT count(*)
 FROM service."ServiceModuleConfig" WHERE "serviceID" = :serviceID AND "moduleID" = :moduleID`;
 

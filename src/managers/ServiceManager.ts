@@ -15,7 +15,6 @@ import {
 	REQUEST_FAILED
 } from '../../utils/constants';
 import {
-	QServiceDetails,
 	QAddModuleConfig,
 	QCheckConfigCount,
 	QUpdateModuleConfig,
@@ -36,7 +35,8 @@ import {
 	QGetAllServiceIDsWithInactiveFilter,
 	QGetAllServicesFromServiceIDWithInactiveFilter,
 	QGetAllServiceIDsCountInactiveWithFilter,
-	QCheckAttributesDefinition
+	QCheckAttributesDefinition,
+	QAllServicesByStatus
 } from '../../database/queries/service';
 import { QueryTypes, Sequelize, Op } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
@@ -384,6 +384,10 @@ export default class ServiceManager {
 	 */
 	async getDetails(serviceID: number): Promise<object> {
 		try {
+			interface detailObj {
+				[key: string]: any;
+			}
+
 			const service = await this.serviceRepository.findOne({
 				attributes: ['serviceID', 'serviceDisplayName', 'serviceTypeID', 'legacyTIPDetailID'],
 				where: {
@@ -399,12 +403,33 @@ export default class ServiceManager {
 			});
 			if (!service) throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
 
-			const serviceDetails = await db.query(QServiceDetails, {
+			const serviceDetails = await db.query(QAllServicesByStatus, {
 				replacements: { serviceID: serviceID },
 				type: QueryTypes.SELECT
 			});
+			var serviceInfo: detailObj = {};
+			serviceDetails.filter((service: any) => {
+				if (service.status === 'ACTIVE') {
+					serviceInfo.activeServiceName = service.serviceName;
+					serviceInfo.activeVersion = service.globalServiceVersion;
+					serviceInfo.activeStartDate = service.validFrom;
+				}
+				if (service.status === 'SCHEDULED') {
+					serviceInfo.scheduledServiceName = service.serviceName;
+					serviceInfo.scheduledVersion = service.globalServiceVersion;
+					serviceInfo.scheduledStartDate = service.validFrom;
+				}
+				if (service.status === 'DRAFT') {
+					serviceInfo.draftServiceName = service.serviceName;
+					serviceInfo.draftVersion = service.globalServiceVersion;
+				}
+				if (service.status === 'INACTIVE') {
+					serviceInfo.inactiveServiceName = service.serviceName;
+					serviceInfo.inactiveVersion = service.globalServiceVersion;
+				}
+			});
 
-			const result = { ...serviceDetails[0], ...service, serviceType: service['serviceType.serviceType'] };
+			const result = { ...serviceInfo, ...service, serviceType: service['serviceType.serviceType'] };
 
 			delete result['serviceType.serviceType'];
 			return result;
@@ -754,33 +779,38 @@ export default class ServiceManager {
 		try {
 			const errorRecords = [];
 			var totalFailedServices = 0;
-
 			for (var row = 1; row < userInput.length; row++) {
 				const legacyTIPDetailID = Number(userInput[row][1]),
 					serviceName = String(userInput[row][2]).trim();
 
 				logger.nonPhi.debug('Getting the matching services from database for given TIP ID and Service name ', { legacyTIPDetailID, serviceName });
+
 				const existingServices = await this.serviceRepository.findAll({
 					where: { legacyTIPDetailID, [Op.and]: [Sequelize.where(Sequelize.fn('lower', Sequelize.col('serviceName')), serviceName.toLowerCase())] }
 				});
+
 				logger.nonPhi.info('Checking the given service name and TIP ID has only active version.');
-				if (
-					(await this.checkExistingServicesHasOnlyActiveVersion(userInput, existingServices, errorRecords, row)) &&
-					(await this.validScheduledDates(userInput, userInput[row][5], userInput[row][6], errorRecords, row))
-				) {
+				var onlyActiveVersion = await this.checkExistingServicesHasOnlyActiveVersion(userInput, existingServices, errorRecords, row);
+
+				var validScheduleDates = await this.validScheduledDates(userInput, userInput[row][5], userInput[row][6], errorRecords, row);
+
+				if (onlyActiveVersion && validScheduleDates) {
 					await this.validateAndCreateServiceAttributes(existingServices[0], userInput[row][3], userInput[row][4], errorRecords, row);
 
 					logger.nonPhi.debug('After successfull validation and association of service attributes, creating a draft version for the active service.');
+
 					const draft_service = await this.createDraft(existingServices[0].serviceID);
 
 					const validFrom = userInput[row][5] ? moment(userInput[row][5]).format(DATE_FORMAT) : null;
 					const validTill = userInput[row][6] ? moment(userInput[row][6]).format(DATE_FORMAT) : null;
 
 					logger.nonPhi.debug('Scheduling the service with following data. ', (existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill));
+
 					await this.schedule(existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill);
 
 					logger.nonPhi.debug('Publishing a schedule event to the SNS topic.');
-					await this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
+
+					this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
 						existingServices[0].serviceID,
 						existingServices[0].legacyTIPDetailID,
 						existingServices[0].globalServiceVersion,
@@ -790,11 +820,14 @@ export default class ServiceManager {
 						reqHeaders,
 						SERVICE_SCHEDULE_EVENT
 					);
+
 					const activeService = JSON.parse(JSON.stringify(await this.getActiveService(existingServices[0].serviceID)));
+
 					if (activeService !== null) {
 						const endDate = activeService.validTill ? activeService.validTill : endDateWithClientTZ(moment(validFrom).subtract(1, 'days').format(DATE_FORMAT));
 						logger.nonPhi.debug('Publishing a change event to the SNS topic to update end date for the active version of the service.');
-						await this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
+
+						this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
 							existingServices[0].serviceID,
 							existingServices[0].legacyTIPDetailID,
 							activeService.globalServiceVersion,
@@ -920,7 +953,7 @@ export default class ServiceManager {
 	private async getAttributesDefinitionIDs(categoryAttributesCollection: any, activeService: Service, errorRecords: any, errorMessage: string, row: number): Promise<any> {
 		try {
 			const attributesDefinitionIDs = [];
-			await categoryAttributesCollection.split(',').forEach(async (cat_attribute: any) => {
+			await categoryAttributesCollection?.split(',').forEach(async (cat_attribute: any) => {
 				const category_attr_name = cat_attribute.trim().split(':');
 				logger.nonPhi.debug('Fetching attributesDefinitionID for category = ' + category_attr_name[0].trim() + ' and attributeName = ' + category_attr_name[1].trim());
 
