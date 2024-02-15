@@ -202,7 +202,7 @@ from service."Service" s
 LEFT JOIN service."ServiceAttributes" sa ON s."serviceID" = sa."serviceID" AND s."globalServiceVersion" = sa."globalServiceVersion"
 JOIN service."ServiceType" st ON s."serviceTypeID" = st."serviceTypeID"
 where s."status" in ('ACTIVE','DRAFT','SCHEDULED') and s."serviceID" in (${idsTxt})  
-ORDER BY ${sortBy} ${sortOrder};`;
+ORDER BY "${sortBy}" ${sortOrder};`;
 
 export const QGetAllServiceIDsCount = () => `select COUNT(DISTINCT "serviceID") AS count from service."Service" 
 where "status" in ('ACTIVE','DRAFT','SCHEDULED')`;
