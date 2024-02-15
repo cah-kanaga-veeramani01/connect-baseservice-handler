@@ -19,12 +19,7 @@ AND s2."globalServiceVersion" IN (
 	service."Service" 
   WHERE 
 	"serviceID" = :serviceID 
-	AND "isPublished" = 1 
-	AND (
-	  "validTill" IS NULL 
-	  OR "validTill" >= now()
-	) 
-	AND "validFrom" <= now()
+	AND status = 'ACTIVE'
 ) 
 LEFT JOIN service."Service" AS s3 ON s1."serviceID" = s3."serviceID" 
 AND s3."globalServiceVersion" IN (
@@ -34,8 +29,7 @@ AND s3."globalServiceVersion" IN (
 	service."Service" 
   WHERE 
 	"serviceID" = :serviceID
-	AND "isPublished" = 1 
-	AND "validFrom" IS NOT NULL AND "validFrom" > NOW() AND (("validTill" IS NOT NULL AND "validFrom" < "validTill") OR ("validTill" IS NULL))
+	AND status = 'SCHEDULED'
 ) 
 LEFT JOIN service."Service" AS s4 ON s1."serviceID" = s4."serviceID" 
 AND s4."globalServiceVersion" IN (
@@ -45,7 +39,7 @@ AND s4."globalServiceVersion" IN (
 	service."Service" 
   WHERE 
 	"serviceID" = :serviceID 
-	AND "isPublished" = 0 AND "validTill" IS NULL AND "validFrom" IS NULL
+	AND status = 'DRAFT'
 )
 LEFT JOIN service."Service" AS s5 ON s1."serviceID" = s5."serviceID" 
 AND s5."globalServiceVersion" IN (
@@ -55,19 +49,22 @@ AND s5."globalServiceVersion" IN (
 	service."Service" 
   WHERE 
 	"serviceID" = :serviceID 
-	AND "validTill" < NOW() AND "validTill" IS NOT NULL AND "validFrom" IS NOT NULL AND "serviceID" NOT IN (
+	AND status = 'INACTIVE' AND "serviceID" NOT IN (
 		select 
 		ss5."serviceID" 
 		from 
 		  service."Service" ss5
 		where 
-		  (
-			( ss5."validFrom" < now()  AND ss5."validTill" >= now() )  OR ( ss5."validFrom" < now() AND ss5."validTill" IS NULL )  AND ss5."isPublished" = 1
-		  )
+		status = 'ACTIVE'
 	  )
 ) 
 WHERE 
 s1."serviceID" = :serviceID FETCH first row only`;
+
+export const QAllServicesByStatus = `select  
+"globalServiceVersion", "serviceName", "status",
+"validFrom" from service."Service"
+where "serviceID" = :serviceID`;
 
 export const QCheckConfigCount = `SELECT count(*)
 FROM service."ServiceModuleConfig" WHERE "serviceID" = :serviceID AND "moduleID" = :moduleID`;
@@ -318,3 +315,5 @@ where sss."status"='ACTIVE' and s1."serviceID"=sss."serviceID") ) X
 where (X."servicename" ILIKE :searchKey OR X."serviceID"::text LIKE :searchKey   OR X."legacyTIPDetailID"::text LIKE :searchKey OR (X."attributess"::text ilike :searchKey and (X."status"='ACTIVE' OR X."status"='INACTIVE') ))   
 ) z
 ORDER BY "servicename"  asc) b`;
+
+export const QCheckAttributesDefinition = 'select "attributesDefinitionID" from service."AttributesDefinition" where name =:name  and "categoryName" = :category';

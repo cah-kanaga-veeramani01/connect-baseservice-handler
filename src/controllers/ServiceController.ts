@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { HandleError, logger } from '../../utils';
 import { IService } from '../interfaces/IServices';
 import ServiceManager from '../managers/ServiceManager';
-import { serviceList, EMPTY_STRING, HTTP_STATUS_CODES, SERVICE_SCHEDULE_EVENT, SERVICE_CHANGE_EVENT } from '../../utils/constants';
+import { serviceList, EMPTY_STRING, HTTP_STATUS_CODES, SERVICE_SCHEDULE_EVENT, SERVICE_CHANGE_EVENT, REQUEST_INPROGRESS } from '../../utils/constants';
 import config from 'config';
 import SNSServiceManager from '../managers/SNSServiceManager';
 import moment from 'moment';
@@ -178,6 +178,25 @@ export default class ServiceController {
 			res.send(serviceDetails);
 		} catch (error: any) {
 			next(error);
+		}
+	}
+
+	public async createBulkServiceAttributes(req: Request, res: Response) {
+		try {
+			const fileName = req.file.originalname;
+
+			logger.nonPhi.info('Received the request for bulk service attributes association. Creating an entry in the database.');
+			const bulkAttributesRequest = await this.serviceManager.persistIncomingRequestForBulkAttributes(fileName, REQUEST_INPROGRESS, req.params.userId);
+
+			logger.nonPhi.info('Bulk attributes association processing begins.');
+			const response = await this.serviceManager.processBulkAttributesRequest(req.file, req.headers);
+
+			logger.nonPhi.info('Updating the database to set the metrics and the status of the request.');
+			await this.serviceManager.updateMetricsAndStatusForBulkAttributesRequest(bulkAttributesRequest, response);
+			res.json(response);
+		} catch (error) {
+			logger.nonPhi.error(error.message, { _error: error });
+			res.status(HTTP_STATUS_CODES.badRequest).json(error);
 		}
 	}
 }

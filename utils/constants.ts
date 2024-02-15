@@ -54,3 +54,23 @@ export const CLIENT_TZ = 'America/New_York';
 export const SERVICE_SCHEDULE_EVENT = 'SCHEDULE';
 
 export const SERVICE_CHANGE_EVENT = 'CHANGE';
+
+export const ERROR_MSG_REMOVE_ATTRIBUTES = ' cannot be removed from the service because it does not exist in the system.';
+
+export const ERROR_MSG_ADD_ATTRIBUTES = ' cannot be added to the service because it does not exist in the system.';
+
+export const REQUEST_INPROGRESS = 'INPROGRESS';
+
+export const REQUEST_COMPLETED = 'COMPLETED';
+
+export const REQUEST_FAILED = 'FAILED';
+
+export const DATE_FORMAT = 'YYYY-MM-DD';
+
+export const ACTIVE = 'ACTIVE';
+
+export const DRAFT = 'DRAFT';
+
+export const SCHEDULED = 'SCHEDULED';
+
+export const INACTIVE = 'INACTIVE';

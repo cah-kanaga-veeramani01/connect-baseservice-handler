@@ -5,21 +5,27 @@ import { logger } from '../../utils/logger';
 const axios = require('axios');
 
 export default class SNSServiceManager {
-	async parentPublishScheduleMessageToSNSTopic(serviceID: number, legacyTipID: number, globalServiceVersion: number, startDate: any, endDate: any, isPublished: number, headers: any, event: string) {
+	parentPublishScheduleMessageToSNSTopic(serviceID: number, legacyTipID: number, globalServiceVersion: number, startDate: any, endDate: any, isPublished: number, headers: any, event: string) {
 		const eventType = event === SERVICE_SCHEDULE_EVENT ? 'SERVICE-SCHEDULE-EVENT' : 'SERVICE-CHANGE-EVENT';
 		const data = JSON.stringify({
 				message: {
 					type: eventType,
-					result: {
-						globalServiceVersion,
-						legacyTipID,
-						serviceID,
-						isPublished,
-						startDate,
-						endDate
-					}
+					result: [
+						{
+							globalServiceVersion,
+							legacyTipID,
+							serviceID,
+							isPublished,
+							startDate,
+							endDate
+						}
+					]
 				},
-				topic: process.env.SNS_TOPIC
+				topic: process.env.SNS_TOPIC,
+				metadata: {
+					eventType,
+					ackSystem: 'ALL'
+				}
 			}),
 			config = {
 				method: 'post',
@@ -31,7 +37,7 @@ export default class SNSServiceManager {
 				},
 				data
 			};
-		const response = await axios.post(config.url, config.data, { headers: config.headers }).catch((error) => {
+		const response = axios.post(config.url, config.data, { headers: config.headers }).catch((error) => {
 			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			else throw new HandleError({ name: 'ParentPublishToSNSTopicError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
