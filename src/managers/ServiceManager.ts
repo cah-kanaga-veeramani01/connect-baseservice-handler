@@ -770,9 +770,10 @@ export default class ServiceManager {
 
 	private async parseInputExcel(file: Express.Multer.File): Promise<any> {
 		try {
-			const workbook = XLSX.read(file.buffer),
+			const workbook = XLSX.read(file.buffer, { cellDates: true }),
 				first_worksheet = workbook.Sheets[workbook.SheetNames[0]],
-				dataFromXL = XLSX.utils.sheet_to_json(first_worksheet, { header: 1 });
+				dataFromXL = XLSX.utils.sheet_to_json(first_worksheet, { header: 1, raw: false, dateNF: 'MM/DD/YYYY' });
+
 			logger.nonPhi.info('Successfully parsed and returning the excel content in json format.');
 			return dataFromXL;
 		} catch (error: any) {
@@ -797,24 +798,24 @@ export default class ServiceManager {
 
 				logger.nonPhi.info('Checking the given service name and TIP ID has only active version.');
 				var onlyActiveVersion = await this.checkExistingServicesHasOnlyActiveVersion(userInput, existingServices, errorRecords, row);
+				var validScheduleDates, validFrom, validTill;
 
-				var validScheduleDates = await this.validScheduledDates(userInput, userInput[row][5], userInput[row][6], errorRecords, row);
+				if (userInput[row][5] !== undefined) {
+					validScheduleDates = await this.validScheduledDates(userInput, userInput[row][5], userInput[row][6], errorRecords, row);
+					validFrom = moment(userInput[row][5]).format(DATE_FORMAT);
+					validTill = userInput[row][6] ? moment(userInput[row][6]).format(DATE_FORMAT) : null;
+				} else {
+					validFrom = moment.tz(moment().add(1, 'days'), CLIENT_TZ).format(DATE_FORMAT);
+					validTill = userInput[row][6] ? moment(userInput[row][6]).format(DATE_FORMAT) : null;
+					validScheduleDates = true;
+				}
 				if (onlyActiveVersion && validScheduleDates) {
 					await this.validateAndCreateServiceAttributes(existingServices[0], userInput[row][3], userInput[row][4], errorRecords, row);
-
 					logger.nonPhi.debug('After successfull validation and association of service attributes, creating a draft version for the active service.');
-
 					const draft_service = await this.createDraft(existingServices[0].serviceID);
-
-					const validFrom = userInput[row][5] ? moment(userInput[row][5]).format(DATE_FORMAT) : null;
-					const validTill = userInput[row][6] ? moment(userInput[row][6]).format(DATE_FORMAT) : null;
-
 					logger.nonPhi.debug('Scheduling the service with following data. ', (existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill));
-
 					await this.schedule(existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill);
-
 					logger.nonPhi.debug('Publishing a schedule event to the SNS topic.');
-
 					this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
 						existingServices[0].serviceID,
 						existingServices[0].legacyTIPDetailID,
@@ -825,13 +826,10 @@ export default class ServiceManager {
 						reqHeaders,
 						SERVICE_SCHEDULE_EVENT
 					);
-
 					const activeService = JSON.parse(JSON.stringify(await this.getActiveService(existingServices[0].serviceID)));
-
 					if (activeService !== null) {
 						const endDate = activeService.validTill ? activeService.validTill : endDateWithClientTZ(moment(validFrom).subtract(1, 'days').format(DATE_FORMAT));
 						logger.nonPhi.debug('Publishing a change event to the SNS topic to update end date for the active version of the service.');
-
 						this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
 							existingServices[0].serviceID,
 							existingServices[0].legacyTIPDetailID,
@@ -860,21 +858,10 @@ export default class ServiceManager {
 	}
 
 	private async validScheduledDates(userInput: any, startDate: any, endDate: any, errorRecords: any, row: number): Promise<boolean> {
-		const validFrom = startDate ? moment(startDate).format(DATE_FORMAT) : null;
+		const validFrom = moment(startDate).format(DATE_FORMAT);
 		const validTill = endDate ? moment(endDate).format(DATE_FORMAT) : null;
-		const today: any = moment.tz(moment(), CLIENT_TZ).format(DATE_FORMAT);
+		const today: any = moment.tz(moment().add(1, 'days'), CLIENT_TZ).format(DATE_FORMAT);
 
-		if (!validFrom) {
-			logger.nonPhi.error('Start Date is not provided.');
-			errorRecords.push({
-				tipID: userInput[row][1],
-				serviceID: userInput[row][0],
-				serviceName: userInput[row][2],
-				failureReason: 'Start Date is not provided.',
-				row: row + 1
-			});
-			return false;
-		}
 		if (validFrom < today) {
 			logger.nonPhi.error('Invalid start date is provided. Start Date is lesser than current date.');
 			errorRecords.push({
@@ -899,12 +886,12 @@ export default class ServiceManager {
 		}
 
 		if (validTill && validFrom > validTill) {
-			logger.nonPhi.error('Invalid start date is provided. Start Date is greater than end date.');
+			logger.nonPhi.error('End Date is lesser than start date.');
 			errorRecords.push({
 				tipID: userInput[row][1],
 				serviceID: userInput[row][0],
 				serviceName: userInput[row][2],
-				failureReason: 'Invalid start date is provided. Start Date is greater than end date.',
+				failureReason: 'End Date is lesser than start date.',
 				row: row + 1
 			});
 			return false;
