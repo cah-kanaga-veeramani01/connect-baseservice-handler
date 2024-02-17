@@ -408,6 +408,9 @@ export default class ServiceManager {
 				type: QueryTypes.SELECT
 			});
 			var serviceInfo: detailObj = {};
+			serviceInfo.inactiveServiceName = null;
+			serviceInfo.inactiveVersion = null;
+
 			serviceDetails.filter((service: any) => {
 				if (service.status === 'ACTIVE') {
 					serviceInfo.activeServiceName = service.serviceName;
@@ -423,7 +426,7 @@ export default class ServiceManager {
 					serviceInfo.draftServiceName = service.serviceName;
 					serviceInfo.draftVersion = service.globalServiceVersion;
 				}
-				if (service.status === 'INACTIVE') {
+				if (service.status === 'INACTIVE' && serviceDetails.findIndex((service) => service.status === 'ACTIVE') === -1) {
 					serviceInfo.inactiveServiceName = service.serviceName;
 					serviceInfo.inactiveVersion = service.globalServiceVersion;
 				}
@@ -796,7 +799,6 @@ export default class ServiceManager {
 				var onlyActiveVersion = await this.checkExistingServicesHasOnlyActiveVersion(userInput, existingServices, errorRecords, row);
 
 				var validScheduleDates = await this.validScheduledDates(userInput, userInput[row][5], userInput[row][6], errorRecords, row);
-
 				if (onlyActiveVersion && validScheduleDates) {
 					await this.validateAndCreateServiceAttributes(existingServices[0], userInput[row][3], userInput[row][4], errorRecords, row);
 
@@ -954,33 +956,32 @@ export default class ServiceManager {
 	}
 
 	private async getAttributesDefinitionIDs(categoryAttributesCollection: any, activeService: Service, errorRecords: any, errorMessage: string, row: number): Promise<any> {
-		try {
-			const attributesDefinitionIDs = [];
-			await categoryAttributesCollection?.split(',').forEach(async (cat_attribute: any) => {
-				const category_attr_name = cat_attribute.trim().split(':');
-				logger.nonPhi.debug('Fetching attributesDefinitionID for category = ' + category_attr_name[0].trim() + ' and attributeName = ' + category_attr_name[1].trim());
-
-				const attributesDefinition = await db.query(QCheckAttributesDefinition, {
+		const attributesDefinitionIDs = [];
+		var attributesDefinition;
+		await categoryAttributesCollection?.split(',').forEach(async (cat_attribute: any) => {
+			const category_attr_name = cat_attribute.trim().split(':');
+			logger.nonPhi.debug('Fetching attributesDefinitionID for category = ' + category_attr_name[0].trim() + ' and attributeName = ' + category_attr_name[1].trim());
+			try {
+				attributesDefinition = await db.query(QCheckAttributesDefinition, {
 					replacements: { category: category_attr_name[0].trim(), name: category_attr_name[1].trim() },
 					type: QueryTypes.SELECT
 				});
-				if (attributesDefinition[0]?.attributesDefinitionID) {
-					attributesDefinitionIDs.push(attributesDefinition[0].attributesDefinitionID);
-				} else {
-					errorRecords.push({
-						tipID: activeService.legacyTIPDetailID,
-						serviceID: activeService.serviceID,
-						serviceName: activeService.serviceName,
-						failureReason: category_attr_name[0] + ':' + category_attr_name[1] + errorMessage,
-						row: row + 1
-					});
-				}
-			});
-			return attributesDefinitionIDs;
-		} catch (error: any) {
-			logger.nonPhi.error(error.message, { _err: error });
-			throw new HandleError({ name: 'AttributeDefinitionFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
-		}
+			} catch (error: any) {
+				logger.nonPhi.error(error.message, { _err: error });
+			}
+			if (attributesDefinition[0]?.attributesDefinitionID && !attributesDefinitionIDs.includes(attributesDefinition[0].attributesDefinitionID)) {
+				attributesDefinitionIDs.push(attributesDefinition[0].attributesDefinitionID);
+			} else {
+				errorRecords.push({
+					tipID: activeService.legacyTIPDetailID,
+					serviceID: activeService.serviceID,
+					serviceName: activeService.serviceName,
+					failureReason: category_attr_name[0] + ':' + category_attr_name[1] + errorMessage,
+					row: row + 1
+				});
+			}
+		});
+		return attributesDefinitionIDs;
 	}
 	public async persistIncomingRequestForBulkAttributes(fileName: string, status: string, userID: string): Promise<any> {
 		try {
