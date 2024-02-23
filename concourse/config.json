@@ -57,7 +57,7 @@
         },
         "readinessProbeConfig": {
             "path": "/actuator/health",
-            "periodSeconds":120
+            "periodSeconds":10
         }
     },
     "platform": "TechnicalPlatform",
@@ -77,7 +77,7 @@
                 "LOG_LEVEL": "{env:fluffle=silly,stage=silly,prod=silly}",
                 "SNS_TOPIC": "{env:fluffle=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo,stage=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-stage-topic.fifo,prod=arn:aws:sns:us-east-1:127494798247:oe-pc-sc-products-publish-prod-topic.fifo}",
                 "PUBLISH_URL": "{env:fluffle=https://connect-program-snssqs-handler.apps.np1.fuseapps.io/sns/publish,stage=https://connect-program-snssqs-handler-stage.np-apps.internal.outcomesone.cloud/sns/publish,prod=https://connect-program-snssqs-handler-prod.pr-apps.internal.outcomesone.cloud/sns/publish}",
-                "KEYCLOAK_BASE_URL": "{env:fluffle=https://cc-keycloak-stage.apps.np1.fuseapps.io,stage=https://cc-keycloak-stage.apps.np1.fuseapps.io,prod=https://cc-keycloak-prod.apps.fuseapps.io}",
+                "KEYCLOAK_BASE_URL": "{env:fluffle=https://keycloak-fluffle.np-apps.internal.outcomesone.cloud,stage=https://keycloak-stage.np-apps.internal.outcomesone.cloud,prod=https://cc-keycloak-prod.apps.fuseapps.io}",
                 "SERVICE_READ_ROLE": "{env:fluffle=SERVICE_API_READ,stage=SERVICE_API_READ,prod=SERVICE_API_READ}",
                 "PORT": "{env:fluffle=8080,stage=8080,prod=8080}",
                 "APM_SERVER_URL": "{env:fluffle=https://apmdev.cahcommtech.com,stage=https://apmdev.cahcommtech.com,prod=https://apmprod.cahcommtech.com}",
