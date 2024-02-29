@@ -810,11 +810,14 @@ export default class ServiceManager {
 					validScheduleDates = true;
 				}
 				if (onlyActiveVersion && validScheduleDates) {
-					await this.validateAndCreateServiceAttributes(existingServices[0], userInput[row][3], userInput[row][4], errorRecords, row);
 					logger.nonPhi.debug('After successfull validation and association of service attributes, creating a draft version for the active service.');
 					const draft_service = await this.createDraft(existingServices[0].serviceID);
+
+					await this.validateAndCreateServiceAttributes(existingServices[0], draft_service.draftVersion, userInput[row][3], userInput[row][4], errorRecords, row);
+
 					logger.nonPhi.debug('Scheduling the service with following data. ', (existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill));
 					await this.schedule(existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill);
+
 					logger.nonPhi.debug('Publishing a schedule event to the SNS topic.');
 					this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
 						existingServices[0].serviceID,
@@ -899,42 +902,36 @@ export default class ServiceManager {
 		return true;
 	}
 
-	private async validateAndCreateServiceAttributes(activeService: Service, attributesToBeAdded: any, attributesToBeRemoved: any, errorRecords: any, row: any) {
+	private async validateAndCreateServiceAttributes(activeService: Service, draftVersion: any, attributesToBeAdded: any, attributesToBeRemoved: any, errorRecords: any, row: any) {
 		try {
 			logger.nonPhi.debug('Fetching attributes definition IDs for the attributes to be added ', attributesToBeAdded);
 			var attributesDefinitionIDs_toAdd = await this.getAttributesDefinitionIDs(attributesToBeAdded, activeService, errorRecords, ERROR_MSG_ADD_ATTRIBUTES, row);
-
+			var attributesDefinitionIDs_toDelete = await this.getAttributesDefinitionIDs(attributesToBeRemoved, activeService, errorRecords, ERROR_MSG_REMOVE_ATTRIBUTES, row);
 			const existingServiceAttributes = await this.serviceAttributesRepository.findOne({
 				where: { serviceID: activeService.serviceID, globalServiceVersion: activeService.globalServiceVersion }
 			});
 			if (existingServiceAttributes !== null) {
 				logger.nonPhi.debug('Fetching attributes definition IDs for the attributes to be removed ', attributesToBeRemoved);
-				var attributesDefinitionIDs_toDelete = await this.getAttributesDefinitionIDs(attributesToBeRemoved, activeService, errorRecords, ERROR_MSG_REMOVE_ATTRIBUTES, row);
+
 				var existingMetadata = existingServiceAttributes.metadata.attributes;
 
 				attributesDefinitionIDs_toAdd.forEach((attrDefID: any) => {
 					if (!existingMetadata.includes(attrDefID)) existingMetadata.push(attrDefID);
 				});
-
 				attributesDefinitionIDs_toDelete.forEach((attrDefID: any) => {
-					var index = existingMetadata.findIndex(attrDefID);
+					var index = existingMetadata.indexOf(attrDefID);
 					if (index !== -1) {
 						existingMetadata.splice(index, 1);
 					}
 				});
-				logger.nonPhi.debug('Updating existing service attributes metadata with new attributes ', { existingMetadata });
-				await this.serviceAttributesRepository.update(
-					{ metadata: { attributes: existingMetadata } },
-					{ where: { serviceID: activeService.serviceID, globalServiceVersion: activeService.globalServiceVersion } }
-				);
-			} else {
-				logger.nonPhi.debug('creating new service attributes metadata ', { attributesDefinitionIDs_toAdd });
-				await this.serviceAttributesRepository.create({
-					metadata: { attributes: attributesDefinitionIDs_toAdd },
-					serviceID: activeService.serviceID,
-					globalServiceVersion: activeService.globalServiceVersion
-				});
+				attributesDefinitionIDs_toAdd = existingMetadata;
 			}
+			logger.nonPhi.debug('creating new service attributes metadata ', { attributesDefinitionIDs_toAdd });
+			await this.serviceAttributesRepository.create({
+				metadata: { attributes: attributesDefinitionIDs_toAdd },
+				serviceID: activeService.serviceID,
+				globalServiceVersion: draftVersion
+			});
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
