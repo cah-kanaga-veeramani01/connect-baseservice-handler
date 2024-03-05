@@ -35,8 +35,8 @@ import {
 	QGetAllServiceIDsWithInactiveFilter,
 	QGetAllServicesFromServiceIDWithInactiveFilter,
 	QGetAllServiceIDsCountInactiveWithFilter,
-	QCheckAttributesDefinition,
-	QAllServicesByStatus
+	QAllServicesByStatus,
+	QGetAllAttributesDefinition
 } from '../../database/queries/service';
 import { QueryTypes, Sequelize, Op } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
@@ -810,39 +810,60 @@ export default class ServiceManager {
 					validScheduleDates = true;
 				}
 				if (onlyActiveVersion && validScheduleDates) {
-					logger.nonPhi.debug('After successfull validation and association of service attributes, creating a draft version for the active service.');
-					const draft_service = await this.createDraft(existingServices[0].serviceID);
-
-					await this.validateAndCreateServiceAttributes(existingServices[0], draft_service.draftVersion, userInput[row][3], userInput[row][4], errorRecords, row);
-
-					logger.nonPhi.debug('Scheduling the service with following data. ', (existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill));
-					await this.schedule(existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill);
-
-					logger.nonPhi.debug('Publishing a schedule event to the SNS topic.');
-					this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
-						existingServices[0].serviceID,
-						existingServices[0].legacyTIPDetailID,
-						existingServices[0].globalServiceVersion,
-						startDateWithClientTZ(validFrom),
-						validTill,
-						existingServices[0].isPublished,
-						reqHeaders,
-						SERVICE_SCHEDULE_EVENT
+					const attributesDefinitions = await this.getAllAttributesDefinition();
+					var attributesDefinitionIDs_toAdd = await this.getAttributesDefinitionIDs(
+						attributesDefinitions,
+						userInput[row][3],
+						existingServices[0],
+						errorRecords,
+						ERROR_MSG_ADD_ATTRIBUTES,
+						row
 					);
-					const activeService = JSON.parse(JSON.stringify(await this.getActiveService(existingServices[0].serviceID)));
-					if (activeService !== null) {
-						const endDate = activeService.validTill ? activeService.validTill : endDateWithClientTZ(moment(validFrom).subtract(1, 'days').format(DATE_FORMAT));
-						logger.nonPhi.debug('Publishing a change event to the SNS topic to update end date for the active version of the service.');
+					var attributesDefinitionIDs_toDelete = await this.getAttributesDefinitionIDs(
+						attributesDefinitions,
+						userInput[row][4],
+						existingServices[0],
+						errorRecords,
+						ERROR_MSG_REMOVE_ATTRIBUTES,
+						row
+					);
+
+					if (attributesDefinitionIDs_toAdd.length > 0 || attributesDefinitionIDs_toDelete.length > 0) {
+						logger.nonPhi.debug('After successfull validation and association of service attributes, creating a draft version for the active service.');
+						const draft_service = await this.createDraft(existingServices[0].serviceID);
+
+						await this.createServiceAttributes(existingServices[0], draft_service.draftVersion, attributesDefinitionIDs_toAdd, attributesDefinitionIDs_toDelete);
+
+						logger.nonPhi.debug('Scheduling the service with following data. ', (existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill));
+
+						await this.schedule(existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill);
+
+						logger.nonPhi.debug('Publishing a schedule event to the SNS topic.');
 						this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
 							existingServices[0].serviceID,
 							existingServices[0].legacyTIPDetailID,
-							activeService.globalServiceVersion,
-							activeService.validFrom,
-							endDate,
-							activeService.isPublished,
+							existingServices[0].globalServiceVersion,
+							startDateWithClientTZ(validFrom),
+							validTill,
+							existingServices[0].isPublished,
 							reqHeaders,
-							SERVICE_CHANGE_EVENT
+							SERVICE_SCHEDULE_EVENT
 						);
+						const activeService = JSON.parse(JSON.stringify(await this.getActiveService(existingServices[0].serviceID)));
+						if (activeService !== null) {
+							const endDate = activeService.validTill ? activeService.validTill : endDateWithClientTZ(moment(validFrom).subtract(1, 'days').format(DATE_FORMAT));
+							logger.nonPhi.debug('Publishing a change event to the SNS topic to update end date for the active version of the service.');
+							this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
+								existingServices[0].serviceID,
+								existingServices[0].legacyTIPDetailID,
+								activeService.globalServiceVersion,
+								activeService.validFrom,
+								endDate,
+								activeService.isPublished,
+								reqHeaders,
+								SERVICE_CHANGE_EVENT
+							);
+						}
 					}
 				} else totalFailedServices += 1;
 			}
@@ -902,36 +923,45 @@ export default class ServiceManager {
 		return true;
 	}
 
-	private async validateAndCreateServiceAttributes(activeService: Service, draftVersion: any, attributesToBeAdded: any, attributesToBeRemoved: any, errorRecords: any, row: any) {
+	private async getAllAttributesDefinition(): Promise<any> {
+		var attributesDefinitions_masterData = await db.query(QGetAllAttributesDefinition, {
+			type: QueryTypes.SELECT
+		});
+		const attrDefMap = new Map<String, number>();
+		attributesDefinitions_masterData.map((attrDef) => {
+			const cat_attr = attrDef.categoryName.trim().toLowerCase() + ':' + attrDef.name.trim().toLowerCase();
+			attrDefMap.set(cat_attr, attrDef.attributesDefinitionID);
+		});
+		return attrDefMap;
+	}
+
+	private async createServiceAttributes(activeService: Service, draftVersion: any, attributesToBeAdded: any, attributesToBeRemoved: any) {
 		try {
-			logger.nonPhi.debug('Fetching attributes definition IDs for the attributes to be added ', attributesToBeAdded);
-			var attributesDefinitionIDs_toAdd = await this.getAttributesDefinitionIDs(attributesToBeAdded, activeService, errorRecords, ERROR_MSG_ADD_ATTRIBUTES, row);
-			var attributesDefinitionIDs_toDelete = await this.getAttributesDefinitionIDs(attributesToBeRemoved, activeService, errorRecords, ERROR_MSG_REMOVE_ATTRIBUTES, row);
 			const existingServiceAttributes = await this.serviceAttributesRepository.findOne({
 				where: { serviceID: activeService.serviceID, globalServiceVersion: activeService.globalServiceVersion }
 			});
 			if (existingServiceAttributes !== null) {
-				logger.nonPhi.debug('Fetching attributes definition IDs for the attributes to be removed ', attributesToBeRemoved);
-
 				var existingMetadata = existingServiceAttributes.metadata.attributes;
 
-				attributesDefinitionIDs_toAdd.forEach((attrDefID: any) => {
+				attributesToBeAdded.forEach((attrDefID: any) => {
 					if (!existingMetadata.includes(attrDefID)) existingMetadata.push(attrDefID);
 				});
-				attributesDefinitionIDs_toDelete.forEach((attrDefID: any) => {
+				attributesToBeRemoved.forEach((attrDefID: any) => {
 					var index = existingMetadata.indexOf(attrDefID);
 					if (index !== -1) {
 						existingMetadata.splice(index, 1);
 					}
 				});
-				attributesDefinitionIDs_toAdd = existingMetadata;
+				attributesToBeAdded = existingMetadata;
 			}
-			logger.nonPhi.debug('creating new service attributes metadata ', { attributesDefinitionIDs_toAdd });
-			await this.serviceAttributesRepository.create({
-				metadata: { attributes: attributesDefinitionIDs_toAdd },
-				serviceID: activeService.serviceID,
-				globalServiceVersion: draftVersion
-			});
+			logger.nonPhi.debug('creating new service attributes metadata ', { attributesToBeAdded });
+			if (attributesToBeAdded.length > 0) {
+				await this.serviceAttributesRepository.create({
+					metadata: { attributes: attributesToBeAdded },
+					serviceID: activeService.serviceID,
+					globalServiceVersion: draftVersion
+				});
+			}
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
@@ -939,30 +969,30 @@ export default class ServiceManager {
 		}
 	}
 
-	private async getAttributesDefinitionIDs(categoryAttributesCollection: any, activeService: Service, errorRecords: any, errorMessage: string, row: number): Promise<any> {
+	private async getAttributesDefinitionIDs(
+		attributesDefinitions: Map<String, number>,
+		categoryAttributesCollection: any,
+		activeService: Service,
+		errorRecords: any,
+		errorMessage: string,
+		row: number
+	): Promise<any> {
 		const attributesDefinitionIDs = [];
-		var attributesDefinition;
-		await categoryAttributesCollection?.split(',').forEach(async (cat_attribute: any) => {
-			const category_attr_name = cat_attribute.trim().split(':');
-			logger.nonPhi.debug('Fetching attributesDefinitionID for category = ' + category_attr_name[0].trim() + ' and attributeName = ' + category_attr_name[1].trim());
+		categoryAttributesCollection?.split(',').forEach(async (cat_attribute: any) => {
 			try {
-				attributesDefinition = await db.query(QCheckAttributesDefinition, {
-					replacements: { category: category_attr_name[0].trim(), name: category_attr_name[1].trim() },
-					type: QueryTypes.SELECT
-				});
+				if (attributesDefinitions.has(cat_attribute.trim().toLowerCase()) && !attributesDefinitionIDs.includes(attributesDefinitions.get(cat_attribute.trim().toLowerCase()))) {
+					attributesDefinitionIDs.push(attributesDefinitions.get(cat_attribute.trim().toLowerCase()));
+				} else {
+					errorRecords.push({
+						tipID: activeService.legacyTIPDetailID,
+						serviceID: activeService.serviceID,
+						serviceName: activeService.serviceName,
+						failureReason: cat_attribute + errorMessage,
+						row: row + 1
+					});
+				}
 			} catch (error: any) {
 				logger.nonPhi.error(error.message, { _err: error });
-			}
-			if (attributesDefinition[0]?.attributesDefinitionID && !attributesDefinitionIDs.includes(attributesDefinition[0].attributesDefinitionID)) {
-				attributesDefinitionIDs.push(attributesDefinition[0].attributesDefinitionID);
-			} else {
-				errorRecords.push({
-					tipID: activeService.legacyTIPDetailID,
-					serviceID: activeService.serviceID,
-					serviceName: activeService.serviceName,
-					failureReason: category_attr_name[0] + ':' + category_attr_name[1] + errorMessage,
-					row: row + 1
-				});
 			}
 		});
 		return attributesDefinitionIDs;
