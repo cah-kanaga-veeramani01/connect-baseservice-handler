@@ -316,4 +316,4 @@ where (X."servicename" ILIKE :searchKey OR X."serviceID"::text LIKE :searchKey  
 ) z
 ORDER BY "servicename"  asc) b`;
 
-export const QCheckAttributesDefinition = 'select "attributesDefinitionID" from service."AttributesDefinition" where name =:name  and "categoryName" = :category';
+export const QGetAllAttributesDefinition = 'select "attributesDefinitionID", "name", "categoryName" from  service."AttributesDefinition"';
