@@ -829,15 +829,17 @@ export default class ServiceManager {
 						row
 					);
 
-					await this.validateServiceAttributes(
-						existingServices[0],
-						attributesDefinitions,
-						attributesDefinitionIDs_toAdd,
-						attributesDefinitionIDs_toDelete,
-						errorRecords,
-						row,
-						addEmptyAttrList
-					);
+					if (attributesDefinitionIDs_toAdd.length !== 0 || attributesDefinitionIDs_toDelete.length !== 0) {
+						await this.validateServiceAttributes(
+							existingServices[0],
+							attributesDefinitions,
+							attributesDefinitionIDs_toAdd,
+							attributesDefinitionIDs_toDelete,
+							errorRecords,
+							row,
+							addEmptyAttrList
+						);
+					}
 
 					if (attributesDefinitionIDs_toAdd.length > 0 || attributesDefinitionIDs_toDelete.length > 0 || addEmptyAttrList[0] === 1) {
 						logger.nonPhi.debug('After successfull validation and association of service attributes, creating a draft version for the active service.');
