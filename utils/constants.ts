@@ -59,6 +59,8 @@ export const ERROR_MSG_REMOVE_ATTRIBUTES = ' cannot be removed from the service 
 
 export const ERROR_MSG_ADD_ATTRIBUTES = ' cannot be added to the service because it does not exist in the system.';
 
+export const ERROR_MSG_NON_ASSOCIATED_ATTRIBUTES = ' not associated already to the Service. So cannot be removed.';
+
 export const REQUEST_INPROGRESS = 'INPROGRESS';
 
 export const REQUEST_COMPLETED = 'COMPLETED';

@@ -12,7 +12,8 @@ import {
 	DRAFT,
 	ACTIVE,
 	REQUEST_COMPLETED,
-	REQUEST_FAILED
+	REQUEST_FAILED,
+	ERROR_MSG_NON_ASSOCIATED_ATTRIBUTES
 } from '../../utils/constants';
 import {
 	QAddModuleConfig,
@@ -799,7 +800,7 @@ export default class ServiceManager {
 				logger.nonPhi.info('Checking the given service name and TIP ID has only active version.');
 				var onlyActiveVersion = await this.checkExistingServicesHasOnlyActiveVersion(userInput, existingServices, errorRecords, row);
 				var validScheduleDates, validFrom, validTill;
-
+				const addEmptyAttrList: any = [];
 				if (userInput[row][5] !== undefined) {
 					validScheduleDates = await this.validScheduledDates(userInput, userInput[row][5], userInput[row][6], errorRecords, row);
 					validFrom = moment(userInput[row][5]).format(DATE_FORMAT);
@@ -828,11 +829,21 @@ export default class ServiceManager {
 						row
 					);
 
-					if (attributesDefinitionIDs_toAdd.length > 0 || attributesDefinitionIDs_toDelete.length > 0) {
+					await this.validateServiceAttributes(
+						existingServices[0],
+						attributesDefinitions,
+						attributesDefinitionIDs_toAdd,
+						attributesDefinitionIDs_toDelete,
+						errorRecords,
+						row,
+						addEmptyAttrList
+					);
+
+					if (attributesDefinitionIDs_toAdd.length > 0 || attributesDefinitionIDs_toDelete.length > 0 || addEmptyAttrList[0] === 1) {
 						logger.nonPhi.debug('After successfull validation and association of service attributes, creating a draft version for the active service.');
 						const draft_service = await this.createDraft(existingServices[0].serviceID);
 
-						await this.createServiceAttributes(existingServices[0], draft_service.draftVersion, attributesDefinitionIDs_toAdd, attributesDefinitionIDs_toDelete);
+						await this.createServiceAttributes(existingServices[0], draft_service.draftVersion, attributesDefinitionIDs_toAdd);
 
 						logger.nonPhi.debug('Scheduling the service with following data. ', (existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill));
 
@@ -864,6 +875,8 @@ export default class ServiceManager {
 								SERVICE_CHANGE_EVENT
 							);
 						}
+					} else {
+						totalFailedServices += 1;
 					}
 				} else totalFailedServices += 1;
 			}
@@ -935,7 +948,15 @@ export default class ServiceManager {
 		return attrDefMap;
 	}
 
-	private async createServiceAttributes(activeService: Service, draftVersion: any, attributesToBeAdded: any, attributesToBeRemoved: any) {
+	private async validateServiceAttributes(
+		activeService: Service,
+		attributesDefinitions: Map<String, number>,
+		attributesToBeAdded: any,
+		attributesToBeRemoved: [],
+		errorRecords: any,
+		row: any,
+		addEmptyAttrList: any[]
+	) {
 		try {
 			const existingServiceAttributes = await this.serviceAttributesRepository.findOne({
 				where: { serviceID: activeService.serviceID, globalServiceVersion: activeService.globalServiceVersion }
@@ -943,25 +964,54 @@ export default class ServiceManager {
 			if (existingServiceAttributes !== null) {
 				var existingMetadata = existingServiceAttributes.metadata.attributes;
 
-				attributesToBeAdded.forEach((attrDefID: any) => {
+				attributesToBeAdded?.forEach((attrDefID: any) => {
 					if (!existingMetadata.includes(attrDefID)) existingMetadata.push(attrDefID);
 				});
-				attributesToBeRemoved.forEach((attrDefID: any) => {
+
+				attributesToBeRemoved?.forEach((attrDefID) => {
 					var index = existingMetadata.indexOf(attrDefID);
 					if (index !== -1) {
 						existingMetadata.splice(index, 1);
+					} else {
+						const errAttribute = [];
+						attributesDefinitions?.forEach((value, key) => {
+							if (value === attrDefID) {
+								errAttribute.push(key);
+							}
+						});
+						errorRecords.push({
+							tipID: activeService.legacyTIPDetailID,
+							serviceID: activeService.serviceID,
+							serviceName: activeService.serviceName,
+							failureReason: errAttribute[0] + ERROR_MSG_NON_ASSOCIATED_ATTRIBUTES,
+							row: row + 1
+						});
 					}
 				});
-				attributesToBeAdded = existingMetadata;
+				attributesToBeAdded.length = 0;
+				if (existingMetadata.length === 0) addEmptyAttrList.push(1);
+				else addEmptyAttrList.push(0);
+			} else {
+				attributesToBeRemoved.length = 0;
 			}
+			existingMetadata?.forEach((element) => {
+				attributesToBeAdded.push(element);
+			});
+			return attributesToBeAdded;
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'BulkAttributesDBInsertionError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+	private async createServiceAttributes(activeService: Service, draftVersion: any, attributesToBeAdded: any) {
+		try {
 			logger.nonPhi.debug('creating new service attributes metadata ', { attributesToBeAdded });
-			if (attributesToBeAdded.length > 0) {
-				await this.serviceAttributesRepository.create({
-					metadata: { attributes: attributesToBeAdded },
-					serviceID: activeService.serviceID,
-					globalServiceVersion: draftVersion
-				});
-			}
+			await this.serviceAttributesRepository.create({
+				metadata: { attributes: attributesToBeAdded },
+				serviceID: activeService.serviceID,
+				globalServiceVersion: draftVersion
+			});
 		} catch (error: any) {
 			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
@@ -978,7 +1028,7 @@ export default class ServiceManager {
 		row: number
 	): Promise<any> {
 		const attributesDefinitionIDs = [];
-		categoryAttributesCollection?.split(',').forEach(async (cat_attribute: any) => {
+		categoryAttributesCollection?.split(',')?.forEach(async (cat_attribute: any) => {
 			try {
 				if (attributesDefinitions.has(cat_attribute.trim().toLowerCase()) && !attributesDefinitionIDs.includes(attributesDefinitions.get(cat_attribute.trim().toLowerCase()))) {
 					attributesDefinitionIDs.push(attributesDefinitions.get(cat_attribute.trim().toLowerCase()));
