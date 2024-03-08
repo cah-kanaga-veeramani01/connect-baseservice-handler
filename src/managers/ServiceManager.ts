@@ -788,16 +788,17 @@ export default class ServiceManager {
 			const errorRecords = [];
 			var totalFailedServices = 0;
 			for (var row = 1; row < userInput.length; row++) {
-				const legacyTIPDetailID = Number(userInput[row][1]),
-					serviceName = String(userInput[row][2]).trim();
+				const legacyTIPDetailID = Number(userInput[row][1]);
 
-				logger.nonPhi.debug('Getting the matching services from database for given TIP ID and Service name ', { legacyTIPDetailID, serviceName });
+				logger.nonPhi.debug('Getting the matching services from database for given TIP ID ', { legacyTIPDetailID });
 
 				const existingServices = await this.serviceRepository.findAll({
-					where: { legacyTIPDetailID, [Op.and]: [Sequelize.where(Sequelize.fn('lower', Sequelize.col('serviceName')), serviceName.toLowerCase())] }
+					where: {
+						legacyTIPDetailID
+					}
 				});
 
-				logger.nonPhi.info('Checking the given service name and TIP ID has only active version.');
+				logger.nonPhi.info('Checking the given TIP ID has only active version.');
 				var onlyActiveVersion = await this.checkExistingServicesHasOnlyActiveVersion(userInput, existingServices, errorRecords, row);
 				var validScheduleDates, validFrom, validTill;
 				const addEmptyAttrList: any = [];
@@ -844,13 +845,9 @@ export default class ServiceManager {
 					if (attributesDefinitionIDs_toAdd.length > 0 || attributesDefinitionIDs_toDelete.length > 0 || addEmptyAttrList[0] === 1) {
 						logger.nonPhi.debug('After successfull validation and association of service attributes, creating a draft version for the active service.');
 						const draft_service = await this.createDraft(existingServices[0].serviceID);
-
 						await this.createServiceAttributes(existingServices[0], draft_service.draftVersion, attributesDefinitionIDs_toAdd);
-
 						logger.nonPhi.debug('Scheduling the service with following data. ', (existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill));
-
 						await this.schedule(existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill);
-
 						logger.nonPhi.debug('Publishing a schedule event to the SNS topic.');
 						this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
 							existingServices[0].serviceID,
@@ -945,7 +942,7 @@ export default class ServiceManager {
 		const attrDefMap = new Map<String, number>();
 		attributesDefinitions_masterData.map((attrDef) => {
 			const cat_attr = attrDef.categoryName.trim().toLowerCase() + ':' + attrDef.name.trim().toLowerCase();
-			attrDefMap.set(cat_attr, attrDef.attributesDefinitionID);
+			attrDefMap.set(cat_attr.replace(/\s+/g, '').replace(/^,+|,+$/g, ''), attrDef.attributesDefinitionID);
 		});
 		return attrDefMap;
 	}
@@ -1030,10 +1027,12 @@ export default class ServiceManager {
 		row: number
 	): Promise<any> {
 		const attributesDefinitionIDs = [];
+		categoryAttributesCollection = categoryAttributesCollection?.replace(/^,+|,+$/g, '');
 		categoryAttributesCollection?.split(',')?.forEach(async (cat_attribute: any) => {
 			try {
-				if (attributesDefinitions.has(cat_attribute.trim().toLowerCase()) && !attributesDefinitionIDs.includes(attributesDefinitions.get(cat_attribute.trim().toLowerCase()))) {
-					attributesDefinitionIDs.push(attributesDefinitions.get(cat_attribute.trim().toLowerCase()));
+				const category_attribute = cat_attribute.trim().toLowerCase().replace(/\s+/g, '');
+				if (attributesDefinitions.has(category_attribute) && !attributesDefinitionIDs.includes(attributesDefinitions.get(category_attribute))) {
+					attributesDefinitionIDs.push(attributesDefinitions.get(category_attribute));
 				} else {
 					errorRecords.push({
 						tipID: activeService.legacyTIPDetailID,
@@ -1061,23 +1060,23 @@ export default class ServiceManager {
 
 	public async checkExistingServicesHasOnlyActiveVersion(userInput: any, existingServices: any, errorRecords: any, row: any): Promise<boolean> {
 		if (existingServices.length === 0) {
-			logger.nonPhi.debug('Given TIP ID and Service Name combination does not exist in the system.');
+			logger.nonPhi.debug('Given TIP ID does not exist in the system.');
 			errorRecords.push({
 				tipID: userInput[row][1],
 				serviceID: userInput[row][0],
 				serviceName: userInput[row][2],
-				failureReason: 'Given TIP ID and Service Name combination does not exist in the system.',
+				failureReason: 'Given TIP ID does not exist in the system.',
 				row: row + 1
 			});
 			return false;
 		}
 		if (existingServices.filter((service: any) => service.status.includes(SCHEDULED) || service.status.includes(DRAFT)).length > 0) {
-			logger.nonPhi.debug('Given TIP ID and Service Name combination has non-active version in the system (scheduled or draft version).');
+			logger.nonPhi.debug('Given TIP ID has non-active version in the system (scheduled or draft version).');
 			errorRecords.push({
 				tipID: userInput[row][1],
 				serviceID: userInput[row][0],
 				serviceName: userInput[row][2],
-				failureReason: 'Given TIP ID and Service Name combination has non-active version in the system (scheduled or draft version).',
+				failureReason: 'Given TIP ID has non-active version in the system (scheduled or draft version).',
 				row: row + 1
 			});
 			return false;
