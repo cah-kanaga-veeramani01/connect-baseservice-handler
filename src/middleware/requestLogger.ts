@@ -10,12 +10,12 @@ import ESAPI from 'node-esapi';
  */
 export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
 	try {
-		logger.info(ESAPI.encoder().encodeForHTML(`${req.method}`), ESAPI.encoder().encodeForURL(`${req.originalUrl}`));
+		logger.nonPhi.info(ESAPI.encoder().encodeForHTML(`${req.method}`), ESAPI.encoder().encodeForURL(`${req.originalUrl}`));
 
 		const start = new Date().getTime();
 		res.on('finish', () => {
 			const elapsed = new Date().getTime() - start;
-			logger.info(ESAPI.encoder().encodeForHTML(`${req.method}`), ESAPI.encoder().encodeForURL(`${req.originalUrl}`), ESAPI.encoder().encodeForHTML(`${res.statusCode}`), `${elapsed}ms`);
+			logger.nonPhi.info(ESAPI.encoder().encodeForHTML(`${req.method}`), ESAPI.encoder().encodeForURL(`${req.originalUrl}`), ESAPI.encoder().encodeForHTML(`${res.statusCode}`), `${elapsed}ms`);
 		});
 
 		next();

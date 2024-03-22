@@ -14,7 +14,7 @@ describe('requestLogger', () => {
 			eventEmitter: EventEmitter
 		});
 		const mockNext = jest.fn();
-		const loggerSpy = jest.spyOn(logger, 'info');
+		const loggerSpy = jest.spyOn(logger.nonPhi, 'info');
 
 		requestLogger(mockReq, mockRes, mockNext);
 		mockRes.emit('finish');
@@ -30,7 +30,7 @@ describe('requestLogger', () => {
 		});
 		const mockRes = httpMocks.createResponse({});
 		const mockNext = jest.fn();
-		const loggerSpy = jest.spyOn(logger, 'info');
+		const loggerSpy = jest.spyOn(logger.nonPhi, 'info');
 		loggerSpy.mockImplementation(() => {
 			throw new Error();
 		});

@@ -1,8 +1,21 @@
 import { Repository } from 'sequelize-typescript';
 import { Service } from '../../database/models/Service';
-import { EMPTY_STRING, CLIENT_TZ } from '../../utils/constants';
 import {
-	QServiceDetails,
+	EMPTY_STRING,
+	CLIENT_TZ,
+	SERVICE_CHANGE_EVENT,
+	SERVICE_SCHEDULE_EVENT,
+	ERROR_MSG_REMOVE_ATTRIBUTES,
+	ERROR_MSG_ADD_ATTRIBUTES,
+	DATE_FORMAT,
+	SCHEDULED,
+	DRAFT,
+	ACTIVE,
+	REQUEST_COMPLETED,
+	REQUEST_FAILED,
+	ERROR_MSG_NON_ASSOCIATED_ATTRIBUTES
+} from '../../utils/constants';
+import {
 	QAddModuleConfig,
 	QCheckConfigCount,
 	QUpdateModuleConfig,
@@ -10,21 +23,23 @@ import {
 	QServiceActiveOrInActive,
 	QServiceActiveVersion,
 	QgetActiveServices,
-	QAttributesDefinition,
-	QGetAllServiceIDsCountWithFilter,
-	QGetAllServiceIDsCount,
-	QGetAllServicesFromServiceIDWithInactive,
-	QGetAllServiceIDsWithInactive,
-	QGetAllServicesFromServiceIDWithInactiveFilter,
-	QGetAllServiceIDsWithInactiveFilter,
-	QGetAllServicesFromServiceID,
 	QGetAllServiceIDs,
-	QGetAllServicesFromServiceIDWithFilter,
+	QGetAllServicesFromServiceID,
+	QGetAllServiceIDsCount,
+	QAttributesDefinition,
 	QGetAllServiceIDsWithFilter,
+	QGetAllServicesFromServiceIDWithFilter,
+	QGetAllServiceIDsCountWithFilter,
+	QGetAllServiceIDsWithInactive,
+	QGetAllServicesFromServiceIDWithInactive,
+	QGetAllServiceIDsCountWithInactive,
+	QGetAllServiceIDsWithInactiveFilter,
+	QGetAllServicesFromServiceIDWithInactiveFilter,
 	QGetAllServiceIDsCountInactiveWithFilter,
-	QGetAllServiceIDsCountWithInactive
+	QAllServicesByStatus,
+	QGetAllAttributesDefinition
 } from '../../database/queries/service';
-import { QueryTypes } from 'sequelize';
+import { QueryTypes, Sequelize, Op } from 'sequelize';
 import { HandleError, HTTP_STATUS_CODES, logger } from '../../utils';
 import { IService } from '../interfaces/IServices';
 import db from '../../database/DBManager';
@@ -33,9 +48,19 @@ import { ServiceType } from '../../database/models/ServiceType';
 import { ServiceModuleConfig } from '../../database/models/ServiceModuleConfig';
 import { endDateWithClientTZ, startDateWithClientTZ, utcToClientTZ } from '../../utils/tzFormatter';
 import moment from 'moment';
-
+import { BulkServiceAttributesStatus } from '../../database/models/BulkServiceAttributesStatus';
+import XLSX from 'xlsx';
+import { ServiceAttributes } from '../../database/models/ServiceAttributes';
+import SNSServiceManager from './SNSServiceManager';
 export default class ServiceManager {
-	constructor(public serviceRepository: Repository<Service>, public serviceTypeRepository: Repository<ServiceType>, public ServiceModuleConfigRepository: Repository<ServiceModuleConfig>) {}
+	constructor(
+		public serviceRepository: Repository<Service>,
+		public serviceTypeRepository: Repository<ServiceType>,
+		public ServiceModuleConfigRepository: Repository<ServiceModuleConfig>,
+		public bulkServiceAttributesRepository: Repository<BulkServiceAttributesStatus>,
+		public serviceAttributesRepository: Repository<ServiceAttributes>,
+		public snsServiceManager: SNSServiceManager
+	) {}
 
 	public async createService(servicePayload: IService) {
 		try {
@@ -67,7 +92,7 @@ export default class ServiceManager {
 				isPublished: 1,
 				createdBy: httpContext.get('userId')
 			});
-			logger.debug('Created a New Service Successfully.');
+			logger.nonPhi.debug('Created a New Service Successfully.');
 			const serviceResponse = service.toJSON();
 
 			return { ...serviceResponse };
@@ -86,10 +111,10 @@ export default class ServiceManager {
 	 */
 	public async createDraft(serviceID: number) {
 		try {
-			logger.debug('createDraft invoked with following parameters', { serviceID });
+			logger.nonPhi.debug('createDraft invoked with following parameters', { serviceID });
 
 			const serviceDetails: any = await this.getDetails(serviceID);
-			logger.debug('Service details', { serviceDetails });
+			logger.nonPhi.debug('Service details', { serviceDetails });
 			if (!serviceDetails) {
 				throw new HandleError({ name: 'ServicDetailsNotFound', message: 'Service details not found', stack: 'Service details not found', errorStatus: HTTP_STATUS_CODES.badRequest });
 			}
@@ -104,9 +129,8 @@ export default class ServiceManager {
 					},
 					raw: true
 				});
-
 				if (!scheduledService) {
-					throw new HandleError({ name: 'ServicVersionNotFound', message: 'Service version is incorrect', stack: 'Service version not found', errorStatus: HTTP_STATUS_CODES.badRequest });
+					throw new HandleError({ name: 'ServiceVersionNotFound', message: 'Service version is incorrect', stack: 'Service version not found', errorStatus: HTTP_STATUS_CODES.badRequest });
 				}
 				await this.serviceRepository.update(
 					{
@@ -159,16 +183,25 @@ export default class ServiceManager {
 				},
 				raw: true
 			});
-
 			if (!activeService) {
-				throw new HandleError({ name: 'ServicVersionNotFound', message: 'Service version is incorrect', stack: 'Service version not found', errorStatus: HTTP_STATUS_CODES.badRequest });
+				throw new HandleError({ name: 'ServiceVersionNotFound', message: 'Service version is incorrect', stack: 'Service version not found', errorStatus: HTTP_STATUS_CODES.badRequest });
 			}
-			activeService.isPublished = 0;
-			activeService.validFrom = null;
-			activeService.validTill = null;
+
 			activeService.globalServiceVersion += 1;
 
-			const newDraftVersion: any = await this.serviceRepository.create(activeService);
+			const newDraftVersion: any = await this.serviceRepository.create({
+				serviceID: activeService.serviceID,
+				globalServiceVersion: activeService.globalServiceVersion,
+				serviceName: activeService.serviceName,
+				serviceDisplayName: activeService.serviceDisplayName,
+				validFrom: null,
+				validTill: null,
+				isPublished: 0,
+				serviceTypeID: activeService.serviceTypeID,
+				legacyTIPDetailID: activeService.legacyTIPDetailID,
+				serviceType: activeService.serviceType
+			});
+
 			const draftServiceName = newDraftVersion.serviceName;
 			return {
 				...newDraftVersion.dataValues,
@@ -182,7 +215,7 @@ export default class ServiceManager {
 				serviceType: serviceDetails.serviceType
 			};
 		} catch (error: any) {
-			logger.error(error.message, { _err: error });
+			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceDraftFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
@@ -198,7 +231,7 @@ export default class ServiceManager {
 	 */
 	async addModuleConfig(serviceID: number, moduleVersion: number, modules: number) {
 		try {
-			logger.debug('AddModuleConfig API invoked with following parameters', { serviceID, moduleVersion, modules });
+			logger.nonPhi.debug('AddModuleConfig API invoked with following parameters', { serviceID, moduleVersion, modules });
 			const params: any = { serviceID: serviceID };
 			if ((await this.serviceRepository.count({ where: params })) === 0) {
 				throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
@@ -231,14 +264,14 @@ export default class ServiceManager {
 				});
 			}
 		} catch (error: any) {
-			logger.error(error.message, { _err: error });
+			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceModuleUpdateError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
 	async getMissingModules(serviceID: number, globalServiceVersion: number) {
 		try {
-			logger.debug('GetModuleEntry API invoked with following parameters', { serviceID, globalServiceVersion });
+			logger.nonPhi.debug('GetModuleEntry API invoked with following parameters', { serviceID, globalServiceVersion });
 			const serviceDetails: any = await this.serviceRepository.findOne({ where: { serviceID, globalServiceVersion } });
 			if (!serviceDetails) {
 				throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
@@ -261,7 +294,7 @@ export default class ServiceManager {
 			}
 			return { serviceID, globalServiceVersion, missingModules };
 		} catch (error: any) {
-			logger.error(error.message, { _err: error });
+			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ModuleConfigFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
@@ -277,7 +310,7 @@ export default class ServiceManager {
 	 */
 	async schedule(serviceID: number, globalServiceVersion: number, startDate: string, endDate: string | null): Promise<object> {
 		try {
-			const today: any = moment.tz(moment(), CLIENT_TZ).format('YYYY-MM-DD');
+			const today: any = moment.tz(moment(), CLIENT_TZ).format(DATE_FORMAT);
 			if (startDate <= today) {
 				throw new HandleError({
 					name: 'InvalidStartDate',
@@ -327,7 +360,7 @@ export default class ServiceManager {
 
 			if (globalServiceVersion > 1 && result.length > 0 && result[0].globalServiceVersion < globalServiceVersion) {
 				const activeVersion = result[0].globalServiceVersion;
-				const computedEndDate = moment(startDate).subtract(1, 'days').format('YYYY-MM-DD');
+				const computedEndDate = moment(startDate).subtract(1, 'days').format(DATE_FORMAT);
 				await this.serviceRepository.update({ validTill: endDateWithClientTZ(computedEndDate) }, { where: { serviceID, globalServiceVersion: activeVersion } });
 			}
 
@@ -337,7 +370,7 @@ export default class ServiceManager {
 			);
 			return updatedProgram[1][0];
 		} catch (error: any) {
-			logger.error(error.message, { _err: error });
+			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceScheduleError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
@@ -352,6 +385,10 @@ export default class ServiceManager {
 	 */
 	async getDetails(serviceID: number): Promise<object> {
 		try {
+			interface detailObj {
+				[key: string]: any;
+			}
+
 			const service = await this.serviceRepository.findOne({
 				attributes: ['serviceID', 'serviceDisplayName', 'serviceTypeID', 'legacyTIPDetailID'],
 				where: {
@@ -367,17 +404,41 @@ export default class ServiceManager {
 			});
 			if (!service) throw new HandleError({ name: 'ServiceDoesntExist', message: 'Service does not exist', stack: 'Service does not exist', errorStatus: HTTP_STATUS_CODES.notFound });
 
-			const serviceDetails = await db.query(QServiceDetails, {
+			const serviceDetails = await db.query(QAllServicesByStatus, {
 				replacements: { serviceID: serviceID },
 				type: QueryTypes.SELECT
 			});
+			var serviceInfo: detailObj = {};
+			serviceInfo.inactiveServiceName = null;
+			serviceInfo.inactiveVersion = null;
 
-			const result = { ...serviceDetails[0], ...service, serviceType: service['serviceType.serviceType'] };
+			serviceDetails.filter((service: any) => {
+				if (service.status === 'ACTIVE') {
+					serviceInfo.activeServiceName = service.serviceName;
+					serviceInfo.activeVersion = service.globalServiceVersion;
+					serviceInfo.activeStartDate = service.validFrom;
+				}
+				if (service.status === 'SCHEDULED') {
+					serviceInfo.scheduledServiceName = service.serviceName;
+					serviceInfo.scheduledVersion = service.globalServiceVersion;
+					serviceInfo.scheduledStartDate = service.validFrom;
+				}
+				if (service.status === 'DRAFT') {
+					serviceInfo.draftServiceName = service.serviceName;
+					serviceInfo.draftVersion = service.globalServiceVersion;
+				}
+				if (service.status === 'INACTIVE' && serviceDetails.findIndex((service) => service.status === 'ACTIVE') === -1) {
+					serviceInfo.inactiveServiceName = service.serviceName;
+					serviceInfo.inactiveVersion = service.globalServiceVersion;
+				}
+			});
+
+			const result = { ...serviceInfo, ...service, serviceType: service['serviceType.serviceType'] };
 
 			delete result['serviceType.serviceType'];
 			return result;
 		} catch (error: any) {
-			logger.error(error.message, { _err: error });
+			logger.nonPhi.error(error.message, { _err: error });
 			if (error instanceof HandleError) throw error;
 			throw new HandleError({ name: 'ServiceDetailFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
@@ -433,7 +494,7 @@ export default class ServiceManager {
 			}, {});
 			return Object.values(mappedObject);
 		} catch (error: any) {
-			logger.error(error.message, { _err: error });
+			logger.nonPhi.error(error.message, { _err: error });
 			throw new HandleError({ name: 'ServiceDetailFetchError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
 		}
 	}
@@ -441,10 +502,10 @@ export default class ServiceManager {
 		try {
 			let services = [];
 			if (searchKey !== EMPTY_STRING) {
-				logger.info('Fetching all services with search filter');
+				logger.nonPhi.info('Fetching all services with search filter');
 				services = await this.getAllServicesWithSearchFilter(sortBy, sortOrder, offset, limit, searchKey);
 			} else {
-				logger.info('Fetching all services without any search filter');
+				logger.nonPhi.info('Fetching all services without any search filter');
 				services = await this.getAllServicesWithoutFilter(sortBy, sortOrder, offset, limit);
 			}
 			const attributesDefinition = await this.getAttributesDefinition(),
@@ -493,10 +554,10 @@ export default class ServiceManager {
 				nonFilteredServicesCount: count,
 				services: [...servicesMap.values()]
 			};
-			logger.info('Returning the list of all services.');
+			logger.nonPhi.info('Returning the list of all services.');
 			return response;
 		} catch (error) {
-			logger.error('Error while fetching all the services', error);
+			logger.nonPhi.error('Error while fetching all the services', error);
 			throw new HandleError({ name: 'ServiceListFetchError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
 		}
 	}
@@ -505,10 +566,10 @@ export default class ServiceManager {
 		try {
 			let services = [];
 			if (searchKey !== EMPTY_STRING) {
-				logger.info('Fetching all the non inactive services with search filter');
+				logger.nonPhi.info('Fetching all the non inactive services with search filter');
 				services = await this.getNonInActiveServicesWithSearchFilter(sortBy, sortOrder, offset, limit, searchKey);
 			} else {
-				logger.info('Fetching all the non inactive services without search filter');
+				logger.nonPhi.info('Fetching all the non inactive services without search filter');
 				services = await this.getAllNonInActiveServicesWithoutFilter(sortBy, sortOrder, offset, limit);
 			}
 
@@ -516,6 +577,9 @@ export default class ServiceManager {
 				servicesMap = new Map<number, object>();
 			services.forEach((service) => {
 				service = { ...service, serviceid: service.serviceID };
+				if (service.servicename === undefined) {
+					service.servicename = service.serviceName;
+				}
 				let attributesForListRow = [],
 					serviceAttributeArr = [];
 				if (service.metadata !== null) {
@@ -554,16 +618,16 @@ export default class ServiceManager {
 				nonFilteredServicesCount: count,
 				services: [...servicesMap.values()]
 			};
-			logger.info('Returning all the non inactive services.');
+			logger.nonPhi.info('Returning all the non inactive services.');
 			return response;
 		} catch (error) {
-			logger.error('Error while fetching all the non inactive services', error);
+			logger.nonPhi.error('Error while fetching all the non inactive services', error);
 			throw new HandleError({ name: 'NonInActiveServicesListFetchError', message: error.message, stack: error.stack, errorStatus: error.statusCode });
 		}
 	}
 
 	private async getTotalServices(): Promise<number> {
-		logger.info('Returning the count of all services including inactive services.');
+		logger.nonPhi.info('Returning the count of all services including inactive services.');
 		const data = await db.query(QGetAllServiceIDsCountWithInactive(), {
 			type: QueryTypes.SELECT,
 			replacements: {}
@@ -571,7 +635,7 @@ export default class ServiceManager {
 		return Number(data[0].count);
 	}
 	private async getTotalServicesFiltered(searchKey): Promise<number> {
-		logger.info('Returning the count of total number of inactive services with filter');
+		logger.nonPhi.info('Returning the count of total number of inactive services with filter');
 		const data = await db.query(QGetAllServiceIDsCountInactiveWithFilter(), {
 			type: QueryTypes.SELECT,
 			replacements: { searchKey }
@@ -598,7 +662,7 @@ export default class ServiceManager {
 			replacements: { limit, offset }
 		});
 		const idsArr = Object.values(ids).map((obj: any) => obj.serviceID);
-		logger.debug('ServiceIDs', { idsArr });
+		logger.nonPhi.debug('ServiceIDs', { idsArr });
 		if (idsArr.length === 0) {
 			return [];
 		}
@@ -614,7 +678,7 @@ export default class ServiceManager {
 				replacements: { limit, offset, searchKey }
 			}),
 			idsArr = Object.values(ids).map((obj: any) => obj.serviceID);
-		logger.debug('ServiceIDs', { idsArr });
+		logger.nonPhi.debug('ServiceIDs', { idsArr });
 		if (idsArr.length === 0) return [];
 		return await db.query(QGetAllServicesFromServiceIDWithInactiveFilter(sortBy, sortOrder, idsArr.join(',')), {
 			type: QueryTypes.SELECT,
@@ -630,7 +694,7 @@ export default class ServiceManager {
 				replacements: { limit, offset }
 			}),
 			idsArr = Object.values(ids).map((obj: any) => obj.serviceID);
-		logger.debug('ServiceIDs', { idsArr });
+		logger.nonPhi.debug('ServiceIDs', { idsArr });
 		if (idsArr.length === 0) return [];
 		return await db.query(QGetAllServicesFromServiceIDWithInactive(sortBy, sortOrder, idsArr.join(',')), {
 			type: QueryTypes.SELECT,
@@ -660,7 +724,7 @@ export default class ServiceManager {
 	}
 
 	private async getTotalNonInActiveServices(): Promise<number> {
-		logger.info('Returning the count of total number of non inactive services.');
+		logger.nonPhi.info('Returning the count of total number of non inactive services.');
 		const data = await db.query(QGetAllServiceIDsCount(), {
 			type: QueryTypes.SELECT,
 			replacements: {}
@@ -668,7 +732,7 @@ export default class ServiceManager {
 		return Number(data[0].count);
 	}
 	private async getTotalNonInActiveServicesFiltered(searchKey): Promise<number> {
-		logger.info('Returning the count of total number of non inactive services with filter.');
+		logger.nonPhi.info('Returning the count of total number of non inactive services with filter.');
 		const data = await db.query(QGetAllServiceIDsCountWithFilter(), {
 			type: QueryTypes.SELECT,
 			replacements: { searchKey }
@@ -690,5 +754,354 @@ export default class ServiceManager {
 			}
 		});
 		return arr;
+	}
+
+	public async processBulkAttributesRequest(file: Express.Multer.File, reqHeaders: any): Promise<object> {
+		try {
+			logger.nonPhi.info('Parsing the input excel file begins.');
+			const dataFromXL = await this.parseInputExcel(file);
+
+			logger.nonPhi.info('Data validation for the user input begins.');
+			return await this.validateUserInput(dataFromXL, reqHeaders);
+		} catch (error) {
+			logger.nonPhi.error(error.message, { _err: error });
+			throw new HandleError({ name: 'BulkAttributesProcessingError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+
+	private async parseInputExcel(file: Express.Multer.File): Promise<any> {
+		try {
+			const workbook = XLSX.read(file.buffer, { cellDates: true }),
+				first_worksheet = workbook.Sheets[workbook.SheetNames[0]],
+				dataFromXL = XLSX.utils.sheet_to_json(first_worksheet, { header: 1, raw: false, dateNF: 'MM/DD/YYYY' });
+
+			logger.nonPhi.info('Successfully parsed and returning the excel content in json format.');
+			return dataFromXL;
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			throw new HandleError({ name: 'BulkAttributesExcelParsingError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+
+	private async validateUserInput(userInput: any, reqHeaders: any): Promise<any> {
+		try {
+			const errorRecords = [];
+			var totalFailedServices = 0;
+			for (var row = 1; row < userInput.length; row++) {
+				const legacyTIPDetailID = Number(userInput[row][1]);
+
+				logger.nonPhi.debug('Getting the matching services from database for given TIP ID ', { legacyTIPDetailID });
+
+				const existingServices = await this.serviceRepository.findAll({
+					where: {
+						legacyTIPDetailID
+					}
+				});
+
+				logger.nonPhi.info('Checking the given TIP ID has only active version.');
+				var onlyActiveVersion = await this.checkExistingServicesHasOnlyActiveVersion(userInput, existingServices, errorRecords, row);
+				var validScheduleDates, validFrom, validTill;
+				const addEmptyAttrList: any = [];
+				if (userInput[row][5] !== undefined) {
+					validScheduleDates = await this.validScheduledDates(userInput, userInput[row][5], userInput[row][6], errorRecords, row);
+					validFrom = moment(userInput[row][5]).format(DATE_FORMAT);
+					validTill = userInput[row][6] ? moment(userInput[row][6]).format(DATE_FORMAT) : null;
+				} else {
+					validFrom = moment.tz(moment().add(1, 'days'), CLIENT_TZ).format(DATE_FORMAT);
+					validTill = userInput[row][6] ? moment(userInput[row][6]).format(DATE_FORMAT) : null;
+					validScheduleDates = true;
+				}
+				if (onlyActiveVersion && validScheduleDates) {
+					const attributesDefinitions = await this.getAllAttributesDefinition();
+					var attributesDefinitionIDs_toAdd = await this.getAttributesDefinitionIDs(
+						attributesDefinitions,
+						userInput[row][3],
+						existingServices[0],
+						errorRecords,
+						ERROR_MSG_ADD_ATTRIBUTES,
+						row
+					);
+					var attributesDefinitionIDs_toDelete = await this.getAttributesDefinitionIDs(
+						attributesDefinitions,
+						userInput[row][4],
+						existingServices[0],
+						errorRecords,
+						ERROR_MSG_REMOVE_ATTRIBUTES,
+						row
+					);
+
+					if (attributesDefinitionIDs_toAdd.length !== 0 || attributesDefinitionIDs_toDelete.length !== 0) {
+						await this.validateServiceAttributes(
+							existingServices[0],
+							attributesDefinitions,
+							attributesDefinitionIDs_toAdd,
+							attributesDefinitionIDs_toDelete,
+							errorRecords,
+							row,
+							addEmptyAttrList
+						);
+					}
+
+					if (attributesDefinitionIDs_toAdd.length > 0 || attributesDefinitionIDs_toDelete.length > 0 || addEmptyAttrList[0] === 1) {
+						logger.nonPhi.debug('After successfull validation and association of service attributes, creating a draft version for the active service.');
+						const draft_service = await this.createDraft(existingServices[0].serviceID);
+						await this.createServiceAttributes(existingServices[0], draft_service.draftVersion, attributesDefinitionIDs_toAdd);
+						logger.nonPhi.debug('Scheduling the service with following data. ', (existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill));
+						await this.schedule(existingServices[0].serviceID, draft_service.draftVersion, validFrom, validTill);
+						logger.nonPhi.debug('Publishing a schedule event to the SNS topic.');
+						this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
+							existingServices[0].serviceID,
+							existingServices[0].legacyTIPDetailID,
+							existingServices[0].globalServiceVersion,
+							startDateWithClientTZ(validFrom),
+							validTill,
+							existingServices[0].isPublished,
+							reqHeaders,
+							SERVICE_SCHEDULE_EVENT
+						);
+						const activeService = JSON.parse(JSON.stringify(await this.getActiveService(existingServices[0].serviceID)));
+						if (activeService !== null) {
+							const endDate = activeService.validTill ? activeService.validTill : endDateWithClientTZ(moment(validFrom).subtract(1, 'days').format(DATE_FORMAT));
+							logger.nonPhi.debug('Publishing a change event to the SNS topic to update end date for the active version of the service.');
+							this.snsServiceManager.parentPublishScheduleMessageToSNSTopic(
+								existingServices[0].serviceID,
+								existingServices[0].legacyTIPDetailID,
+								activeService.globalServiceVersion,
+								activeService.validFrom,
+								endDate,
+								activeService.isPublished,
+								reqHeaders,
+								SERVICE_CHANGE_EVENT
+							);
+						}
+					} else {
+						totalFailedServices += 1;
+					}
+				} else totalFailedServices += 1;
+			}
+			logger.nonPhi.info('Successfully validated all the rows and generating the response.');
+			return {
+				totalRowCount: userInput.length - 1,
+				totalSuccessfullServices: userInput.length - 1 - totalFailedServices,
+				totalFailedServices: totalFailedServices,
+				failedServiceAttributesList: errorRecords
+			};
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'BulkAttributesValidationError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+
+	private async validScheduledDates(userInput: any, startDate: any, endDate: any, errorRecords: any, row: number): Promise<boolean> {
+		const validFrom = moment(startDate).format(DATE_FORMAT);
+		const validTill = endDate ? moment(endDate).format(DATE_FORMAT) : null;
+		const today: any = moment.tz(moment().add(1, 'days'), CLIENT_TZ).format(DATE_FORMAT);
+
+		if (validFrom < today) {
+			logger.nonPhi.error('Invalid start date is provided. Start Date is lesser than current date.');
+			errorRecords.push({
+				tipID: userInput[row][1],
+				serviceID: userInput[row][0],
+				serviceName: userInput[row][2],
+				failureReason: 'Invalid start date is provided. Start Date is lesser than current date.',
+				row: row + 1
+			});
+			return false;
+		}
+		if (validTill && validTill < today) {
+			logger.nonPhi.error('Invalid end date is provided. End Date is lesser than current date.');
+			errorRecords.push({
+				tipID: userInput[row][1],
+				serviceID: userInput[row][0],
+				serviceName: userInput[row][2],
+				failureReason: 'Invalid end date is provided. End Date is lesser than current date.',
+				row: row + 1
+			});
+			return false;
+		}
+
+		if (validTill && validFrom > validTill) {
+			logger.nonPhi.error('End Date is lesser than start date.');
+			errorRecords.push({
+				tipID: userInput[row][1],
+				serviceID: userInput[row][0],
+				serviceName: userInput[row][2],
+				failureReason: 'End Date is lesser than start date.',
+				row: row + 1
+			});
+			return false;
+		}
+		return true;
+	}
+
+	private async getAllAttributesDefinition(): Promise<any> {
+		var attributesDefinitions_masterData = await db.query(QGetAllAttributesDefinition, {
+			type: QueryTypes.SELECT
+		});
+		const attrDefMap = new Map<String, number>();
+		attributesDefinitions_masterData.map((attrDef) => {
+			const cat_attr = attrDef.categoryName.trim().toLowerCase() + ':' + attrDef.name.trim().toLowerCase();
+			attrDefMap.set(cat_attr.replace(/\s+/g, '').replace(/^,+|,+$/g, ''), attrDef.attributesDefinitionID);
+		});
+		return attrDefMap;
+	}
+
+	private async validateServiceAttributes(
+		activeService: Service,
+		attributesDefinitions: Map<String, number>,
+		attributesToBeAdded: any,
+		attributesToBeRemoved: [],
+		errorRecords: any,
+		row: any,
+		addEmptyAttrList: any[]
+	) {
+		try {
+			const existingServiceAttributes = await this.serviceAttributesRepository.findOne({
+				where: { serviceID: activeService.serviceID, globalServiceVersion: activeService.globalServiceVersion }
+			});
+			if (existingServiceAttributes !== null) {
+				var existingMetadata = existingServiceAttributes.metadata.attributes;
+
+				attributesToBeAdded?.forEach((attrDefID: any) => {
+					if (!existingMetadata.includes(attrDefID)) existingMetadata.push(attrDefID);
+				});
+
+				attributesToBeRemoved?.forEach((attrDefID) => {
+					var index = existingMetadata.indexOf(attrDefID);
+					if (index !== -1) {
+						existingMetadata.splice(index, 1);
+					} else {
+						const errAttribute = [];
+						attributesDefinitions?.forEach((value, key) => {
+							if (value === attrDefID) {
+								errAttribute.push(key);
+							}
+						});
+						errorRecords.push({
+							tipID: activeService.legacyTIPDetailID,
+							serviceID: activeService.serviceID,
+							serviceName: activeService.serviceName,
+							failureReason: errAttribute[0] + ERROR_MSG_NON_ASSOCIATED_ATTRIBUTES,
+							row: row + 1
+						});
+					}
+				});
+				attributesToBeAdded.length = 0;
+				if (existingMetadata.length === 0) addEmptyAttrList.push(1);
+				else addEmptyAttrList.push(0);
+			} else {
+				attributesToBeRemoved.length = 0;
+			}
+			existingMetadata?.forEach((element) => {
+				attributesToBeAdded.push(element);
+			});
+			return attributesToBeAdded;
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'BulkAttributesDBInsertionError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+	private async createServiceAttributes(activeService: Service, draftVersion: any, attributesToBeAdded: any) {
+		try {
+			logger.nonPhi.debug('creating new service attributes metadata ', { attributesToBeAdded });
+			await this.serviceAttributesRepository.create({
+				metadata: { attributes: attributesToBeAdded },
+				serviceID: activeService.serviceID,
+				globalServiceVersion: draftVersion
+			});
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'BulkAttributesDBInsertionError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+
+	private async getAttributesDefinitionIDs(
+		attributesDefinitions: Map<String, number>,
+		categoryAttributesCollection: any,
+		activeService: Service,
+		errorRecords: any,
+		errorMessage: string,
+		row: number
+	): Promise<any> {
+		const attributesDefinitionIDs = [];
+		categoryAttributesCollection = categoryAttributesCollection?.replace(/^,+|,+$/g, '');
+		categoryAttributesCollection?.split(',')?.forEach(async (cat_attribute: any) => {
+			try {
+				const category_attribute = cat_attribute.trim().toLowerCase().replace(/\s+/g, '');
+				if (attributesDefinitions.has(category_attribute) && !attributesDefinitionIDs.includes(attributesDefinitions.get(category_attribute))) {
+					attributesDefinitionIDs.push(attributesDefinitions.get(category_attribute));
+				} else {
+					errorRecords.push({
+						tipID: activeService.legacyTIPDetailID,
+						serviceID: activeService.serviceID,
+						serviceName: activeService.serviceName,
+						failureReason: cat_attribute + errorMessage,
+						row: row + 1
+					});
+				}
+			} catch (error: any) {
+				logger.nonPhi.error(error.message, { _err: error });
+			}
+		});
+		return attributesDefinitionIDs;
+	}
+	public async persistIncomingRequestForBulkAttributes(fileName: string, status: string, userID: string): Promise<any> {
+		try {
+			logger.nonPhi.debug('Creating a request entry in BulkAttributesStatus table with following values ', { fileName, status, userID });
+			return await this.bulkServiceAttributesRepository.create({ fileName, status, createdBy: userID });
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			throw new HandleError({ name: 'BulkAttributesRequestInsertionError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
+	}
+
+	public async checkExistingServicesHasOnlyActiveVersion(userInput: any, existingServices: any, errorRecords: any, row: any): Promise<boolean> {
+		if (existingServices.length === 0) {
+			logger.nonPhi.debug('Given TIP ID does not exist in the system.');
+			errorRecords.push({
+				tipID: userInput[row][1],
+				serviceID: userInput[row][0],
+				serviceName: userInput[row][2],
+				failureReason: 'Given TIP ID does not exist in the system.',
+				row: row + 1
+			});
+			return false;
+		}
+		if (existingServices.filter((service: any) => service.status.includes(SCHEDULED) || service.status.includes(DRAFT)).length > 0) {
+			logger.nonPhi.debug('Given TIP ID has non-active version in the system (scheduled or draft version).');
+			errorRecords.push({
+				tipID: userInput[row][1],
+				serviceID: userInput[row][0],
+				serviceName: userInput[row][2],
+				failureReason: 'Given TIP ID has non-active version in the system (scheduled or draft version).',
+				row: row + 1
+			});
+			return false;
+		}
+		existingServices = existingServices.find((service: any) => service.status === ACTIVE);
+		return true;
+	}
+
+	public async updateMetricsAndStatusForBulkAttributesRequest(bulkAttributesRequest: any, response: any): Promise<any> {
+		try {
+			const status = response.totalSuccessfullServices >= 1 ? REQUEST_COMPLETED : REQUEST_FAILED;
+			await this.bulkServiceAttributesRepository.update(
+				{
+					totalRecords: response.totalRowCount,
+					successfullyProcessedRecords: response.totalSuccessfullServices,
+					totalFailedRecords: response.totalFailedRecords,
+					errorReason: response.failureReason,
+					status
+				},
+				{ where: { bulkServiceAttributesStatusID: bulkAttributesRequest.bulkServiceAttributesStatusID } }
+			);
+		} catch (error: any) {
+			logger.nonPhi.error(error.message, { _err: error });
+			if (error instanceof HandleError) throw error;
+			throw new HandleError({ name: 'BulkAttributesRequestUpdationError', message: error.message, stack: error.stack, errorStatus: HTTP_STATUS_CODES.internalServerError });
+		}
 	}
 }

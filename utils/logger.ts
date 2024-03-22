@@ -10,23 +10,34 @@ import httpContext from 'express-http-context';
 const winstonLogger = winston.createLogger({
 	transports: [
 		new winston.transports.Console({
-			handleExceptions: true,
-			level: process.env.LOG_LEVEL
+			level: 'silly',
+			handleExceptions: true
 		})
 	],
 	format: winston.format.combine(
 		winston.format.metadata(),
-		format((log) => {
-			log['@timestamp'] = new Date().toISOString();
-			log.logID = httpContext.get('logID');
-			log.hl_meta = log?.metadata ? { ...log?.metadata } : {};
-			delete log.metadata;
-			return log;
+		format((info) => {
+			info['@timestamp'] = new Date().toISOString();
+			info.logID = httpContext.get('logID');
+			info.hl_meta = info?.metadata ? { ...info?.metadata } : {};
+			delete info.metadata;
+			return info;
 		})(),
-		winston.format.printf((log) => {
-			return `${JSON.stringify(log)}`;
+		winston.format.printf((info) => {
+			return `${JSON.stringify(info)}`;
 		})
-	)
+	),
+
+	defaultMeta: {
+		logger: 'winston'
+	}
 });
 
-export const logger = winstonLogger;
+/**
+ * @exports logger with phi and nonPhi options
+ */
+export const logger = {
+	phi: winstonLogger,
+	nonPhi: winstonLogger,
+	winstonLogger
+};

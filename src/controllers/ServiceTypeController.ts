@@ -8,7 +8,7 @@ export default class ServiceTypeController {
 
 	public async getAllServiceTypes(req: Request, res: Response, next: NextFunction) {
 		try {
-			logger.info('GET Service Types has been invoked');
+			logger.nonPhi.info('GET Service Types has been invoked');
 			res.send(await this.serviceTypeManager.getAllServiceTypes());
 		} catch (error) {
 			next(error);
@@ -18,7 +18,7 @@ export default class ServiceTypeController {
 	public async createServiceType(req: Request, res: Response) {
 		try {
 			const serviceTypePayload: IServiceType = req.body;
-			logger.info('ADD Service Type has been invoked with following parameter ', { ...serviceTypePayload });
+			logger.nonPhi.info('ADD Service Type has been invoked with following parameter ', { ...serviceTypePayload });
 			res.send(await this.serviceTypeManager.createServiceType(serviceTypePayload));
 		} catch (error) {
 			res.json(error);

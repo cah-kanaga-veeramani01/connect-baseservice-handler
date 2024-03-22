@@ -21,6 +21,6 @@ import { HTTP_STATUS_CODES, DEFAULT_ERROR_CODE } from '../../utils/constants';
  * @returns {object} JSON error object.
  */
 export const errorHandler: ErrorRequestHandler = (err: HandleError, _req: Request, res: Response, _next: NextFunction): object => {
-	logger.error(err.message, { _error: err });
+	logger.nonPhi.error(err.message, { _error: err });
 	return res.status(err.status || HTTP_STATUS_CODES.internalServerError).json({ name: err.name, code: err.code || DEFAULT_ERROR_CODE, message: err.message });
 };

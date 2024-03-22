@@ -75,7 +75,7 @@ ServicDetailsNotFound:
   EN:
     message: "Service details not found."
 
-ServicVersionNotFound:
+ServiceVersionNotFound:
   code: "SCE021"
   EN:
     message: "Service version is incorrect."
@@ -100,7 +100,12 @@ ServiceDetailsFetchError:
   EN:
     message: "An error occurred while fetching service details for the service."
 
-FetchServicesError:
-  code: "SCE026"
+NonInActiveServicesListFetchError:
+  code: 'SCE026'
   EN:
-    message: "An error occurred while fetching active and scheduled services."
+    message: 'Error while fetching all non inactive services list.'
+
+BulkAttributesRequestPersistenceError:
+  code: 'SCE027'
+  EN:
+    message: 'Error while persisting the request for bulk service attributes association.'

@@ -3,7 +3,7 @@
     - name: service-config-handler
       command: npm run start
       random-route: false
-      buildpack: https://github.com/cloudfoundry/nodejs-buildpack#v1.8.13
+      buildpack: https://github.com/cloudfoundry/nodejs-buildpack#v1.7.69
       routes:
         - route: service-config-handler.apps.np1.fuseapps.io
       memory: 1024M
@@ -27,4 +27,3 @@
         SERVICE_READ_ROLE: ((service_read_role))
         PUBLISH_URL: ((publish_url))
         SNS_TOPIC: ((sns_topic))
-        LOG_LEVEL: ((log_level))

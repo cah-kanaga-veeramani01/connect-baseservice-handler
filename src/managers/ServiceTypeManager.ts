@@ -19,7 +19,7 @@ export default class ServiceTypeManager {
 				});
 			}
 			const result = await this.serviceTypeRepository.create({ serviceType: serviceTypePayload.serviceType, createdBy: httpContext.get('userId') });
-			logger.info('Created a new service type successfully.');
+			logger.nonPhi.info('Created a new service type successfully.');
 			return result;
 		} catch (error) {
 			if (error instanceof HandleError) throw error;
@@ -30,7 +30,7 @@ export default class ServiceTypeManager {
 	public async getAllServiceTypes() {
 		try {
 			const result = await this.serviceTypeRepository.findAll();
-			if (result.length) logger.info('Able to fetch all service types successfully.');
+			if (result.length) logger.nonPhi.info('Able to fetch all service types successfully.');
 			return result;
 		} catch (error) {
 			throw new HandleError({ name: 'ServiceTypeFetchError', message: error.message, stack: error.stack, errorStatus: error.statusCode });

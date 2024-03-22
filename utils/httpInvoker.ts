@@ -18,7 +18,7 @@ export const invoke = async (reqConfig: AxiosRequestConfig): Promise<AxiosRespon
 	try {
 		return await axios(reqConfig);
 	} catch (error: any) {
-		logger.error(error.message, { _err: error });
+		logger.nonPhi.error(error.message, { _err: error });
 		throw error;
 	}
 };

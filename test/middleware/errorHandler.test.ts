@@ -16,7 +16,7 @@ describe('error Handler middleware', () => {
 		const mockRes = httpMocks.createResponse();
 		const mockNext = jest.fn();
 
-		const loggerSpy = jest.spyOn(logger, 'error');
+		const loggerSpy = jest.spyOn(logger.nonPhi, 'error');
 
 		errorHandler(mockErr, mockReq, mockRes, mockNext);
 		expect(loggerSpy).toHaveBeenCalledWith(mockErr.message, { _error: mockErr });
@@ -31,7 +31,7 @@ describe('error Handler middleware', () => {
 		const mockRes = httpMocks.createResponse();
 		const mockNext = jest.fn();
 
-		const loggerSpy = jest.spyOn(logger, 'error');
+		const loggerSpy = jest.spyOn(logger.nonPhi, 'error');
 
 		errorHandler(mockErr, mockReq, mockRes, mockNext);
 		expect(loggerSpy).toHaveBeenCalledWith(mockErr.message, { _error: mockErr });

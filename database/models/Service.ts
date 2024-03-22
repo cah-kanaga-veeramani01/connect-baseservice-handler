@@ -35,6 +35,9 @@ export class Service extends Model<Service> {
 	@BelongsTo(() => ServiceType)
 	serviceType: ServiceType;
 
+	@Column(DataType.STRING)
+	status: string;
+
 	@Default(Sequelize.fn('now')) @Column(DataType.DATE) createdAt: Date;
 
 	@Column(DataType.STRING) createdBy: string;
