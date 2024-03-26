@@ -5,4 +5,5 @@ coverage
 docs
 .scannerwork
 .vscode
+.DS_Store
 dist
